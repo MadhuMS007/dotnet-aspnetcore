@@ -1,0 +1,14 @@
+#nullable enable
+Microsoft.AspNetCore.Identity.IdentityJwtServiceCollectionExtensions
+Microsoft.AspNetCore.Identity.ITokenStore<TUser>
+Microsoft.AspNetCore.Identity.TokenManager<TUser>
+Microsoft.AspNetCore.Identity.TokenManager<TUser>.Dispose() -> void
+Microsoft.AspNetCore.Identity.TokenManager<TUser>.ErrorDescriber.get -> Microsoft.AspNetCore.Identity.IdentityErrorDescriber!
+Microsoft.AspNetCore.Identity.TokenManager<TUser>.ErrorDescriber.set -> void
+Microsoft.AspNetCore.Identity.TokenManager<TUser>.Store.get -> Microsoft.AspNetCore.Identity.ITokenStore<TUser!>!
+Microsoft.AspNetCore.Identity.TokenManager<TUser>.ThrowIfDisposed() -> void
+Microsoft.AspNetCore.Identity.TokenManager<TUser>.TokenManager(Microsoft.AspNetCore.Identity.ITokenStore<TUser!>! store, Microsoft.AspNetCore.Identity.IdentityErrorDescriber! errors, Microsoft.Extensions.Logging.ILogger<Microsoft.AspNetCore.Identity.TokenManager<TUser!>!>! logger) -> void
+static Microsoft.AspNetCore.Identity.IdentityJwtServiceCollectionExtensions.AddDefaultIdentityJwt<TUser>(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<Microsoft.AspNetCore.Identity.IdentityOptions!>! setupAction) -> Microsoft.AspNetCore.Identity.IdentityBuilder!
+virtual Microsoft.AspNetCore.Identity.TokenManager<TUser>.CancellationToken.get -> System.Threading.CancellationToken
+virtual Microsoft.AspNetCore.Identity.TokenManager<TUser>.Dispose(bool disposing) -> void
+virtual Microsoft.AspNetCore.Identity.TokenManager<TUser>.Logger.get -> Microsoft.Extensions.Logging.ILogger!

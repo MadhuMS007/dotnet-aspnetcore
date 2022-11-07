@@ -14,14 +14,6 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// </summary>
 public static class IdentityServiceCollectionExtensions
 {
-    public static IdentityBuilder AddDefaultIdentityJwt<TUser>(this IServiceCollection services,
-        Action<IdentityOptions> setupAction)
-        where TUser : class
-    {
-        services.AddAuthentication(IdentityConstants.JwtScheme).AddScheme<IdentityJwtOptions, IdentityJwtHandler>(IdentityConstants.JwtScheme, configureOptions: null);
-        return services.AddIdentityCore<TUser>(setupAction);
-    }
-
     /// <summary>
     /// Adds the default identity system configuration for the specified User and Role types.
     /// </summary>

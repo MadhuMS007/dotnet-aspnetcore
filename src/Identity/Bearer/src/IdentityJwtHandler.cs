@@ -8,16 +8,28 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.Extensions.Configuration.UserSecrets;
-using System.Text.Json.Nodes;
-using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Microsoft.AspNetCore.Identity;
 
 /// <summary>
-/// 
+/// Contains extension methods to <see cref="IServiceCollection"/> for configuring identity services.
 /// </summary>
-public class IdentityJwtHandler : AuthenticationHandler<IdentityJwtOptions>
+public static class IdentityJwtServiceCollectionExtensions
+{
+    public static IdentityBuilder AddDefaultIdentityJwt<TUser>(this IServiceCollection services,
+        Action<IdentityOptions> setupAction)
+        where TUser : class
+    {
+        services.AddAuthentication(IdentityConstants.JwtScheme).AddScheme<IdentityJwtOptions, IdentityJwtHandler>(IdentityConstants.JwtScheme, configureOptions: null);
+        return services.AddIdentityCore<TUser>(setupAction);
+    }
+}
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public class IdentityJwtHandler : AuthenticationHandler<IdentityJwtOptions>
 {
     private readonly JwtSecurityTokenHandler _defaultHandler = new JwtSecurityTokenHandler();
     internal static AuthenticateResult ValidatorNotFound = AuthenticateResult.Fail("No SecurityTokenValidator available for token.");
@@ -97,7 +109,7 @@ public class IdentityJwtHandler : AuthenticationHandler<IdentityJwtOptions>
 
             var newKeyMaterial = System.Security.Cryptography.RandomNumberGenerator.GetBytes(32);
 
-            validationParameters.IssuerSigningKey = new SymmetricSecurityKey(ReadKeyAsBytes(_jwtSettings.TokenSecretKey))
+            //validationParameters.IssuerSigningKey = new SymmetricSecurityKey(ReadKeyAsBytes(_jwtSettings.TokenSecretKey))
 
             //if (_configuration != null)
             //{

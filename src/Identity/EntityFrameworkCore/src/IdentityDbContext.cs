@@ -119,6 +119,28 @@ public abstract class IdentityDbContext<TUser, TRole, TKey, TUserClaim, TUserRol
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+    }
+
+    /// <summary>
+    /// Configures the schema needed for the identity framework for schema version 2.0
+    /// </summary>
+    /// <param name="builder">
+    /// The builder being used to construct the model for this context.
+    /// </param>
+    protected override void OnModelCreatingVersion2(ModelBuilder builder)
+    {
+        OnModelCreatingVersion1(builder);
+    }
+
+    /// <summary>
+    /// Configures the schema needed for the identity framework for schema version 1.0
+    /// </summary>
+    /// <param name="builder">
+    /// The builder being used to construct the model for this context.
+    /// </param>
+    protected override void OnModelCreatingVersion1(ModelBuilder builder)
+    {
+        base.OnModelCreatingVersion1(builder);
         builder.Entity<TUser>(b =>
         {
             b.HasMany<TUserRole>().WithOne().HasForeignKey(ur => ur.UserId).IsRequired();
