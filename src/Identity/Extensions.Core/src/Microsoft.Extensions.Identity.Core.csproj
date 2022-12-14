@@ -7,7 +7,6 @@
     <IsAspNetCoreApp>true</IsAspNetCoreApp>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageTags>aspnetcore;identity;membership</PackageTags>
-    <EnableNETAnalyzers>false</EnableNETAnalyzers>
     <IsTrimmable>true</IsTrimmable>
   </PropertyGroup>
 
