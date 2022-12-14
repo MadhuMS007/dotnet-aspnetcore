@@ -33,7 +33,8 @@ public class IdentityConstants
     /// <summary>
     /// The scheme used to identify bearer authentication token.
     /// </summary>
-    public static readonly string BearerScheme = CookiePrefix + ".Bearer";
+    public static readonly string BearerScheme = "Bearer";
+    //public static readonly string BearerScheme = CookiePrefix + ".Bearer";
 
     /// <summary>
     /// The scheme used to identify bearer cookie.

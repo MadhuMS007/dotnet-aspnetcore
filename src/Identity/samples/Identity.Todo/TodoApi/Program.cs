@@ -1,6 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using Microsoft.AspNetCore.Identity;
 using TodoApi;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,15 +13,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddAuthentication().AddJwtBearer();
 builder.Services.AddAuthorizationBuilder().AddCurrentUserHandler();
 
-// Add the service to generate JWT tokens
-builder.Services.AddTokenService();
-
 // Configure the database
 var connectionString = builder.Configuration.GetConnectionString("Todos") ?? "Data Source=.db/Todos.db";
 builder.Services.AddSqlite<TodoDbContext>(connectionString);
 
 // Configure identity
-builder.Services.AddIdentityCore<TodoUser>()
+builder.Services.AddDefaultIdentityBearer<TodoUser>()
                 .AddEntityFrameworkStores<TodoDbContext>();
 
 // State that represents the current user from the database *and* the request

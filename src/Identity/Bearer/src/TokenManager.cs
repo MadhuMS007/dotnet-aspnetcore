@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -36,7 +35,7 @@ public class TokenManager<TUser> : IDisposable where TUser : class
     /// <summary>
     /// Constructs a new instance of <see cref="TokenManager{TUser}"/>.
     /// </summary>
-    /// <param name="store">The persistence store the manager will operate over.</param>
+ //   /// <param name="store">The persistence store the manager will operate over.</param>
     /// <param name="userManager">An instance of <see cref="UserManager"/> used to retrieve users from and persist users.</param>
     /// <param name="errors">The <see cref="IdentityErrorDescriber"/> used to provider error messages.</param>
     /// <param name="logger">The logger used to log messages, warnings and errors.</param>
@@ -44,18 +43,15 @@ public class TokenManager<TUser> : IDisposable where TUser : class
     /// <param name="bearerOptions">The options which configure the bearer token such as signing key, audience, and issuer.</param>
     /// <exception cref="ArgumentNullException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
-    public TokenManager(ITokenStore<IdentityToken> store,
+    public TokenManager(
+//        ITokenStore<IdentityToken> store,
         UserManager<TUser> userManager,
         IdentityErrorDescriber errors,
         ILogger<TokenManager<IdentityToken>> logger,
         IBearerUserClaimsFactory<TUser> claimsFactory,
         IOptions<IdentityBearerOptions> bearerOptions)
     {
-        if (store == null)
-        {
-            throw new ArgumentNullException(nameof(store));
-        }
-        Store = store;
+        //Store = store ?? throw new ArgumentNullException(nameof(store));
         UserManager = userManager;
         ErrorDescriber = errors;
         ClaimsFactory = claimsFactory;
@@ -67,7 +63,7 @@ public class TokenManager<TUser> : IDisposable where TUser : class
     /// Gets the persistence store this instance operates over.
     /// </summary>
     /// <value>The persistence store this instance operates over.</value>
-    protected ITokenStore<IdentityToken> Store { get; private set; }
+    //protected ITokenStore<IdentityToken> Store { get; private set; }
 
     /// <summary>
     /// Gets the <see cref="ILogger"/> used to log messages from the manager.
@@ -128,6 +124,7 @@ public class TokenManager<TUser> : IDisposable where TUser : class
         return handler.WriteToken(jwtToken);
     }
 
+    /*
     /// <summary>
     /// Get a refresh token for the user.
     /// </summary>
@@ -189,7 +186,7 @@ public class TokenManager<TUser> : IDisposable where TUser : class
         }
         return IdentityResult.Success;
     }
-
+    */
     /// <summary>
     /// Releases the unmanaged resources used by the role manager and optionally releases the managed resources.
     /// </summary>
@@ -198,7 +195,7 @@ public class TokenManager<TUser> : IDisposable where TUser : class
     {
         if (disposing && !_disposed)
         {
-            Store.Dispose();
+            //Store.Dispose();
         }
         _disposed = true;
     }

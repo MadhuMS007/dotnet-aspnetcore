@@ -35,11 +35,11 @@ internal class TodoApplication : WebApplicationFactory<Program>
         Assert.True(result.Succeeded);
     }
 
-    public HttpClient CreateClient(string id, bool isAdmin = false)
+    public async Task<HttpClient> CreateClientAsync(string id, bool isAdmin = false)
     {
+        var token = await CreateTokenAsync(id, isAdmin);
         return CreateDefaultClient(new AuthHandler(req =>
         {
-            var token = CreateToken(id, isAdmin);
             req.Headers.Authorization = new AuthenticationHeaderValue(JwtBearerDefaults.AuthenticationScheme, token);
         }));
     }
@@ -87,13 +87,15 @@ internal class TodoApplication : WebApplicationFactory<Program>
         return base.CreateHost(builder);
     }
 
-    private string CreateToken(string id, bool isAdmin = false)
+    private async Task<string> CreateTokenAsync(string id, bool isAdmin = false)
     {
         // Read the user JWTs configuration for testing so unit tests can generate
         // JWT tokens.
-        var tokenService = Services.GetRequiredService<ITokenService>();
-
-        return tokenService.GenerateToken(id, isAdmin);
+        using var scope = Services.CreateScope();
+        var tokenService = scope.ServiceProvider.GetRequiredService<TokenManager<TodoUser>>();
+        var newUser = new TodoUser { UserName = id };
+        // TODO: isAdmin is broken
+        return await tokenService.GetBearerAsync(newUser);
     }
 
     protected override void Dispose(bool disposing)

@@ -84,8 +84,8 @@ public class BearerUserClaimsFactory<TUser> : IBearerUserClaimsFactory<TUser> wh
 
         // REVIEW: move this into the options setup instead to do it once
         var audiences = _bearerOptions.Audiences
-                    .Where(s => !string.IsNullOrEmpty(s))
-                    .Select(s => new Claim(JwtRegisteredClaimNames.Aud, s!))
+                    .Where(s => !string.IsNullOrEmpty(s.Value))
+                    .Select(s => new Claim(JwtRegisteredClaimNames.Aud, s.Value!))
                     .ToArray();
         id.AddClaims(audiences);
         return id;

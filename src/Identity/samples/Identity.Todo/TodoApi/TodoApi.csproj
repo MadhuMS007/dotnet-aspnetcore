@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>$(DefaultNetCoreTargetFramework)</TargetFramework>
@@ -11,7 +11,8 @@
     <Reference Include="Microsoft.AspNetCore" />
     <Reference Include="Microsoft.AspNetCore.Http.Results" />
     <Reference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
-    <Reference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore"  />
+    <Reference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
+    <Reference Include="Microsoft.AspNetCore.Identity.Bearer" />
     <Reference Include="Microsoft.AspNetCore.OpenApi" />
     <Reference Include="Microsoft.EntityFrameworkCore.Sqlite" />
   </ItemGroup>

@@ -1,6 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.IdentityModel.Tokens;
 
@@ -37,5 +38,5 @@ public class IdentityBearerOptions : AuthenticationSchemeOptions
     /// <summary>
     /// The list of valid audiences
     /// </summary>
-    public IList<string> Audiences { get; set; } = new List<string>();
+    public IList<Claim> Audiences { get; set; } = new List<Claim>();
 }

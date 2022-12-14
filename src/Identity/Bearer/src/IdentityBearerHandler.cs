@@ -7,6 +7,7 @@ using System.Security.Claims;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -23,15 +24,25 @@ public static class IdentityJwtServiceCollectionExtensions
     /// </summary>
     /// <typeparam name="TUser"></typeparam>
     /// <param name="services"></param>
+    /// <returns></returns>
+    public static IdentityBuilder AddDefaultIdentityBearer<TUser>(this IServiceCollection services)
+        where TUser : class
+    => services.AddDefaultIdentityBearer<TUser>(_ => { });
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <typeparam name="TUser"></typeparam>
+    /// <param name="services"></param>
     /// <param name="setupAction"></param>
     /// <returns></returns>
-    public static IdentityBuilder AddDefaultIdentityJwt<TUser>(this IServiceCollection services,
+    public static IdentityBuilder AddDefaultIdentityBearer<TUser>(this IServiceCollection services,
         Action<IdentityOptions> setupAction)
         where TUser : class
     {
-        services.AddAuthentication(IdentityConstants.BearerScheme)
-            .AddCookie(IdentityConstants.BearerCookieScheme)
-            .AddScheme<BearerSchemeOptions, IdentityBearerHandler>(IdentityConstants.BearerScheme, configureOptions: null);
+        //services.AddAuthentication(IdentityConstants.BearerScheme)
+        //    .AddCookie(IdentityConstants.BearerCookieScheme)
+        //    .AddScheme<BearerSchemeOptions, IdentityBearerHandler>(IdentityConstants.BearerScheme, configureOptions: null);
 
         services.AddOptions<IdentityBearerOptions>().Configure<IAuthenticationConfigurationProvider>((o, cp) =>
         {
@@ -59,12 +70,14 @@ public static class IdentityJwtServiceCollectionExtensions
             o.SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(signingKeyBytes),
                     SecurityAlgorithms.HmacSha256Signature);
 
-            o.Audiences = (IList<string>)(bearerSection.GetSection("ValidAudiences").GetChildren()
+            o.Audiences = (bearerSection.GetSection("ValidAudiences").GetChildren()
                         .Where(s => !string.IsNullOrEmpty(s.Value))
                         .Select(s => new Claim(JwtRegisteredClaimNames.Aud, s.Value!))
                         .ToList());
         });
 
+        services.TryAddScoped<TokenManager<TUser>>();
+        services.TryAddScoped<IBearerUserClaimsFactory<TUser>, BearerUserClaimsFactory<TUser>>();
         return services.AddIdentityCore<TUser>(setupAction);
     }
 }
