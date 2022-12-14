@@ -31,7 +31,12 @@ public class IdentityConstants
     public static readonly string TwoFactorUserIdScheme = CookiePrefix + ".TwoFactorUserId";
 
     /// <summary>
-    /// The scheme used to identify jwt authentication token.
+    /// The scheme used to identify bearer authentication token.
     /// </summary>
     public static readonly string BearerScheme = CookiePrefix + ".Bearer";
+
+    /// <summary>
+    /// The scheme used to identify bearer cookie.
+    /// </summary>
+    public static readonly string BearerCookieScheme = CookiePrefix + ".Bearer.Cookie";
 }

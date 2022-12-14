@@ -1,13 +1,10 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Options;
 
 namespace Microsoft.AspNetCore.Identity;
 
@@ -28,9 +25,8 @@ public class TokenManager<TUser> : IDisposable where TUser : class
     public static readonly string AccessTokenName = "Access";
 
     private bool _disposed;
-    private readonly string _issuer;
-    private readonly SigningCredentials _jwtSigningCredentials;
-    private readonly Claim[] _audiences;
+
+    private readonly IdentityBearerOptions _bearerOptions;
 
     /// <summary>
     /// The cancellation token used to cancel operations.
@@ -45,15 +41,15 @@ public class TokenManager<TUser> : IDisposable where TUser : class
     /// <param name="errors">The <see cref="IdentityErrorDescriber"/> used to provider error messages.</param>
     /// <param name="logger">The logger used to log messages, warnings and errors.</param>
     /// <param name="claimsFactory">The factory to use to create claims principals for a user.</param>
-    /// <param name="authenticationConfigurationProvider">Used to access the authentication configuration section.</param>
+    /// <param name="bearerOptions">The options which configure the bearer token such as signing key, audience, and issuer.</param>
     /// <exception cref="ArgumentNullException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
     public TokenManager(ITokenStore<IdentityToken> store,
         UserManager<TUser> userManager,
         IdentityErrorDescriber errors,
         ILogger<TokenManager<IdentityToken>> logger,
-        IUserClaimsPrincipalFactory<IdentityToken> claimsFactory,
-        IAuthenticationConfigurationProvider authenticationConfigurationProvider)
+        IBearerUserClaimsFactory<TUser> claimsFactory,
+        IOptions<IdentityBearerOptions> bearerOptions)
     {
         if (store == null)
         {
@@ -64,35 +60,7 @@ public class TokenManager<TUser> : IDisposable where TUser : class
         ErrorDescriber = errors;
         ClaimsFactory = claimsFactory;
         Logger = logger;
-
-        // We're reading the authentication configuration for the Bearer scheme
-        var bearerSection = authenticationConfigurationProvider.GetSchemeConfiguration(IdentityConstants.BearerScheme);
-
-        // An example of what the expected schema looks like
-        // "Authentication": {
-        //     "Schemes": {
-        //       "Bearer": {
-        //         "ValidAudiences": [ ],
-        //         "ValidIssuer": "",
-        //         "SigningKeys": [ { "Issuer": .., "Value": base64Key, "Length": 32 } ]
-        //       }
-        //     }
-        //   }
-
-        var section = bearerSection.GetSection("SigningKeys:0");
-
-        _issuer = bearerSection["ValidIssuer"] ?? throw new InvalidOperationException("Issuer is not specified");
-        var signingKeyBase64 = section["Value"] ?? throw new InvalidOperationException("Signing key is not specified");
-
-        var signingKeyBytes = Convert.FromBase64String(signingKeyBase64);
-
-        _jwtSigningCredentials = new SigningCredentials(new SymmetricSecurityKey(signingKeyBytes),
-                SecurityAlgorithms.HmacSha256Signature);
-
-        _audiences = bearerSection.GetSection("ValidAudiences").GetChildren()
-                    .Where(s => !string.IsNullOrEmpty(s.Value))
-                    .Select(s => new Claim(JwtRegisteredClaimNames.Aud, s.Value!))
-                    .ToArray();
+        _bearerOptions = bearerOptions.Value;
     }
 
     /// <summary>
@@ -117,7 +85,7 @@ public class TokenManager<TUser> : IDisposable where TUser : class
     /// <summary>
     /// The <see cref="IUserClaimsPrincipalFactory{TUser}"/> used.
     /// </summary>
-    public IUserClaimsPrincipalFactory<IdentityToken> ClaimsFactory { get; set; }
+    public IBearerUserClaimsFactory<TUser> ClaimsFactory { get; set; }
 
     /// <summary>
     /// Gets the <see cref="IdentityErrorDescriber"/> used to provider error messages.
@@ -141,36 +109,21 @@ public class TokenManager<TUser> : IDisposable where TUser : class
     /// </summary>
     /// <param name="user">The user.</param>
     /// <returns></returns>
-    public virtual string GetBearerAsync(TUser user)
+    public virtual async Task<string> GetBearerAsync(TUser user)
     {
-        // TODO: Get the claims principal for the user
-        var identity = new ClaimsIdentity(IdentityConstants.BearerScheme);
 
-        identity.AddClaim(new Claim(JwtRegisteredClaimNames.Sub, "<username>"));
-
-        // REVIEW: Check that this logic is OK for jti claims
-        var id = Guid.NewGuid().ToString().GetHashCode().ToString("x", CultureInfo.InvariantCulture);
-
-        identity.AddClaim(new Claim(JwtRegisteredClaimNames.Jti, id));
-
-        //// Check if user is Admin somehow
-        //if (isAdmin)
-        //{
-        //    identity.AddClaim(new Claim(ClaimTypes.Role, "admin"));
-        //}
-
-        identity.AddClaims(_audiences);
+        var identity = await ClaimsFactory.CreateIdentityAsync(user);
 
         var handler = new JwtSecurityTokenHandler();
 
         var jwtToken = handler.CreateJwtSecurityToken(
-            _issuer,
+            _bearerOptions.Issuer,
             audience: null,
             identity,
             notBefore: DateTime.UtcNow,
             expires: DateTime.UtcNow.AddMinutes(30),
             issuedAt: DateTime.UtcNow,
-            _jwtSigningCredentials);
+            _bearerOptions.SigningCredentials);
 
         return handler.WriteToken(jwtToken);
     }

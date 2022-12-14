@@ -9,20 +9,33 @@ namespace Microsoft.AspNetCore.Identity;
 /// <summary>
 /// 
 /// </summary>
-public class IdentityJwtOptions : AuthenticationSchemeOptions
+public class BearerSchemeOptions : AuthenticationSchemeOptions
 {
-    //private readonly SigningCredentials _jwtSigningCredentials;
-    //private readonly Claim[] _audiences;
-
     /// <summary>
     /// Gets or sets the parameters used to validate identity tokens.
     /// </summary>
     /// <remarks>Contains the types and definitions required for validating a token.</remarks>
     /// <exception cref="ArgumentNullException">if 'value' is null.</exception>
     public TokenValidationParameters TokenValidationParameters { get; set; } = new TokenValidationParameters();
+}
 
+/// <summary>
+/// 
+/// </summary>
+public class IdentityBearerOptions : AuthenticationSchemeOptions
+{
     /// <summary>
     /// The Issuer for the token
     /// </summary>
-    public string Issuer { get; set; } = string.Empty;
+    public string? Issuer { get; set; }
+
+    /// <summary>
+    /// The <see cref="SigningCredentials"/> to use.
+    /// </summary>
+    public SigningCredentials? SigningCredentials { get; set; }
+
+    /// <summary>
+    /// The list of valid audiences
+    /// </summary>
+    public IList<string> Audiences { get; set; } = new List<string>();
 }
