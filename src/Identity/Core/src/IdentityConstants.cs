@@ -33,5 +33,5 @@ public class IdentityConstants
     /// <summary>
     /// The scheme used to identify jwt authentication token.
     /// </summary>
-    public static readonly string JwtScheme = CookiePrefix + ".Jwt";
+    public static readonly string BearerScheme = CookiePrefix + ".Bearer";
 }

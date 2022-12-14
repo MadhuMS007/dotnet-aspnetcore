@@ -17,19 +17,26 @@ namespace Microsoft.AspNetCore.Identity;
 /// </summary>
 public static class IdentityJwtServiceCollectionExtensions
 {
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <typeparam name="TUser"></typeparam>
+    /// <param name="services"></param>
+    /// <param name="setupAction"></param>
+    /// <returns></returns>
     public static IdentityBuilder AddDefaultIdentityJwt<TUser>(this IServiceCollection services,
         Action<IdentityOptions> setupAction)
         where TUser : class
     {
-        services.AddAuthentication(IdentityConstants.JwtScheme).AddScheme<IdentityJwtOptions, IdentityJwtHandler>(IdentityConstants.JwtScheme, configureOptions: null);
+        services.AddAuthentication(IdentityConstants.BearerScheme).AddScheme<IdentityJwtOptions, IdentityJwtHandler>(IdentityConstants.BearerScheme, configureOptions: null);
         return services.AddIdentityCore<TUser>(setupAction);
     }
 }
 
-    /// <summary>
-    /// 
-    /// </summary>
-    public class IdentityJwtHandler : AuthenticationHandler<IdentityJwtOptions>
+/// <summary>
+/// 
+/// </summary>
+internal sealed class IdentityJwtHandler : AuthenticationHandler<IdentityJwtOptions>
 {
     private readonly JwtSecurityTokenHandler _defaultHandler = new JwtSecurityTokenHandler();
     internal static AuthenticateResult ValidatorNotFound = AuthenticateResult.Fail("No SecurityTokenValidator available for token.");
@@ -105,9 +112,12 @@ public static class IdentityJwtServiceCollectionExtensions
                 return AuthenticateResult.NoResult();
             }
 
+            // delete
+            await Task.Delay(1);
+
             var validationParameters = Options.TokenValidationParameters.Clone();
 
-            var newKeyMaterial = System.Security.Cryptography.RandomNumberGenerator.GetBytes(32);
+            //var newKeyMaterial = System.Security.Cryptography.RandomNumberGenerator.GetBytes(32);
 
             //validationParameters.IssuerSigningKey = new SymmetricSecurityKey(ReadKeyAsBytes(_jwtSettings.TokenSecretKey))
 
@@ -120,7 +130,7 @@ public static class IdentityJwtServiceCollectionExtensions
             //        ?? _configuration.SigningKeys;
             //}
 
-            SecurityToken? validatedToken = null;
+            SecurityToken? validatedToken;
             var validator = _defaultHandler;
             if (validator.CanReadToken(token))
             {

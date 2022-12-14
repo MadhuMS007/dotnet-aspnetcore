@@ -1,1 +1,3 @@
 #nullable enable
+virtual Microsoft.AspNetCore.Identity.IdentityUserToken<TKey>.ValidUntil.get -> System.DateTimeOffset
+virtual Microsoft.AspNetCore.Identity.IdentityUserToken<TKey>.ValidUntil.set -> void

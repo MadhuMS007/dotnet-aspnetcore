@@ -22,6 +22,11 @@ public class IdentityUserToken<TKey> where TKey : IEquatable<TKey>
     public virtual string LoginProvider { get; set; } = default!;
 
     /// <summary>
+    /// Gets or sets the DateTimeOffset that this token is valid until.
+    /// </summary>
+    public virtual DateTimeOffset ValidUntil { get; set; }
+
+    /// <summary>
     /// Gets or sets the name of the token.
     /// </summary>
     public virtual string Name { get; set; } = default!;

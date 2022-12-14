@@ -1,14 +1,64 @@
 #nullable enable
+Microsoft.AspNetCore.Identity.IdentityJwtOptions
+Microsoft.AspNetCore.Identity.IdentityJwtOptions.IdentityJwtOptions() -> void
+Microsoft.AspNetCore.Identity.IdentityJwtOptions.Issuer.get -> string!
+Microsoft.AspNetCore.Identity.IdentityJwtOptions.Issuer.set -> void
+Microsoft.AspNetCore.Identity.IdentityJwtOptions.TokenValidationParameters.get -> Microsoft.IdentityModel.Tokens.TokenValidationParameters!
+Microsoft.AspNetCore.Identity.IdentityJwtOptions.TokenValidationParameters.set -> void
 Microsoft.AspNetCore.Identity.IdentityJwtServiceCollectionExtensions
-Microsoft.AspNetCore.Identity.ITokenStore<TUser>
+Microsoft.AspNetCore.Identity.IdentityToken
+Microsoft.AspNetCore.Identity.IdentityToken.IdentityToken() -> void
+Microsoft.AspNetCore.Identity.IdentityToken.Purpose.get -> string!
+Microsoft.AspNetCore.Identity.IdentityToken.Purpose.set -> void
+Microsoft.AspNetCore.Identity.IdentityToken.Revoked.get -> bool
+Microsoft.AspNetCore.Identity.IdentityToken.Revoked.set -> void
+Microsoft.AspNetCore.Identity.IdentityToken.UserId.get -> string!
+Microsoft.AspNetCore.Identity.IdentityToken.UserId.set -> void
+Microsoft.AspNetCore.Identity.IdentityToken.ValidUntil.get -> System.DateTimeOffset
+Microsoft.AspNetCore.Identity.IdentityToken.ValidUntil.set -> void
+Microsoft.AspNetCore.Identity.IdentityToken.Value.get -> string!
+Microsoft.AspNetCore.Identity.IdentityToken.Value.set -> void
+Microsoft.AspNetCore.Identity.ITokenStore<TToken>
+Microsoft.AspNetCore.Identity.ITokenStore<TToken>.CreateAsync(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.IdentityResult!>!
+Microsoft.AspNetCore.Identity.ITokenStore<TToken>.DeleteAsync(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.IdentityResult!>!
+Microsoft.AspNetCore.Identity.ITokenStore<TToken>.FindAsync(string! purpose, string! value, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<TToken?>!
+Microsoft.AspNetCore.Identity.ITokenStore<TToken>.UpdateAsync(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.IdentityResult!>!
 Microsoft.AspNetCore.Identity.TokenManager<TUser>
+Microsoft.AspNetCore.Identity.TokenManager<TUser>.ClaimsFactory.get -> Microsoft.AspNetCore.Identity.IUserClaimsPrincipalFactory<Microsoft.AspNetCore.Identity.IdentityToken!>!
+Microsoft.AspNetCore.Identity.TokenManager<TUser>.ClaimsFactory.set -> void
 Microsoft.AspNetCore.Identity.TokenManager<TUser>.Dispose() -> void
 Microsoft.AspNetCore.Identity.TokenManager<TUser>.ErrorDescriber.get -> Microsoft.AspNetCore.Identity.IdentityErrorDescriber!
 Microsoft.AspNetCore.Identity.TokenManager<TUser>.ErrorDescriber.set -> void
-Microsoft.AspNetCore.Identity.TokenManager<TUser>.Store.get -> Microsoft.AspNetCore.Identity.ITokenStore<TUser!>!
+Microsoft.AspNetCore.Identity.TokenManager<TUser>.Store.get -> Microsoft.AspNetCore.Identity.ITokenStore<Microsoft.AspNetCore.Identity.IdentityToken!>!
 Microsoft.AspNetCore.Identity.TokenManager<TUser>.ThrowIfDisposed() -> void
-Microsoft.AspNetCore.Identity.TokenManager<TUser>.TokenManager(Microsoft.AspNetCore.Identity.ITokenStore<TUser!>! store, Microsoft.AspNetCore.Identity.IdentityErrorDescriber! errors, Microsoft.Extensions.Logging.ILogger<Microsoft.AspNetCore.Identity.TokenManager<TUser!>!>! logger) -> void
+Microsoft.AspNetCore.Identity.TokenManager<TUser>.TokenManager(Microsoft.AspNetCore.Identity.ITokenStore<Microsoft.AspNetCore.Identity.IdentityToken!>! store, Microsoft.AspNetCore.Identity.UserManager<TUser!>! userManager, Microsoft.AspNetCore.Identity.IdentityErrorDescriber! errors, Microsoft.Extensions.Logging.ILogger<Microsoft.AspNetCore.Identity.TokenManager<Microsoft.AspNetCore.Identity.IdentityToken!>!>! logger, Microsoft.AspNetCore.Identity.IUserClaimsPrincipalFactory<Microsoft.AspNetCore.Identity.IdentityToken!>! claimsFactory, Microsoft.AspNetCore.Authentication.IAuthenticationConfigurationProvider! authenticationConfigurationProvider) -> void
+Microsoft.AspNetCore.Identity.TokenManager<TUser>.UserManager.get -> Microsoft.AspNetCore.Identity.UserManager<TUser!>!
+Microsoft.AspNetCore.Identity.TokenManager<TUser>.UserManager.set -> void
+Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>
+Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.AutoSaveChanges.get -> bool
+Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.AutoSaveChanges.set -> void
+Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.Dispose() -> void
+Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.ErrorDescriber.get -> Microsoft.AspNetCore.Identity.IdentityErrorDescriber!
+Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.ErrorDescriber.set -> void
+Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.SaveChanges(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.ThrowIfDisposed() -> void
+Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.TokenStore(TContext! context, Microsoft.AspNetCore.Identity.IdentityErrorDescriber? describer = null) -> void
 static Microsoft.AspNetCore.Identity.IdentityJwtServiceCollectionExtensions.AddDefaultIdentityJwt<TUser>(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<Microsoft.AspNetCore.Identity.IdentityOptions!>! setupAction) -> Microsoft.AspNetCore.Identity.IdentityBuilder!
+static readonly Microsoft.AspNetCore.Identity.TokenManager<TUser>.AccessTokenName -> string!
+static readonly Microsoft.AspNetCore.Identity.TokenManager<TUser>.RefreshTokenName -> string!
+virtual Microsoft.AspNetCore.Identity.IdentityToken.ConcurrencyStamp.get -> string?
+virtual Microsoft.AspNetCore.Identity.IdentityToken.ConcurrencyStamp.set -> void
 virtual Microsoft.AspNetCore.Identity.TokenManager<TUser>.CancellationToken.get -> System.Threading.CancellationToken
 virtual Microsoft.AspNetCore.Identity.TokenManager<TUser>.Dispose(bool disposing) -> void
+virtual Microsoft.AspNetCore.Identity.TokenManager<TUser>.FindByRefreshAsync(string! token) -> System.Threading.Tasks.Task<TUser?>!
+virtual Microsoft.AspNetCore.Identity.TokenManager<TUser>.GetBearerAsync(TUser! user) -> string!
+virtual Microsoft.AspNetCore.Identity.TokenManager<TUser>.GetRefreshAsync(TUser! user) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.IdentityToken!>!
 virtual Microsoft.AspNetCore.Identity.TokenManager<TUser>.Logger.get -> Microsoft.Extensions.Logging.ILogger!
+virtual Microsoft.AspNetCore.Identity.TokenManager<TUser>.Logger.set -> void
+virtual Microsoft.AspNetCore.Identity.TokenManager<TUser>.RevokeRefreshAsync(TUser! user, string! token) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.IdentityResult!>!
+virtual Microsoft.AspNetCore.Identity.TokenManager<TUser>.ValidateAccessAsync(string! token) -> System.Security.Claims.ClaimsPrincipal?
+virtual Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.Context.get -> TContext!
+virtual Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.CreateAsync(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.IdentityResult!>!
+virtual Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.DeleteAsync(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.IdentityResult!>!
+virtual Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.FindAsync(string! purpose, string! value, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<TToken?>!
+virtual Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.UpdateAsync(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.IdentityResult!>!

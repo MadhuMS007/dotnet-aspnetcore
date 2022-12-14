@@ -129,6 +129,7 @@ public abstract class IdentityDbContext<TUser, TRole, TKey, TUserClaim, TUserRol
     /// </param>
     protected override void OnModelCreatingVersion2(ModelBuilder builder)
     {
+        // TODO: Any changes for the role version?
         OnModelCreatingVersion1(builder);
     }
 

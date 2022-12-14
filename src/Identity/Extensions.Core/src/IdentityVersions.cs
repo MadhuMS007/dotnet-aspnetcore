@@ -19,6 +19,6 @@ public static class IdentityVersions
     /// Represents the 2.0 version of the identity schema which adds the functionality
     /// needed for Identity.Bearer
     /// </summary>
-    public static readonly Version Version2 = new Version(1, 0);
+    public static readonly Version Version2 = new Version(2, 0);
 
 }

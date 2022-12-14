@@ -146,7 +146,9 @@ public abstract class IdentityUserContext<TUser, TKey, TUserClaim, TUserLogin, T
     /// </param>
     protected virtual void OnModelCreatingVersion2(ModelBuilder builder)
     {
-        // Differences from Version 1 is maxKeyLength defaults to 128
+        // Differences from Version 1:
+        // - maxKeyLength defaults to 128
+        // - IdentityUserToken adds ValidTil
 
         var storeOptions = GetStoreOptions();
         var maxKeyLength = storeOptions?.MaxLengthForKeys ?? 128;
@@ -324,5 +326,8 @@ public abstract class IdentityUserContext<TUser, TKey, TUserClaim, TUserLogin, T
 
             b.ToTable("AspNetUserTokens");
         });
+
+        // Ignore the propeties added for V2 schema.
+        builder.Entity<TUserToken>().Ignore("ValidUntil");
     }
 }
