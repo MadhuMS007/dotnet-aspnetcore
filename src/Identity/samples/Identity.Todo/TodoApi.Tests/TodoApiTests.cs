@@ -39,7 +39,9 @@ public class TodoApiTests
         var client = await application.CreateClientAsync(userId);
         var response = await client.GetAsync("/todos");
 
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        // Note: we get 401 if we send an empty token for an unknown user
+        // we get 403 if we send a bogus token for an unknown user
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]

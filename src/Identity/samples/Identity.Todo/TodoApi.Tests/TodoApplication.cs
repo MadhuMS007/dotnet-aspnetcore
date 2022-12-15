@@ -40,9 +40,9 @@ internal class TodoApplication : WebApplicationFactory<Program>
         Assert.True(result.Succeeded);
     }
 
-    public async Task<HttpClient> CreateClientAsync(string id)
+    public async Task<HttpClient> CreateClientAsync(string userName)
     {
-        var token = await CreateTokenAsync(id);
+        var token = await CreateTokenAsync(userName);
         return CreateDefaultClient(new AuthHandler(req =>
         {
             req.Headers.Authorization = new AuthenticationHeaderValue(JwtBearerDefaults.AuthenticationScheme, token);

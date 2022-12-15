@@ -20,6 +20,23 @@ public static class BearerServiceCollectionExtensions
     /// <summary>
     /// 
     /// </summary>
+    /// <param name="services"></param>
+    /// <returns></returns>
+    public static AuthenticationBuilder AddBearerServerAuthentication(this IServiceCollection services)
+    {
+        // Our default scheme is cookies
+        var authenticationBuilder = services.AddAuthentication(IdentityConstants.BearerCookieScheme);
+
+        // Add the default authentication cookie that will be used between the front end and
+        // the backend.
+        authenticationBuilder.AddCookie(IdentityConstants.BearerCookieScheme);
+
+        return authenticationBuilder;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
     /// <typeparam name="TUser"></typeparam>
     /// <param name="services"></param>
     /// <returns></returns>

@@ -2,8 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OAuth;
+using Microsoft.AspNetCore.Identity;
 
 namespace Todo.Web.Server;
 
@@ -19,11 +19,7 @@ public static class AuthenticationExtensions
     public static WebApplicationBuilder AddAuthentication(this WebApplicationBuilder builder)
     {
         // Our default scheme is cookies
-        var authenticationBuilder = builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme);
-
-        // Add the default authentication cookie that will be used between the front end and
-        // the backend.
-        authenticationBuilder.AddCookie();
+        var authenticationBuilder = builder.Services.AddBearerServerAuthentication();
 
         // This is the cookie that will store the user information from the social login provider
         authenticationBuilder.AddCookie(AuthConstants.SocialScheme);

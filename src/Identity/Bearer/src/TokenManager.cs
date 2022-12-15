@@ -108,6 +108,11 @@ public class TokenManager<TUser> : IDisposable where TUser : class
     /// <returns></returns>
     public virtual async Task<string> GetBearerAsync(TUser user)
     {
+        // REVIEW: we could throw instead?
+        if (user == null)
+        {
+            return string.Empty;
+        }
 
         var identity = await ClaimsFactory.CreateIdentityAsync(user);
 
