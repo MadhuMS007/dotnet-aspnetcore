@@ -3,7 +3,6 @@
 
 using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using Microsoft.Extensions.Options;
 
@@ -52,7 +51,7 @@ public class BearerUserClaimsFactory<TUser> : IBearerUserClaimsFactory<TUser> wh
     public async Task<ClaimsIdentity> CreateIdentityAsync(TUser user)
     {
         // Based on UserClaimsPrincipalFactory
-        var userId = await UserManager.GetUserIdAsync(user).ConfigureAwait(false);
+        //var userId = await UserManager.GetUserIdAsync(user).ConfigureAwait(false);
         var userName = await UserManager.GetUserNameAsync(user).ConfigureAwait(false);
         var id = new ClaimsIdentity(IdentityConstants.BearerScheme); // REVIEW: Used to match Application scheme
             //Options.ClaimsIdentity.UserNameClaimType,
@@ -82,12 +81,7 @@ public class BearerUserClaimsFactory<TUser> : IBearerUserClaimsFactory<TUser> wh
         var jti = Guid.NewGuid().ToString().GetHashCode().ToString("x", CultureInfo.InvariantCulture);
         id.AddClaim(new Claim(JwtRegisteredClaimNames.Jti, jti));
 
-        // REVIEW: move this into the options setup instead to do it once
-        var audiences = _bearerOptions.Audiences
-                    .Where(s => !string.IsNullOrEmpty(s.Value))
-                    .Select(s => new Claim(JwtRegisteredClaimNames.Aud, s.Value!))
-                    .ToArray();
-        id.AddClaims(audiences);
+        id.AddClaims(_bearerOptions.Audiences);
         return id;
     }
 }

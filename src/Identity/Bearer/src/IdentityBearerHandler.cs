@@ -6,6 +6,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
@@ -40,9 +41,11 @@ public static class IdentityJwtServiceCollectionExtensions
         Action<IdentityOptions> setupAction)
         where TUser : class
     {
-        //services.AddAuthentication(IdentityConstants.BearerScheme)
+        services.AddAuthentication("Identity.Bearer")
         //    .AddCookie(IdentityConstants.BearerCookieScheme)
-        //    .AddScheme<BearerSchemeOptions, IdentityBearerHandler>(IdentityConstants.BearerScheme, configureOptions: null);
+        // Forward to the jwt for now
+            .AddScheme<BearerSchemeOptions, IdentityBearerHandler>("Identity.Bearer", o => o.ForwardDefault = JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer();
 
         services.AddOptions<IdentityBearerOptions>().Configure<IAuthenticationConfigurationProvider>((o, cp) =>
         {
@@ -168,9 +171,6 @@ internal sealed class IdentityBearerHandler : AuthenticationHandler<BearerScheme
             {
                 return AuthenticateResult.NoResult();
             }
-
-            // delete
-            await Task.Delay(1);
 
             var validationParameters = Options.TokenValidationParameters.Clone();
 

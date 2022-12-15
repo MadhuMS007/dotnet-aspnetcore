@@ -10,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 //builder.AddSerilog();
 
 // Configure auth
-builder.Services.AddAuthentication().AddJwtBearer();
+// builder.Services.AddAuthentication().AddJwtBearer(); // AddDefaultIdentityBearer does this
 builder.Services.AddAuthorizationBuilder().AddCurrentUserHandler();
 
 // Configure the database

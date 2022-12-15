@@ -35,7 +35,6 @@ public class TokenManager<TUser> : IDisposable where TUser : class
     /// <summary>
     /// Constructs a new instance of <see cref="TokenManager{TUser}"/>.
     /// </summary>
- //   /// <param name="store">The persistence store the manager will operate over.</param>
     /// <param name="userManager">An instance of <see cref="UserManager"/> used to retrieve users from and persist users.</param>
     /// <param name="errors">The <see cref="IdentityErrorDescriber"/> used to provider error messages.</param>
     /// <param name="logger">The logger used to log messages, warnings and errors.</param>
@@ -59,11 +58,13 @@ public class TokenManager<TUser> : IDisposable where TUser : class
         _bearerOptions = bearerOptions.Value;
     }
 
+    /*
     /// <summary>
     /// Gets the persistence store this instance operates over.
     /// </summary>
     /// <value>The persistence store this instance operates over.</value>
-    //protected ITokenStore<IdentityToken> Store { get; private set; }
+    protected ITokenStore<IdentityToken> Store { get; private set; }
+    */
 
     /// <summary>
     /// Gets the <see cref="ILogger"/> used to log messages from the manager.
