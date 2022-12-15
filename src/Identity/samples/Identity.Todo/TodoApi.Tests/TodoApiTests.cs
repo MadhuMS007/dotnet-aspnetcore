@@ -194,14 +194,14 @@ public class TodoApiTests
         await using var application = new TodoApplication();
         await using var db = application.CreateTodoDbContext();
         await application.CreateUserAsync(userId);
-        await application.CreateUserAsync(adminUserId);
+        await application.CreateUserAsync(adminUserId, isAdmin: true);
 
         db.Todos.Add(new Todo { Title = "I want to do this thing tomorrow", OwnerId = userId });
 
         await db.SaveChangesAsync();
 
         var client = await application.CreateClientAsync(userId);
-        var adminClient = await application.CreateClientAsync(adminUserId, isAdmin: true);
+        var adminClient = await application.CreateClientAsync(adminUserId);
 
         var todos = await client.GetFromJsonAsync<List<TodoItem>>("/todos");
         Assert.NotNull(todos);
@@ -274,14 +274,14 @@ public class TodoApiTests
         await using var application = new TodoApplication();
         await using var db = application.CreateTodoDbContext();
         await application.CreateUserAsync(userId);
-        await application.CreateUserAsync(adminUserId);
+        await application.CreateUserAsync(adminUserId, isAdmin: true);
 
         db.Todos.Add(new Todo { Title = "I want to do this thing tomorrow", OwnerId = userId });
 
         await db.SaveChangesAsync();
 
         var client = await application.CreateClientAsync(userId);
-        var adminClient = await application.CreateClientAsync(adminUserId, isAdmin: true);
+        var adminClient = await application.CreateClientAsync(adminUserId);
 
         var todos = await client.GetFromJsonAsync<List<TodoItem>>("/todos");
         Assert.NotNull(todos);

@@ -3,6 +3,7 @@
 
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -26,18 +27,22 @@ internal class TodoApplication : WebApplicationFactory<Program>
         return db;
     }
 
-    public async Task CreateUserAsync(string username, string? password = null)
+    public async Task CreateUserAsync(string username, string? password = null, bool isAdmin = false)
     {
         using var scope = Services.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<TodoUser>>();
         var newUser = new TodoUser { UserName = username };
         var result = await userManager.CreateAsync(newUser, password ?? Guid.NewGuid().ToString());
+        if (isAdmin)
+        {
+            await userManager.AddClaimAsync(newUser, new Claim(ClaimTypes.Role, "admin"));
+        }
         Assert.True(result.Succeeded);
     }
 
-    public async Task<HttpClient> CreateClientAsync(string id, bool isAdmin = false)
+    public async Task<HttpClient> CreateClientAsync(string id)
     {
-        var token = await CreateTokenAsync(id, isAdmin);
+        var token = await CreateTokenAsync(id);
         return CreateDefaultClient(new AuthHandler(req =>
         {
             req.Headers.Authorization = new AuthenticationHeaderValue(JwtBearerDefaults.AuthenticationScheme, token);
@@ -87,15 +92,15 @@ internal class TodoApplication : WebApplicationFactory<Program>
         return base.CreateHost(builder);
     }
 
-    private async Task<string> CreateTokenAsync(string id, bool isAdmin = false)
+    private async Task<string> CreateTokenAsync(string userName)
     {
         // Read the user JWTs configuration for testing so unit tests can generate
         // JWT tokens.
         using var scope = Services.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<TodoUser>>();
         var tokenService = scope.ServiceProvider.GetRequiredService<TokenManager<TodoUser>>();
-        var newUser = new TodoUser { UserName = id };
-        // TODO: isAdmin is broken
-        return await tokenService.GetBearerAsync(newUser);
+        var user = await userManager.FindByNameAsync(userName);
+        return await tokenService.GetBearerAsync(user);
     }
 
     protected override void Dispose(bool disposing)
