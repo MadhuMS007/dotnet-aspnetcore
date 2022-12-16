@@ -116,18 +116,14 @@ public class TokenManager<TUser> : IDisposable where TUser : class
 
         var identity = await ClaimsFactory.CreateIdentityAsync(user);
 
-        var handler = new JwtSecurityTokenHandler();
-
-        var jwtToken = handler.CreateJwtSecurityToken(
-            _bearerOptions.Issuer,
-            audience: null,
+        var jwtBuilder = new JwtBuilder(
+            _bearerOptions.Issuer!,
+            _bearerOptions.SigningCredentials!,
+            audience: string.Empty,
             identity,
-            notBefore: DateTime.UtcNow,
-            expires: DateTime.UtcNow.AddMinutes(30),
-            issuedAt: DateTime.UtcNow,
-            _bearerOptions.SigningCredentials);
-
-        return handler.WriteToken(jwtToken);
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow.AddMinutes(30));
+        return jwtBuilder.CreateJwt();
     }
 
     /*

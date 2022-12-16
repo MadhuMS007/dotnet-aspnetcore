@@ -37,6 +37,21 @@ Microsoft.AspNetCore.Identity.ITokenStore<TToken>.CreateAsync(TToken! token, Sys
 Microsoft.AspNetCore.Identity.ITokenStore<TToken>.DeleteAsync(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.IdentityResult!>!
 Microsoft.AspNetCore.Identity.ITokenStore<TToken>.FindAsync(string! purpose, string! value, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<TToken?>!
 Microsoft.AspNetCore.Identity.ITokenStore<TToken>.UpdateAsync(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.IdentityResult!>!
+Microsoft.AspNetCore.Identity.JwtBuilder
+Microsoft.AspNetCore.Identity.JwtBuilder.Audience.get -> string!
+Microsoft.AspNetCore.Identity.JwtBuilder.Audience.set -> void
+Microsoft.AspNetCore.Identity.JwtBuilder.CreateJwt() -> string!
+Microsoft.AspNetCore.Identity.JwtBuilder.Expires.get -> System.DateTimeOffset
+Microsoft.AspNetCore.Identity.JwtBuilder.Expires.set -> void
+Microsoft.AspNetCore.Identity.JwtBuilder.Identity.get -> System.Security.Claims.ClaimsIdentity!
+Microsoft.AspNetCore.Identity.JwtBuilder.Identity.set -> void
+Microsoft.AspNetCore.Identity.JwtBuilder.Issuer.get -> string!
+Microsoft.AspNetCore.Identity.JwtBuilder.Issuer.set -> void
+Microsoft.AspNetCore.Identity.JwtBuilder.JwtBuilder(string! issuer, Microsoft.IdentityModel.Tokens.SigningCredentials! signingCredentials, string! audience, System.Security.Claims.ClaimsIdentity! identity, System.DateTimeOffset notBefore, System.DateTimeOffset expires) -> void
+Microsoft.AspNetCore.Identity.JwtBuilder.NotBefore.get -> System.DateTimeOffset
+Microsoft.AspNetCore.Identity.JwtBuilder.NotBefore.set -> void
+Microsoft.AspNetCore.Identity.JwtBuilder.SigningCredentials.get -> Microsoft.IdentityModel.Tokens.SigningCredentials!
+Microsoft.AspNetCore.Identity.JwtBuilder.SigningCredentials.set -> void
 Microsoft.AspNetCore.Identity.TokenManager<TUser>
 Microsoft.AspNetCore.Identity.TokenManager<TUser>.ClaimsFactory.get -> Microsoft.AspNetCore.Identity.IBearerUserClaimsFactory<TUser!>!
 Microsoft.AspNetCore.Identity.TokenManager<TUser>.ClaimsFactory.set -> void
