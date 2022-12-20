@@ -26,7 +26,7 @@ public interface IBearerPayloadFactory<TUser> where TUser : class
 /// 
 /// </summary>
 /// <typeparam name="TUser"></typeparam>
-public class BearerPayloadFactory<TUser> : IBearerPayloadFactory<TUser> where TUser : class
+internal sealed class BearerPayloadFactory<TUser> : IBearerPayloadFactory<TUser> where TUser : class
 {
     private readonly IdentityBearerOptions _bearerOptions;
     private UserManager<TUser> UserManager { get; set; }

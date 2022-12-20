@@ -23,8 +23,6 @@ public class IdentityBearerOptionsTest
 
         var services = new ServiceCollection();
         services.AddAuthentication();
-        services.AddDefaultIdentityJwt<IdentityUser>(_ => { });
-
+        services.AddDefaultIdentityBearer<IdentityUser>(_ => { });
     }
-
 }

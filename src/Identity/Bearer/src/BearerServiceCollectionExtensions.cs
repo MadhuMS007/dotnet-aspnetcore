@@ -1,13 +1,10 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.IdentityModel.Tokens;
 
 namespace Microsoft.AspNetCore.Identity;
 
@@ -54,9 +51,9 @@ public static class BearerServiceCollectionExtensions
         Action<IdentityOptions> setupAction)
         where TUser : class
     {
-        services.AddAuthentication("Identity.Bearer")
+        services.AddAuthentication(IdentityConstants.BearerScheme)
             .AddCookie(IdentityConstants.BearerCookieScheme)
-            .AddScheme<BearerSchemeOptions, IdentityBearerHandler>("Identity.Bearer", o => { });
+            .AddScheme<BearerSchemeOptions, IdentityBearerHandler>(IdentityConstants.BearerScheme, o => { });
 
         services.AddOptions<IdentityBearerOptions>().Configure<IAuthenticationConfigurationProvider>((o, cp) =>
         {
