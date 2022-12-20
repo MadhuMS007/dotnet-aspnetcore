@@ -66,28 +66,28 @@ public static class BearerServiceCollectionExtensions
             // An example of what the expected schema looks like
             // "Authentication": {
             //     "Schemes": {
-            //       "Bearer": {
-            //         "ValidAudiences": [ ],
-            //         "ValidIssuer": "",
+            //       "Identity.Bearer": {
+            //         "Audience": "",
+            //         "Issuer": "",
             //         "SigningKeys": [ { "Issuer": .., "Value": base64Key, "Length": 32 } ]
             //       }
             //     }
             //   }
 
-            var section = bearerSection.GetSection("SigningKeys:0");
+//            var section = bearerSection.GetSection("SigningKeys:0");
 
-            o.Issuer = bearerSection["ValidIssuer"] ?? throw new InvalidOperationException("Issuer is not specified");
-            var signingKeyBase64 = section["Value"] ?? throw new InvalidOperationException("Signing key is not specified");
+            o.Issuer = bearerSection["Issuer"] ?? throw new InvalidOperationException("Issuer is not specified");
+//            var signingKeyBase64 = section["Value"] ?? throw new InvalidOperationException("Signing key is not specified");
 
-            var signingKeyBytes = Convert.FromBase64String(signingKeyBase64);
+            //var signingKeyBytes = Convert.FromBase64String(signingKeyBase64);
 
-            o.SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(signingKeyBytes),
-                    SecurityAlgorithms.HmacSha256Signature);
+            //o.SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(signingKeyBytes),
+            //        SecurityAlgorithms.HmacSha256Signature);
 
-            o.Audiences = (bearerSection.GetSection("ValidAudiences").GetChildren()
+            o.Audiences = bearerSection.GetSection("Audiences").GetChildren()
                         .Where(s => !string.IsNullOrEmpty(s.Value))
-                        .Select(s => new Claim(JwtRegisteredClaimNames.Aud, s.Value!))
-                        .ToList());
+                        .Select(s => s.Value!)
+                        .ToList();
         });
 
         services.TryAddScoped<TokenManager<TUser>>();

@@ -94,7 +94,7 @@ public class BearerPayloadFactory<TUser> : IBearerPayloadFactory<TUser> where TU
         payload[JwtRegisteredClaimNames.Jti] = jti;
 
         // REVIEW: why more than one aud?
-        payload["aud"] = _bearerOptions.Audiences.Last().Value;
+        payload["aud"] = _bearerOptions.Audiences.LastOrDefault()!;
         return payload;
     }
 }

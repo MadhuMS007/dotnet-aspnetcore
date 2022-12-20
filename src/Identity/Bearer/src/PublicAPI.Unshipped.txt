@@ -9,7 +9,7 @@ Microsoft.AspNetCore.Identity.BearerServiceCollectionExtensions
 Microsoft.AspNetCore.Identity.IBearerPayloadFactory<TUser>
 Microsoft.AspNetCore.Identity.IBearerPayloadFactory<TUser>.CreatePayloadAsync(TUser! user) -> System.Threading.Tasks.Task<System.Collections.Generic.IDictionary<string!, string!>!>!
 Microsoft.AspNetCore.Identity.IdentityBearerOptions
-Microsoft.AspNetCore.Identity.IdentityBearerOptions.Audiences.get -> System.Collections.Generic.IList<System.Security.Claims.Claim!>!
+Microsoft.AspNetCore.Identity.IdentityBearerOptions.Audiences.get -> System.Collections.Generic.IList<string!>!
 Microsoft.AspNetCore.Identity.IdentityBearerOptions.Audiences.set -> void
 Microsoft.AspNetCore.Identity.IdentityBearerOptions.IdentityBearerOptions() -> void
 Microsoft.AspNetCore.Identity.IdentityBearerOptions.Issuer.get -> string?

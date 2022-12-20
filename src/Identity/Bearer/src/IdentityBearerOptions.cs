@@ -38,5 +38,5 @@ public class IdentityBearerOptions : AuthenticationSchemeOptions
     /// <summary>
     /// The list of valid audiences
     /// </summary>
-    public IList<Claim> Audiences { get; set; } = new List<Claim>();
+    public IList<string> Audiences { get; set; } = new List<string>();
 }
