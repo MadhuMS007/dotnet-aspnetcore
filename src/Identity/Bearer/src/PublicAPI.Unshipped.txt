@@ -1,14 +1,13 @@
 #nullable enable
+Microsoft.AspNetCore.Identity.BearerPayloadFactory<TUser>
+Microsoft.AspNetCore.Identity.BearerPayloadFactory<TUser>.CreatePayloadAsync(TUser! user) -> System.Threading.Tasks.Task<System.Collections.Generic.IDictionary<string!, string!>!>!
 Microsoft.AspNetCore.Identity.BearerSchemeOptions
 Microsoft.AspNetCore.Identity.BearerSchemeOptions.BearerSchemeOptions() -> void
 Microsoft.AspNetCore.Identity.BearerSchemeOptions.TokenValidationParameters.get -> Microsoft.IdentityModel.Tokens.TokenValidationParameters!
 Microsoft.AspNetCore.Identity.BearerSchemeOptions.TokenValidationParameters.set -> void
 Microsoft.AspNetCore.Identity.BearerServiceCollectionExtensions
-Microsoft.AspNetCore.Identity.BearerUserClaimsFactory<TUser>
-Microsoft.AspNetCore.Identity.BearerUserClaimsFactory<TUser>.BearerUserClaimsFactory(Microsoft.AspNetCore.Identity.UserManager<TUser!>! userManager, Microsoft.Extensions.Options.IOptions<Microsoft.AspNetCore.Identity.IdentityBearerOptions!>! bearerOptions) -> void
-Microsoft.AspNetCore.Identity.BearerUserClaimsFactory<TUser>.CreateIdentityAsync(TUser! user) -> System.Threading.Tasks.Task<System.Security.Claims.ClaimsIdentity!>!
-Microsoft.AspNetCore.Identity.IBearerUserClaimsFactory<TUser>
-Microsoft.AspNetCore.Identity.IBearerUserClaimsFactory<TUser>.CreateIdentityAsync(TUser! user) -> System.Threading.Tasks.Task<System.Security.Claims.ClaimsIdentity!>!
+Microsoft.AspNetCore.Identity.IBearerPayloadFactory<TUser>
+Microsoft.AspNetCore.Identity.IBearerPayloadFactory<TUser>.CreatePayloadAsync(TUser! user) -> System.Threading.Tasks.Task<System.Collections.Generic.IDictionary<string!, string!>!>!
 Microsoft.AspNetCore.Identity.IdentityBearerOptions
 Microsoft.AspNetCore.Identity.IdentityBearerOptions.Audiences.get -> System.Collections.Generic.IList<System.Security.Claims.Claim!>!
 Microsoft.AspNetCore.Identity.IdentityBearerOptions.Audiences.set -> void

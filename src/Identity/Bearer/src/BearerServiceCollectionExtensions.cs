@@ -5,7 +5,6 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.IdentityModel.Tokens;
@@ -56,10 +55,8 @@ public static class BearerServiceCollectionExtensions
         where TUser : class
     {
         services.AddAuthentication("Identity.Bearer")
-        //    .AddCookie(IdentityConstants.BearerCookieScheme)
-        // Forward to the jwt for now
-            .AddScheme<BearerSchemeOptions, IdentityBearerHandler>("Identity.Bearer", o => o.ForwardDefault = JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer();
+            .AddCookie(IdentityConstants.BearerCookieScheme)
+            .AddScheme<BearerSchemeOptions, IdentityBearerHandler>("Identity.Bearer", o => { });
 
         services.AddOptions<IdentityBearerOptions>().Configure<IAuthenticationConfigurationProvider>((o, cp) =>
         {
@@ -94,7 +91,7 @@ public static class BearerServiceCollectionExtensions
         });
 
         services.TryAddScoped<TokenManager<TUser>>();
-        services.TryAddScoped<IBearerUserClaimsFactory<TUser>, BearerUserClaimsFactory<TUser>>();
+        services.TryAddScoped<IBearerPayloadFactory<TUser>, BearerPayloadFactory<TUser>>();
         return services.AddIdentityCore<TUser>(setupAction);
     }
 }

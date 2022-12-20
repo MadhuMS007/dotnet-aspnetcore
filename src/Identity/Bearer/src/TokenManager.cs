@@ -1,7 +1,6 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.IdentityModel.Tokens.Jwt;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -47,7 +46,7 @@ public class TokenManager<TUser> : IDisposable where TUser : class
         UserManager<TUser> userManager,
         IdentityErrorDescriber errors,
         ILogger<TokenManager<IdentityToken>> logger,
-        IBearerUserClaimsFactory<TUser> claimsFactory,
+        IBearerPayloadFactory<TUser> claimsFactory,
         IOptions<IdentityBearerOptions> bearerOptions)
     {
         //Store = store ?? throw new ArgumentNullException(nameof(store));
@@ -82,7 +81,7 @@ public class TokenManager<TUser> : IDisposable where TUser : class
     /// <summary>
     /// The <see cref="IUserClaimsPrincipalFactory{TUser}"/> used.
     /// </summary>
-    public IBearerUserClaimsFactory<TUser> ClaimsFactory { get; set; }
+    public IBearerPayloadFactory<TUser> ClaimsFactory { get; set; }
 
     /// <summary>
     /// Gets the <see cref="IdentityErrorDescriber"/> used to provider error messages.
@@ -114,13 +113,13 @@ public class TokenManager<TUser> : IDisposable where TUser : class
             return string.Empty;
         }
 
-        var identity = await ClaimsFactory.CreateIdentityAsync(user);
+        var payload = await ClaimsFactory.CreatePayloadAsync(user);
 
         var jwtBuilder = new JwtBuilder(
             _bearerOptions.Issuer!,
             _bearerOptions.SigningCredentials!,
             audience: string.Empty,
-            identity,
+            payload,
             DateTimeOffset.UtcNow,
             DateTimeOffset.UtcNow.AddMinutes(30));
         return jwtBuilder.CreateJwt();

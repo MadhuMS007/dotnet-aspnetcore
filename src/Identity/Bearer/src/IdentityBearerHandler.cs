@@ -7,7 +7,6 @@ using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 
 namespace Microsoft.AspNetCore.Identity;
 
@@ -16,7 +15,6 @@ namespace Microsoft.AspNetCore.Identity;
 /// </summary>
 internal sealed class IdentityBearerHandler : AuthenticationHandler<BearerSchemeOptions>
 {
-    private readonly JwtSecurityTokenHandler _defaultHandler = new JwtSecurityTokenHandler();
     internal static AuthenticateResult ValidatorNotFound = AuthenticateResult.Fail("No SecurityTokenValidator available for token.");
 
     public IdentityBearerHandler(IOptionsMonitor<BearerSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder, ISystemClock clock) : base(options, logger, encoder, clock)
@@ -77,71 +75,36 @@ internal sealed class IdentityBearerHandler : AuthenticationHandler<BearerScheme
 
         // Otherwise check for Bearer token
         string? token = null;
-        try
+        var authorization = Request.Headers.Authorization.ToString();
+
+        // If no authorization header found, nothing to process further
+        if (string.IsNullOrEmpty(authorization))
         {
-            var authorization = Request.Headers.Authorization.ToString();
-
-            // If no authorization header found, nothing to process further
-            if (string.IsNullOrEmpty(authorization))
-            {
-                return AuthenticateResult.NoResult();
-            }
-
-            if (authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
-            {
-                token = authorization.Substring("Bearer ".Length).Trim();
-            }
-
-            // If no token found, no further work possible
-            if (string.IsNullOrEmpty(token))
-            {
-                return AuthenticateResult.NoResult();
-            }
-
-            var validationParameters = Options.TokenValidationParameters.Clone();
-
-            //var newKeyMaterial = System.Security.Cryptography.RandomNumberGenerator.GetBytes(32);
-
-            //validationParameters.IssuerSigningKey = new SymmetricSecurityKey(ReadKeyAsBytes(_jwtSettings.TokenSecretKey))
-
-            //if (_configuration != null)
-            //{
-            //    var issuers = new[] { _configuration.Issuer };
-            //    validationParameters.ValidIssuers = validationParameters.ValidIssuers?.Concat(issuers) ?? issuers;
-
-            //    validationParameters.IssuerSigningKeys = validationParameters.IssuerSigningKeys?.Concat(_configuration.SigningKeys)
-            //        ?? _configuration.SigningKeys;
-            //}
-
-            SecurityToken? validatedToken;
-            var validator = _defaultHandler;
-            if (validator.CanReadToken(token))
-            {
-                ClaimsPrincipal principal;
-                try
-                {
-                    principal = validator.ValidateToken(token, validationParameters, out validatedToken);
-
-                    //if (Options.SaveToken)
-                    //{
-                    //    tokenValidatedContext.Properties.StoreTokens(new[]
-                    //    {
-                    //            new AuthenticationToken { Name = "access_token", Value = token }
-                    //        });
-                    //}
-
-                    return AuthenticateResult.Success(new AuthenticationTicket(principal, Scheme.Name));
-                }
-                catch (Exception ex)
-                {
-                    return AuthenticateResult.Fail(ex);
-                }
-
-            }
-            return ValidatorNotFound;
+            return AuthenticateResult.NoResult();
         }
-        finally
+
+        if (authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
         {
+            token = authorization.Substring("Bearer ".Length).Trim();
         }
+
+        // If no token found, no further work possible
+        if (string.IsNullOrEmpty(token))
+        {
+            return AuthenticateResult.NoResult();
+        }
+
+        // The token should be the raw payload right now
+        var payload = JwtBuilder.ReadJwt(token);
+        if (payload != null)
+        {
+            var claimsIdentity = new ClaimsIdentity(Scheme.Name);
+            foreach (var key in payload.Keys)
+            {
+                claimsIdentity.AddClaim(new Claim(key, payload[key]));
+            }
+            return AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(claimsIdentity), Scheme.Name));
+        }
+        return AuthenticateResult.NoResult();
     }
 }
