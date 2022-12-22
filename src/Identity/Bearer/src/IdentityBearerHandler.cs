@@ -15,9 +15,11 @@ namespace Microsoft.AspNetCore.Identity;
 internal sealed class IdentityBearerHandler : AuthenticationHandler<BearerSchemeOptions>
 {
     internal static AuthenticateResult ValidatorNotFound = AuthenticateResult.Fail("No SecurityTokenValidator available for token.");
+    private readonly IdentityBearerOptions _options;
 
-    public IdentityBearerHandler(IOptionsMonitor<BearerSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder, ISystemClock clock) : base(options, logger, encoder, clock)
+    public IdentityBearerHandler(IOptionsMonitor<BearerSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder, ISystemClock clock, IOptions<IdentityBearerOptions> bearerOptions) : base(options, logger, encoder, clock)
     {
+        _options = bearerOptions.Value;
     }
 
     //public static byte[] CreateSigningKeyMaterial(string userSecretsId, string scheme, string issuer, int signingKeyLength = 32, bool reset = false)
@@ -94,7 +96,7 @@ internal sealed class IdentityBearerHandler : AuthenticationHandler<BearerScheme
         }
 
         // The token should be the raw payload right now
-        var payload = JwtBuilder.ReadJwt(token);
+        var payload = JwtBuilder.ReadJwt(token, JWSAlg.HS256, _options.SigningCredentials);
         if (payload != null)
         {
             var claimsIdentity = new ClaimsIdentity(Scheme.Name);

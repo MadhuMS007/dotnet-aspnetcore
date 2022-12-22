@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.IdentityModel.Tokens;
 
 namespace Microsoft.AspNetCore.Identity;
 
@@ -27,7 +26,7 @@ public class IdentityBearerOptions : AuthenticationSchemeOptions
     /// <summary>
     /// The <see cref="SigningCredentials"/> to use.
     /// </summary>
-    public SigningCredentials? SigningCredentials { get; set; }
+    public JsonWebKey? SigningCredentials { get; set; }
 
     /// <summary>
     /// The list of valid audiences

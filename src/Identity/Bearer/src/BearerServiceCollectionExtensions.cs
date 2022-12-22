@@ -5,6 +5,7 @@ using System.Linq;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Configuration;
 
 namespace Microsoft.AspNetCore.Identity;
 
@@ -47,6 +48,7 @@ public static class BearerServiceCollectionExtensions
     /// <param name="services"></param>
     /// <param name="setupAction"></param>
     /// <returns></returns>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
     public static IdentityBuilder AddDefaultIdentityBearer<TUser>(this IServiceCollection services,
         Action<IdentityOptions> setupAction)
         where TUser : class
@@ -74,9 +76,13 @@ public static class BearerServiceCollectionExtensions
 //            var section = bearerSection.GetSection("SigningKeys:0");
 
             o.Issuer = bearerSection["Issuer"] ?? throw new InvalidOperationException("Issuer is not specified");
-//            var signingKeyBase64 = section["Value"] ?? throw new InvalidOperationException("Signing key is not specified");
+            //            var signingKeyBase64 = section["Value"] ?? throw new InvalidOperationException("Signing key is not specified");
 
             //var signingKeyBytes = Convert.FromBase64String(signingKeyBase64);
+
+            var jwkSection = bearerSection.GetRequiredSection("SigningCredentials");
+
+            o.SigningCredentials = jwkSection.Get<JsonWebKey>();
 
             //o.SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(signingKeyBytes),
             //        SecurityAlgorithms.HmacSha256Signature);

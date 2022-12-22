@@ -116,6 +116,7 @@ public class TokenManager<TUser> : IDisposable where TUser : class
         var payload = await ClaimsFactory.CreatePayloadAsync(user);
 
         var jwtBuilder = new JwtBuilder(
+            JWSAlg.HS256,
             _bearerOptions.Issuer!,
             _bearerOptions.SigningCredentials!,
             audience: string.Empty,
