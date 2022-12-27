@@ -120,10 +120,11 @@ public class TokenManager<TUser> : IDisposable where TUser : class
             _bearerOptions.Issuer!,
             _bearerOptions.SigningCredentials!,
             audience: string.Empty,
+            subject: string.Empty, // TODO: combine this with CreatePayload?
             payload,
             DateTimeOffset.UtcNow,
             DateTimeOffset.UtcNow.AddMinutes(30));
-        return jwtBuilder.CreateJwt();
+        return await jwtBuilder.CreateJwtAsync();
     }
 
     /*

@@ -1,8 +1,10 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Security.Cryptography;
 using System.Text.Json;
 using Microsoft.IdentityModel.Tokens;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Microsoft.AspNetCore.Identity;
 
@@ -79,8 +81,8 @@ public static class JWSAlg
 
 // FormatOptions specifies Algorithm and the signing key so BCL can sign/validate
 // jwtData contains both the header dictionary and the payload string
-// CreateJwt => BclApi.CreateJwt(formatOptions, jwtData);
-// ReadJwt => jwtData = BclApi.ReadJwt(formatOptions) // null or throw on failure
+// CreateJwtAsync => BclApi.CreateJwtAsync(formatOptions, jwtData);
+// ReadJwtAsync => jwtData = BclApi.ReadJwtAsync(formatOptions) // null or throw on failure
 
 // RS256 JWT
 // new JwtBuilder(JwtAlgorithm.RS256)
@@ -227,69 +229,121 @@ internal sealed class Jwt
 
 }
 
-internal static class BclJwt
+internal interface IJwtAlgorithm
 {
-    //public static string Create(string alg, Jwt data)
-    //{
-    //    // BCL looks up the alg, makes sure the appropriate key in header
-    //    // computes the signature using the key 
-    //    return "header.payload.signature";
-    //}
+    /// <summary>
+    /// Ensures the necessary data for this Jwt Algorithm is contained in the key (if provided).
+    /// </summary>
+    /// <param name="key"></param>
+    /// <returns></returns>
+    public abstract Task<bool> ValidateKeyAsync(JsonWebKey? key);
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
-    public static string CreateJwt(Jwt jwt, string algorithm, JsonWebKey? key)
+    /// <summary>
+    /// Create a Jwt using the specified key for this algorithm.
+    /// </summary>
+    /// <param name="jwt"></param>
+    /// <param name="key"></param>
+    /// <returns></returns>
+    public abstract Task<string> CreateJwtAsync(Jwt jwt, JsonWebKey? key);
+
+    /// <summary>
+    /// Attempts to decode the jwtToken using the specified key for this algorithm.
+    /// </summary>
+    /// <param name="jwtToken">The jwtToken string.</param>
+    /// <param name="key">The JWK used for signing.</param>
+    /// <returns>The JWT data.</returns>
+    public abstract Task<Jwt?> ReadJwtAsync(string jwtToken, JsonWebKey? key);
+}
+
+internal class JwtAlgNone : IJwtAlgorithm
+{
+    public Task<string> CreateJwtAsync(Jwt jwt, JsonWebKey? key)
+        // Just send the payload as the jwt
+        => Task.FromResult(jwt.Payload ?? string.Empty);
+
+    public Task<Jwt?> ReadJwtAsync(string jwtToken, JsonWebKey? key)
     {
-        jwt.Header["alg"] = algorithm;
-        jwt.Header["typ"] = "JWT";
-        if (algorithm == JWSAlg.None)
-        {
-            // Just send the payload as the jwt
-            return jwt.Payload ?? string.Empty;
-        }
-        else // TEMPORARY: Just encode the header and payload and key as the format
-        {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
+        var data = new Jwt();
+        data.Header["alg"] = JWSAlg.None;
+        data.Header["typ"] = "JWT";
+        data.Payload = jwtToken;
+        return Task.FromResult<Jwt?>(data);
+    }
 
-            return $"{Base64UrlEncoder.Encode(JsonSerializer.Serialize(jwt.Header))}.{Base64UrlEncoder.Encode(jwt.Payload)}.{key.Kid}";
-        }
-        throw new InvalidOperationException($"Unsupported alg: {algorithm}.");
+    public Task<bool> ValidateKeyAsync(JsonWebKey? key)
+        => Task.FromResult(true);
+}
+
+internal class JwtAlgHS256 : IJwtAlgorithm
+{
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
+    public Task<string> CreateJwtAsync(Jwt jwt, JsonWebKey? key)
+    {
+        jwt.Header["alg"] = JWSAlg.HS256;
+        jwt.Header["typ"] = "JWT";
+        // TODO: This should actually do HS256 using the key to sign, instead of just sending the key as the signature
+        return Task.FromResult($"{Base64UrlEncoder.Encode(JsonSerializer.Serialize(jwt.Header))}.{Base64UrlEncoder.Encode(jwt.Payload)}.{key!.Kid}");
     }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
-    public static Jwt? ReadJwt(string jwt, string algorithm, JsonWebKey? key)
+    public Task<Jwt?> ReadJwtAsync(string jwtToken, JsonWebKey? key)
     {
+        if (key == null)
+        {
+            return Task.FromResult<Jwt?>(null);
+        }
+
+        var sections = jwtToken.Split('.');
+        if (sections.Length != 3)
+        {
+            // Expected 3 sections
+            return Task.FromResult<Jwt?>(null);
+        }
+        var header = JsonSerializer.Deserialize<IDictionary<string, string>>(Base64UrlEncoder.Decode(sections[0]));
+        // TODO: Actually do HS256 signing
+        if (header?["alg"] != "HS256" || header?["typ"] != "JWT" || sections[2] != key.Kid)
+        {
+            // Expected HS256 alg and key to be the last section
+            return Task.FromResult<Jwt?>(null);
+        }
         var data = new Jwt();
-        if (algorithm == JWSAlg.None)
-        {
-            data.Payload = jwt;
-            return data;
-        }
-        else
-        {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
+        data.Header = header;
+        data.Payload = Base64UrlEncoder.Decode(sections[1]);
+        return Task.FromResult<Jwt?>(data);
+    }
 
-            var sections = jwt.Split('.');
-            if (sections.Length != 3)
-            {
-                return null; // Expected 3 sections
-            }
-            var header = JsonSerializer.Deserialize<IDictionary<string, string>>(Base64UrlEncoder.Decode(sections[0]));
-            if (header?["alg"] != algorithm || sections[2] != key.Kid)
-            {
-                return null; // Expected 3 sections and key to be the last section
-            }
-            data.Header = header;
-            data.Payload = Base64UrlEncoder.Decode(sections[1]);
-            return data;
+    public Task<bool> ValidateKeyAsync(JsonWebKey? key)
+        => Task.FromResult(key != null);
+}
 
+internal static class BclJwt
+{
+    public static IDictionary<string, IJwtAlgorithm> Algorithms { get; } = new Dictionary<string, IJwtAlgorithm>();
+
+    static BclJwt()
+    {
+        Algorithms[JWSAlg.None] = new JwtAlgNone();
+        Algorithms[JWSAlg.HS256] = new JwtAlgHS256();
+    }
+
+    public static Task<string> CreateJwtAsync(Jwt jwt, string algorithm, JsonWebKey? key)
+    {
+        if (!Algorithms.ContainsKey(algorithm))
+        {
+            throw new InvalidOperationException($"Unknown algorithm: {algorithm}.");
         }
-        throw new InvalidOperationException($"Unsupported alg: {algorithm}.");
+
+        return Algorithms[algorithm].CreateJwtAsync(jwt, key);
+    }
+
+    public static Task<Jwt?> ReadJwtAsync(string jwt, string algorithm, JsonWebKey? key)
+    {
+        if (!Algorithms.ContainsKey(algorithm))
+        {
+            throw new InvalidOperationException($"Unknown algorithm: {algorithm}.");
+        }
+
+        return Algorithms[algorithm].ReadJwtAsync(jwt, key);
     }
 }
 
@@ -305,15 +359,17 @@ public class JwtBuilder
     /// <param name="issuer"></param>
     /// <param name="signingKey"></param>
     /// <param name="audience"></param>
+    /// <param name="subject"></param>
     /// <param name="payload"></param>
     /// <param name="notBefore"></param>
     /// <param name="expires"></param>
-    public JwtBuilder(string algorithm, string issuer, JsonWebKey signingKey, string audience, IDictionary<string, string> payload, DateTimeOffset notBefore, DateTimeOffset expires)
+    public JwtBuilder(string algorithm, string issuer, JsonWebKey signingKey, string audience, string subject, IDictionary<string, string> payload, DateTimeOffset notBefore, DateTimeOffset expires)
     {
         Algorithm = algorithm;
         Issuer = issuer;
         SigningKey = signingKey;
         Audience = audience;
+        Subject = subject;
         Payload = payload;
         NotBefore = notBefore;
         Expires = expires;
@@ -325,46 +381,74 @@ public class JwtBuilder
     public string Algorithm { get; set; }
 
     /// <summary>
-    /// The Issuer for the token
+    /// The Issuer for the JWT.
     /// </summary>
     public string Issuer { get; set; }
 
     /// <summary>
-    /// The signing key to use
+    /// The signing key to use.
     /// </summary>
     public JsonWebKey SigningKey { get; set; }
 
     /// <summary>
-    /// 
+    /// The intended audience for the JWT.
     /// </summary>
     public string Audience { get; set; }
 
     /// <summary>
-    /// 
+    /// The claims payload for the JWT.
     /// </summary>
     public IDictionary<string, string> Payload{ get; set; }
 
     /// <summary>
-    /// 
+    /// Specifies when the JWT must not be accepted before.
     /// </summary>
     public DateTimeOffset NotBefore { get; set; }
 
     /// <summary>
-    /// 
+    /// Specifies when the JWT expires.
     /// </summary>
     public DateTimeOffset Expires { get; set; }
+
+    /// <summary>
+    /// The time this JWT was issued, if null, DateTimeOffset.Now will be used.
+    /// </summary>
+    public DateTimeOffset? IssuedAt { get; set; }
+
+    /// <summary>
+    /// The subject(user) of the JWT.
+    /// </summary>
+    public string Subject { get; set; }
+
+    /// <summary>
+    /// The JWT ID, a unique identifier which can be used to prevent replay.
+    /// </summary>
+    public string? Jti { get; set; }
 
     /// <summary>
     /// 
     /// </summary>
     /// <returns></returns>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
-    public string CreateJwt()
+    public Task<string> CreateJwtAsync()
     {
-        var jwtData = new Jwt();
-        jwtData.Payload = JsonSerializer.Serialize(Payload);
+        // Generate JTI if null
+        if (Jti == null)
+        {
+            Jti = Guid.NewGuid().ToString();
+        }
 
-        return BclJwt.CreateJwt(jwtData, Algorithm, SigningKey);
+        if (IssuedAt == null)
+        {
+            IssuedAt = DateTimeOffset.Now;
+        }
+
+        var jwtData = new Jwt
+        {
+            Payload = JsonSerializer.Serialize(Payload)
+        };
+
+        return BclJwt.CreateJwtAsync(jwtData, Algorithm, SigningKey);
 
         //var handler = new JwtSecurityTokenHandler();
 
@@ -389,9 +473,9 @@ public class JwtBuilder
     /// <param name="signingKey"></param>
     /// <returns></returns>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
-    public static IDictionary<string, string>? ReadJwt(string jwtToken, string algorithm, JsonWebKey? signingKey)
+    public static async Task<IDictionary<string, string>?> ReadJwtAsync(string jwtToken, string algorithm, JsonWebKey? signingKey)
     {
-        var data = BclJwt.ReadJwt(jwtToken, algorithm, signingKey);
+        var data = await BclJwt.ReadJwtAsync(jwtToken, algorithm, signingKey);
         return data?.Payload != null
             ? JsonSerializer.Deserialize<IDictionary<string, string>>(data.Payload)
             : null;
