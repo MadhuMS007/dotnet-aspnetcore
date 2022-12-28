@@ -1,10 +1,10 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.Security.Cryptography;
+using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Microsoft.IdentityModel.Tokens;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Microsoft.AspNetCore.Identity;
 
@@ -186,13 +186,82 @@ public sealed class JsonWebKey
     //public string Y { get; set; }
 }
 
+internal sealed class JwtHeader : IDictionary<string, string>
+{
+    public string this[string key] { get => Headers[key]; set => Headers[key] = value; }
+
+    /// <summary>
+    /// The actual headers.
+    /// </summary>
+    public IDictionary<string, string> Headers { get; } = new Dictionary<string, string>();
+
+    /// <summary>
+    /// Maps to the Headers["alg"] representing the Algorithm for the JWT.
+    /// </summary>
+    public string Alg
+    {
+        get => Headers["alg"];
+        set => Headers["alg"] = value;
+    }
+
+    /// <summary>
+    /// Maps to the Headers["typ"] representing the Type of the JWT.
+    /// </summary>
+    public string Typ
+    {
+        get => Headers["typ"];
+        set => Headers["typ"] = value;
+    }
+
+    public ICollection<string> Keys => Headers.Keys;
+
+    public ICollection<string> Values => Headers.Values;
+
+    public int Count => Headers.Count;
+
+    public bool IsReadOnly => Headers.IsReadOnly;
+
+    public void Add(string key, string value)
+        => Headers.Add(key, value);
+
+    public void Add(KeyValuePair<string, string> item)
+        => Headers.Add(item);
+
+    public void Clear()
+        => Headers.Clear();
+
+    public bool Contains(KeyValuePair<string, string> item)
+        => Headers.Contains(item);
+
+    public bool ContainsKey(string key)
+        => Headers.ContainsKey(key);
+
+    public void CopyTo(KeyValuePair<string, string>[] array, int arrayIndex)
+        => Headers.CopyTo(array, arrayIndex);
+
+    public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
+        => Headers.GetEnumerator();
+
+    public bool Remove(string key)
+        => Headers.Remove(key);
+
+    public bool Remove(KeyValuePair<string, string> item)
+        => Headers.Remove(item);
+
+    public bool TryGetValue(string key, [MaybeNullWhen(false)] out string value)
+        => Headers.TryGetValue(key, out value); 
+
+    IEnumerator IEnumerable.GetEnumerator()
+        => ((IEnumerable)Headers).GetEnumerator();
+}
+
 internal sealed class Jwt
 {
 
     /// <summary>
     /// The metadata, including algorithm, type
     /// </summary>
-    public IDictionary<string, string> Header { get; set; } = new Dictionary<string, string>();
+    public JwtHeader Header { get; set; } = new JwtHeader();
 
     /// <summary>
     /// The payload of the token.
@@ -255,7 +324,7 @@ internal interface IJwtAlgorithm
     public abstract Task<Jwt?> ReadJwtAsync(string jwtToken, JsonWebKey? key);
 }
 
-internal class JwtAlgNone : IJwtAlgorithm
+internal sealed class JwtAlgNone : IJwtAlgorithm
 {
     public Task<string> CreateJwtAsync(Jwt jwt, JsonWebKey? key)
         // Just send the payload as the jwt
@@ -264,8 +333,8 @@ internal class JwtAlgNone : IJwtAlgorithm
     public Task<Jwt?> ReadJwtAsync(string jwtToken, JsonWebKey? key)
     {
         var data = new Jwt();
-        data.Header["alg"] = JWSAlg.None;
-        data.Header["typ"] = "JWT";
+        data.Header.Alg = JWSAlg.None;
+        data.Header.Typ = "JWT";
         data.Payload = jwtToken;
         return Task.FromResult<Jwt?>(data);
     }
@@ -274,13 +343,13 @@ internal class JwtAlgNone : IJwtAlgorithm
         => Task.FromResult(true);
 }
 
-internal class JwtAlgHS256 : IJwtAlgorithm
+internal sealed class JwtAlgHS256 : IJwtAlgorithm
 {
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
     public Task<string> CreateJwtAsync(Jwt jwt, JsonWebKey? key)
     {
-        jwt.Header["alg"] = JWSAlg.HS256;
-        jwt.Header["typ"] = "JWT";
+        jwt.Header.Alg = JWSAlg.HS256;
+        jwt.Header.Typ = "JWT";
         // TODO: This should actually do HS256 using the key to sign, instead of just sending the key as the signature
         return Task.FromResult($"{Base64UrlEncoder.Encode(JsonSerializer.Serialize(jwt.Header))}.{Base64UrlEncoder.Encode(jwt.Payload)}.{key!.Kid}");
     }
@@ -299,7 +368,7 @@ internal class JwtAlgHS256 : IJwtAlgorithm
             // Expected 3 sections
             return Task.FromResult<Jwt?>(null);
         }
-        var header = JsonSerializer.Deserialize<IDictionary<string, string>>(Base64UrlEncoder.Decode(sections[0]));
+        var header = JsonSerializer.Deserialize<JwtHeader>(Base64UrlEncoder.Decode(sections[0]));
         // TODO: Actually do HS256 signing
         if (header?["alg"] != "HS256" || header?["typ"] != "JWT" || sections[2] != key.Kid)
         {
