@@ -38,7 +38,7 @@ public class JwtBuilderTest
             "issuer",
             _noneKey,
             audience: "audience",
-            subject: string.Empty, // TODO: combine this with CreatePayload?
+            subject: string.Empty,
             payload: null,
             DateTimeOffset.UtcNow,
             DateTimeOffset.UtcNow.AddMinutes(-30));
@@ -76,7 +76,7 @@ public class JwtBuilderTest
             audience: "audience",
             subject: string.Empty,
             payload: null,
-            DateTimeOffset.UtcNow.AddMinutes(5), // NotBefore set to 5 minutes in the future
+            DateTimeOffset.UtcNow,
             DateTimeOffset.UtcNow.AddMinutes(30));
         var token = await jwtBuilder.CreateJwtAsync();
 
@@ -94,7 +94,7 @@ public class JwtBuilderTest
             audience: "badaudience",
             subject: string.Empty,
             payload: null,
-            DateTimeOffset.UtcNow.AddMinutes(5), // NotBefore set to 5 minutes in the future
+            DateTimeOffset.UtcNow,
             DateTimeOffset.UtcNow.AddMinutes(30));
         var token = await jwtBuilder.CreateJwtAsync();
 
