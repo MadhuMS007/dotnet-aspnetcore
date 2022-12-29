@@ -191,6 +191,21 @@ internal sealed class JwtHeader : IDictionary<string, string>
     public string this[string key] { get => Headers[key]; set => Headers[key] = value; }
 
     /// <summary>
+    /// Constructor, alg is required.
+    /// </summary>
+    /// <param name="alg"></param>
+    public JwtHeader(string alg) => Alg = alg;
+
+    public JwtHeader(IDictionary<string, string> headers)
+    {
+        if (!headers.ContainsKey("alg"))
+        {
+            throw new ArgumentException("alg must be specified.", nameof(headers));
+        }
+        Headers = headers;
+    }
+
+    /// <summary>
     /// The actual headers.
     /// </summary>
     public IDictionary<string, string> Headers { get; } = new Dictionary<string, string>();
@@ -201,16 +216,22 @@ internal sealed class JwtHeader : IDictionary<string, string>
     public string Alg
     {
         get => Headers["alg"];
-        set => Headers["alg"] = value;
+        private set => Headers["alg"] = value;
     }
 
     /// <summary>
     /// Maps to the Headers["typ"] representing the Type of the JWT.
     /// </summary>
-    public string Typ
+    public string Type
     {
         get => Headers["typ"];
         set => Headers["typ"] = value;
+    }
+
+    public string ContentType
+    {
+        get => Headers["cty"];
+        set => Headers["cty"] = value;
     }
 
     public ICollection<string> Keys => Headers.Keys;
@@ -257,11 +278,24 @@ internal sealed class JwtHeader : IDictionary<string, string>
 
 internal sealed class Jwt
 {
+    /// <summary>
+    /// Creates a new Jwt with the specified algorithm
+    /// </summary>
+    /// <param name="alg">The algorithm for the JWT.</param>
+    public Jwt(string alg)
+        => Header = new JwtHeader(alg);
+
+    /// <summary>
+    /// Creates a new Jwt with the specified header
+    /// </summary>
+    /// <param name="header">the JWT header.</param>
+    public Jwt(JwtHeader header)
+        => Header = header;
 
     /// <summary>
     /// The metadata, including algorithm, type
     /// </summary>
-    public JwtHeader Header { get; set; } = new JwtHeader();
+    public JwtHeader Header { get; set; }
 
     /// <summary>
     /// The payload of the token.
@@ -269,33 +303,6 @@ internal sealed class Jwt
     public string? Payload { get; set; }
 
     // The signature is computed from the header and payload
-
-    //public void MakeHeader(string typ, string cty, string alg)
-    //{
-    //    Header["typ"] = typ;
-    //    Header["cty"] = cty;
-    //    Header["alg"] = alg;
-    //}
-
-    ///// <summary>
-    ///// Add all the claims to the payload
-    ///// </summary>
-    ///// <param name="payload"></param>
-    //public void MakePayload(IDictionary<string, string> payload)
-    //{
-    //    Payload = "payload.Serialize()";
-    //}
-
-    ///// <summary>
-    ///// Turn the payload back into a dictionary
-    ///// </summary>
-    ///// <param name="payload"></param>
-    //public IDictionary<string, string> ReadPayload()
-    //{
-    //    // Read payload back out into string, string
-    //    return new Dictionary<string, string>();
-    //}
-
 }
 
 internal interface IJwtAlgorithm
@@ -332,9 +339,8 @@ internal sealed class JwtAlgNone : IJwtAlgorithm
 
     public Task<Jwt?> ReadJwtAsync(string jwtToken, JsonWebKey? key)
     {
-        var data = new Jwt();
-        data.Header.Alg = JWSAlg.None;
-        data.Header.Typ = "JWT";
+        var data = new Jwt(JWSAlg.None);
+        data.Header.Type = "JWT";
         data.Payload = jwtToken;
         return Task.FromResult<Jwt?>(data);
     }
@@ -348,8 +354,8 @@ internal sealed class JwtAlgHS256 : IJwtAlgorithm
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
     public Task<string> CreateJwtAsync(Jwt jwt, JsonWebKey? key)
     {
-        jwt.Header.Alg = JWSAlg.HS256;
-        jwt.Header.Typ = "JWT";
+        jwt.Header = new JwtHeader(JWSAlg.HS256);
+        jwt.Header.Type = "JWT";
         // TODO: This should actually do HS256 using the key to sign, instead of just sending the key as the signature
         return Task.FromResult($"{Base64UrlEncoder.Encode(JsonSerializer.Serialize(jwt.Header))}.{Base64UrlEncoder.Encode(jwt.Payload)}.{key!.Kid}");
     }
@@ -368,21 +374,20 @@ internal sealed class JwtAlgHS256 : IJwtAlgorithm
             // Expected 3 sections
             return Task.FromResult<Jwt?>(null);
         }
-        var header = JsonSerializer.Deserialize<JwtHeader>(Base64UrlEncoder.Decode(sections[0]));
+        var header = JsonSerializer.Deserialize<IDictionary<string, string>>(Base64UrlEncoder.Decode(sections[0]));
         // TODO: Actually do HS256 signing
         if (header?["alg"] != "HS256" || header?["typ"] != "JWT" || sections[2] != key.Kid)
         {
             // Expected HS256 alg and key to be the last section
             return Task.FromResult<Jwt?>(null);
         }
-        var data = new Jwt();
-        data.Header = header;
+        var data = new Jwt(new JwtHeader(header));
         data.Payload = Base64UrlEncoder.Decode(sections[1]);
         return Task.FromResult<Jwt?>(data);
     }
 
     public Task<bool> ValidateKeyAsync(JsonWebKey? key)
-        => Task.FromResult(key != null);
+        => Task.FromResult(key != null && key.Kid != null);
 }
 
 internal static class BclJwt
@@ -512,7 +517,7 @@ public class JwtBuilder
             IssuedAt = DateTimeOffset.Now;
         }
 
-        var jwtData = new Jwt
+        var jwtData = new Jwt(Algorithm)
         {
             Payload = JsonSerializer.Serialize(Payload)
         };

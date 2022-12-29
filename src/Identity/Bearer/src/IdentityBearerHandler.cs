@@ -95,6 +95,7 @@ internal sealed class IdentityBearerHandler : AuthenticationHandler<BearerScheme
             return AuthenticateResult.NoResult();
         }
 
+        // TODO: This needs to do validation of the issuer/audience, etc.
         // The token should be the raw payload right now
         var payload = await JwtBuilder.ReadJwtAsync(token, JWSAlg.HS256, _options.SigningCredentials);
         if (payload != null)
