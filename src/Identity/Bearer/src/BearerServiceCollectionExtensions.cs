@@ -80,13 +80,23 @@ public static class BearerServiceCollectionExtensions
 
             //var signingKeyBytes = Convert.FromBase64String(signingKeyBase64);
 
-            var jwkSection = bearerSection.GetRequiredSection("SigningCredentials");
+            // An example of what the expected signing keys (JWKs) looks like
+            //"SigningCredentials": {
+            //  "kty": "oct",
+            //  "alg": "HS256",
+            //  "kid": "randomguid",
+            //  "k": "(G+KbPeShVmYq3t6w9z$C&F)J@McQfTj"
+            //}
 
+            // TODO: should this support a JWKS (set of keys?)
+            // TODO: This should go into some other key manager API
+            var jwkSection = bearerSection.GetRequiredSection("SigningCredentials");
             o.SigningCredentials = jwkSection.Get<JsonWebKey>();
 
             //o.SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(signingKeyBytes),
             //        SecurityAlgorithms.HmacSha256Signature);
 
+            // TODO: Resolve multiple audiences read vs write??
             o.Audiences = bearerSection.GetSection("Audiences").GetChildren()
                         .Where(s => !string.IsNullOrEmpty(s.Value))
                         .Select(s => s.Value!)

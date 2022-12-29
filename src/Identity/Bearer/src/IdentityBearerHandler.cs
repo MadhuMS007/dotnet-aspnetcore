@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Linq;
-using System.Security.Claims;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
@@ -10,9 +9,6 @@ using Microsoft.Extensions.Options;
 
 namespace Microsoft.AspNetCore.Identity;
 
-/// <summary>
-/// 
-/// </summary>
 internal sealed class IdentityBearerHandler : AuthenticationHandler<BearerSchemeOptions>
 {
     internal static AuthenticateResult ValidatorNotFound = AuthenticateResult.Fail("No SecurityTokenValidator available for token.");
@@ -23,49 +19,6 @@ internal sealed class IdentityBearerHandler : AuthenticationHandler<BearerScheme
         _options = bearerOptions.Value;
     }
 
-    //public static byte[] CreateSigningKeyMaterial(string userSecretsId, string scheme, string issuer, int signingKeyLength = 32, bool reset = false)
-    //{
-    //    // Create signing material and save to user secrets
-    //    var newKeyMaterial = System.Security.Cryptography.RandomNumberGenerator.GetBytes(signingKeyLength);
-    //    //var secretsFilePath = @"C:\Users\haok\keys\identityjwt.txt";
-
-    //    //JsonObject secrets = null;
-    //    //if (File.Exists(secretsFilePath))
-    //    //{
-    //    //    using var secretsFileStream = new FileStream(secretsFilePath, FileMode.Open, FileAccess.Read);
-    //    //    if (secretsFileStream.Length > 0)
-    //    //    {
-    //    //        secrets = JsonSerializer.Deserialize<JsonObject>(secretsFileStream);
-    //    //    }
-    //    //}
-
-    //    //secrets ??= new JsonObject();
-    //    //var signkingKeysPropertyName = GetSigningKeyPropertyName(scheme);
-    //    //var shortId = Guid.NewGuid().ToString("N").Substring(0, 8);
-    //    //var key = new SigningKey(shortId, issuer, Convert.ToBase64String(newKeyMaterial), signingKeyLength);
-
-    //    //if (secrets.ContainsKey(signkingKeysPropertyName))
-    //    //{
-    //    //    var signingKeys = secrets[signkingKeysPropertyName].AsArray();
-    //    //    if (reset)
-    //    //    {
-    //    //        var toRemove = signingKeys.SingleOrDefault(key => key["Issuer"].GetValue<string>() == issuer);
-    //    //        signingKeys.Remove(toRemove);
-    //    //    }
-    //    //    signingKeys.Add(key);
-    //    //}
-    //    //else
-    //    //{
-    //    //    secrets.Add(signkingKeysPropertyName, JsonValue.Create(new[] { key }));
-    //    //}
-
-    //    //using var secretsWriteStream = new FileStream(secretsFilePath, FileMode.Create, FileAccess.Write);
-    //    //JsonSerializer.Serialize(secretsWriteStream, secrets);
-
-    //    return newKeyMaterial;
-    //}
-
-    ///
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
         // Check the cookie first (could just rely on forward authenticate, consider)
@@ -87,7 +40,7 @@ internal sealed class IdentityBearerHandler : AuthenticationHandler<BearerScheme
 
         if (authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
         {
-            token = authorization.Substring("Bearer ".Length).Trim();
+            token = authorization["Bearer ".Length..].Trim();
         }
 
         // If no token found, no further work possible
@@ -95,9 +48,6 @@ internal sealed class IdentityBearerHandler : AuthenticationHandler<BearerScheme
         {
             return AuthenticateResult.NoResult();
         }
-
-        // TODO: This needs to do validation of the issuer/audience, etc.
-        // The token should be the raw payload right now
 
         var reader = new JwtReader(
             JWSAlg.HS256,

@@ -76,7 +76,6 @@ internal sealed class BearerPayloadFactory<TUser> : IBearerPayloadFactory<TUser>
         }
 
         // REVIEW: Check that this logic is OK for jti claims
-        //payload[JwtRegisteredClaimNames.Jti] = jti;
         jwtBuilder.Jti = Guid.NewGuid().ToString().GetHashCode().ToString("x", CultureInfo.InvariantCulture);
 
         // REVIEW: why more than one aud?

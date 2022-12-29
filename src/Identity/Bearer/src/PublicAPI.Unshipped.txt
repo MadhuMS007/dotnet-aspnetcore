@@ -101,7 +101,6 @@ override Microsoft.AspNetCore.Identity.IdentityDbContext<TUser, TRole, TToken, T
 static Microsoft.AspNetCore.Identity.BearerServiceCollectionExtensions.AddBearerServerAuthentication(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.AspNetCore.Authentication.AuthenticationBuilder!
 static Microsoft.AspNetCore.Identity.BearerServiceCollectionExtensions.AddDefaultIdentityBearer<TUser>(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.AspNetCore.Identity.IdentityBuilder!
 static Microsoft.AspNetCore.Identity.BearerServiceCollectionExtensions.AddDefaultIdentityBearer<TUser>(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<Microsoft.AspNetCore.Identity.IdentityOptions!>! setupAction) -> Microsoft.AspNetCore.Identity.IdentityBuilder!
-static Microsoft.AspNetCore.Identity.JwtBuilder.ReadJwtAsync(string! jwtToken, string! algorithm, Microsoft.AspNetCore.Identity.JsonWebKey? signingKey) -> System.Threading.Tasks.Task<System.Collections.Generic.IDictionary<string!, string!>?>!
 static Microsoft.Extensions.DependencyInjection.BearerBuilderExtensions.AddTokenStore<TContext>(this Microsoft.AspNetCore.Identity.IdentityBuilder! builder) -> Microsoft.AspNetCore.Identity.IdentityBuilder!
 static readonly Microsoft.AspNetCore.Identity.JWSAlg.HS256 -> string!
 static readonly Microsoft.AspNetCore.Identity.JWSAlg.None -> string!
