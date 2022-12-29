@@ -3,6 +3,8 @@
 
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
+using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.IdentityModel.Tokens;
 
@@ -421,6 +423,159 @@ internal static class BclJwt
     }
 }
 
+internal class JwtReader
+{
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="algorithm"></param>
+    /// <param name="issuer"></param>
+    /// <param name="signingKey"></param>
+    /// <param name="audience"></param>
+    public JwtReader(string algorithm, string issuer, JsonWebKey signingKey, string audience)
+    {
+        Algorithm = algorithm;
+        Issuer = issuer;
+        SigningKey = signingKey;
+        Audience = audience;
+    }
+
+    /// <summary>
+    /// The Algorithm for the JWT.
+    /// </summary>
+    public string Algorithm { get; set; }
+
+    /// <summary>
+    /// The Issuer for the JWT.
+    /// </summary>
+    public string Issuer { get; set; }
+
+    /// <summary>
+    /// The signing key to use.
+    /// </summary>
+    public JsonWebKey SigningKey { get; set; }
+
+    /// <summary>
+    /// The intended audience for the JWT.
+    /// </summary>
+    public string Audience { get; set; }
+
+    private static string? SafeGet(IDictionary<string, string> payload, string key)
+    {
+        payload.TryGetValue(key, out var value);
+        return value;
+    }
+
+    private static bool SafeBeforeDateCheck(IDictionary<string, string> payload, string key)
+    {
+        var date = SafeGet(payload, key);
+        if (date == null)
+        {
+            return false;
+        }
+        if (DateTimeOffset.UtcNow > FromUtcTicks(date))
+        {
+            return false;
+        }
+        return true;
+    }
+
+    private static bool SafeAfterDateCheck(IDictionary<string, string> payload, string key)
+    {
+        var date = SafeGet(payload, key);
+        if (date == null)
+        {
+            return false;
+        }
+        if (DateTimeOffset.UtcNow < FromUtcTicks(date))
+        {
+            return false;
+        }
+        return true;
+    }
+
+    private static DateTimeOffset FromUtcTicks(string utcTicks)
+        => new DateTimeOffset(long.Parse(utcTicks, CultureInfo.InvariantCulture), TimeSpan.Zero);
+
+    // Make sure that the payload is valid and not expired
+    private bool ValidatePayload(IDictionary<string, string> payload)
+    {
+        var issuer = SafeGet(payload, "iss");
+        if (issuer != Issuer)
+        {
+            return false;
+        }
+
+        // REVIEW: more than one valid?
+        var audience = SafeGet(payload, "aud");
+        if (audience != Audience)
+        {
+            return false;
+        }
+
+        // Make sure JWT is not expired
+        if (!SafeBeforeDateCheck(payload, "exp"))
+        {
+            return false;
+        }
+
+        // Make sure JWT is not too early
+        if (!SafeAfterDateCheck(payload, "nbf"))
+        {
+            return false;
+        }
+
+        // REVIEW: should we ensure iat is present?
+        // REVIEW: should we set subject or check that it matches?
+
+        return true;
+    }
+
+    /// <summary>
+    /// Attempts to validate a JWT, returns the payload as a ClaimsPrincipal if successful.
+    /// </summary>
+    /// <param name="jwtToken">The JWT.</param>
+    /// <returns>A ClaimsPrincipal if the JWT is valid.</returns>
+    public async Task<ClaimsPrincipal?> ValidateJwtAsync(string jwtToken)
+    {
+        var payload = await ReadJwtAsync(jwtToken, Algorithm, SigningKey);
+        if (payload != null)
+        {
+            // Ensure that the payload is valid.
+            if (!ValidatePayload(payload))
+            {
+                return null;
+            }
+
+            // REVIEW: should we take the scheme name?
+            var claimsIdentity = new ClaimsIdentity(IdentityConstants.BearerScheme);
+            foreach (var key in payload.Keys)
+            {
+                claimsIdentity.AddClaim(new Claim(key, payload[key]));
+            }
+            return new ClaimsPrincipal(claimsIdentity);
+        }
+        return null;
+
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="jwtToken"></param>
+    /// <param name="algorithm"></param>
+    /// <param name="signingKey"></param>
+    /// <returns></returns>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
+    public static async Task<IDictionary<string, string>?> ReadJwtAsync(string jwtToken, string algorithm, JsonWebKey? signingKey)
+    {
+        var data = await BclJwt.ReadJwtAsync(jwtToken, algorithm, signingKey);
+        return data?.Payload != null
+            ? JsonSerializer.Deserialize<IDictionary<string, string>>(data.Payload)
+            : null;
+    }
+}
+
 /// <summary>
 /// 
 /// </summary>
@@ -437,14 +592,14 @@ public class JwtBuilder
     /// <param name="payload"></param>
     /// <param name="notBefore"></param>
     /// <param name="expires"></param>
-    public JwtBuilder(string algorithm, string issuer, JsonWebKey signingKey, string audience, string subject, IDictionary<string, string> payload, DateTimeOffset notBefore, DateTimeOffset expires)
+    public JwtBuilder(string algorithm, string issuer, JsonWebKey signingKey, string audience, string subject, IDictionary<string, string>? payload, DateTimeOffset notBefore, DateTimeOffset expires)
     {
         Algorithm = algorithm;
         Issuer = issuer;
         SigningKey = signingKey;
         Audience = audience;
         Subject = subject;
-        Payload = payload;
+        Payload = payload ?? new Dictionary<string, string>();
         NotBefore = notBefore;
         Expires = expires;
     }
@@ -472,7 +627,7 @@ public class JwtBuilder
     /// <summary>
     /// The claims payload for the JWT.
     /// </summary>
-    public IDictionary<string, string> Payload{ get; set; }
+    public IDictionary<string, string> Payload { get; set; }
 
     /// <summary>
     /// Specifies when the JWT must not be accepted before.
@@ -499,6 +654,32 @@ public class JwtBuilder
     /// </summary>
     public string? Jti { get; set; }
 
+    private void SetReservedPayload(string key, string value)
+    {
+        if (Payload.ContainsKey(key))
+        {
+            throw new InvalidOperationException($"The key: {key} is reserved and must not be set in Payload.");
+        }
+        Payload[key] = value;
+    }
+
+    // Add the validation settings to the payload and make sure the reserved keys aren't set.
+    private void PreparePayload()
+    {
+        SetReservedPayload("iss", Issuer);
+        SetReservedPayload("aud", Audience);
+        SetReservedPayload("sub", Subject);
+
+        var issuedAt = IssuedAt ?? DateTimeOffset.UtcNow;
+        SetReservedPayload("iat", issuedAt.UtcTicks.ToString(CultureInfo.InvariantCulture));
+        SetReservedPayload("exp", Expires.UtcTicks.ToString(CultureInfo.InvariantCulture));
+        SetReservedPayload("nbf", NotBefore.UtcTicks.ToString(CultureInfo.InvariantCulture));
+        if (Jti != null)
+        {
+            SetReservedPayload("jti", Jti);
+        }
+    }
+
     /// <summary>
     /// 
     /// </summary>
@@ -512,10 +693,8 @@ public class JwtBuilder
             Jti = Guid.NewGuid().ToString();
         }
 
-        if (IssuedAt == null)
-        {
-            IssuedAt = DateTimeOffset.Now;
-        }
+        // TODO: add the metadata claims
+        PreparePayload();
 
         var jwtData = new Jwt(Algorithm)
         {

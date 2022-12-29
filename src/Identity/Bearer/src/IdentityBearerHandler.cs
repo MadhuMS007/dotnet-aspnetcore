@@ -1,6 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Linq;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
@@ -97,15 +98,17 @@ internal sealed class IdentityBearerHandler : AuthenticationHandler<BearerScheme
 
         // TODO: This needs to do validation of the issuer/audience, etc.
         // The token should be the raw payload right now
-        var payload = await JwtBuilder.ReadJwtAsync(token, JWSAlg.HS256, _options.SigningCredentials);
-        if (payload != null)
+
+        var reader = new JwtReader(
+            JWSAlg.HS256,
+            _options.Issuer!,
+            _options.SigningCredentials!,
+            _options.Audiences.FirstOrDefault() ?? string.Empty);
+
+        var principal = await reader.ValidateJwtAsync(token);
+        if (principal != null)
         {
-            var claimsIdentity = new ClaimsIdentity(Scheme.Name);
-            foreach (var key in payload.Keys)
-            {
-                claimsIdentity.AddClaim(new Claim(key, payload[key]));
-            }
-            return AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(claimsIdentity), Scheme.Name));
+            return AuthenticateResult.Success(new AuthenticationTicket(principal, Scheme.Name));
         }
         return AuthenticateResult.NoResult();
     }

@@ -1,6 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Linq;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -113,17 +114,16 @@ public class TokenManager<TUser> : IDisposable where TUser : class
             return string.Empty;
         }
 
-        var payload = await ClaimsFactory.CreatePayloadAsync(user);
-
         var jwtBuilder = new JwtBuilder(
             JWSAlg.HS256,
             _bearerOptions.Issuer!,
             _bearerOptions.SigningCredentials!,
-            audience: string.Empty,
+            audience: _bearerOptions.Audiences.FirstOrDefault() ?? string.Empty,
             subject: string.Empty, // TODO: combine this with CreatePayload?
-            payload,
+            payload: null,
             DateTimeOffset.UtcNow,
             DateTimeOffset.UtcNow.AddMinutes(30));
+        await ClaimsFactory.BuildPayloadAsync(user, jwtBuilder);
         return await jwtBuilder.CreateJwtAsync();
     }
 
