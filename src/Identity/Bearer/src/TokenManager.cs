@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Linq;
+using System.Security.Claims;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -53,7 +54,7 @@ public class TokenManager<TUser> : IDisposable where TUser : class
         //Store = store ?? throw new ArgumentNullException(nameof(store));
         UserManager = userManager;
         ErrorDescriber = errors;
-        ClaimsFactory = claimsFactory;
+        PayloadFactory = claimsFactory;
         Logger = logger;
         _bearerOptions = bearerOptions.Value;
     }
@@ -82,7 +83,7 @@ public class TokenManager<TUser> : IDisposable where TUser : class
     /// <summary>
     /// The <see cref="IUserClaimsPrincipalFactory{TUser}"/> used.
     /// </summary>
-    public IBearerPayloadFactory<TUser> ClaimsFactory { get; set; }
+    public IBearerPayloadFactory<TUser> PayloadFactory { get; set; }
 
     /// <summary>
     /// Gets the <see cref="IdentityErrorDescriber"/> used to provider error messages.
@@ -123,8 +124,19 @@ public class TokenManager<TUser> : IDisposable where TUser : class
             payload: null,
             DateTimeOffset.UtcNow,
             DateTimeOffset.UtcNow.AddMinutes(30));
-        await ClaimsFactory.BuildPayloadAsync(user, jwtBuilder);
+        await PayloadFactory.BuildPayloadAsync(user, jwtBuilder);
         return await jwtBuilder.CreateJwtAsync();
+    }
+
+    /// <summary>
+    /// Given a principal representing the claims in a bearer token, determine if its valid
+    /// </summary>
+    /// <param name="principal"></param>
+    /// <returns>True if the bearer principal is valid.</returns>
+    public virtual Task<bool> ValidateBearerPrincipalAsync(ClaimsPrincipal? principal)
+    {
+        // TODO: Check for revocation etc.
+        return Task.FromResult(principal != null);
     }
 
     /*

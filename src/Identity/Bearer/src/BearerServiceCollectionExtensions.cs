@@ -57,6 +57,8 @@ public static class BearerServiceCollectionExtensions
             .AddCookie(IdentityConstants.BearerCookieScheme)
             .AddScheme<BearerSchemeOptions, IdentityBearerHandler>(IdentityConstants.BearerScheme, o => { });
 
+        services.AddScoped<IBearerTokenValidator, JwtTokenValidator<TUser>>();
+
         services.AddOptions<IdentityBearerOptions>().Configure<IAuthenticationConfigurationProvider>((o, cp) =>
         {
             // We're reading the authentication configuration for the Bearer scheme

@@ -39,7 +39,6 @@ internal sealed class Jwt
 
     // The signature is computed from the header and payload
 
-
     public static Task<string> CreateAsync(Jwt jwt, string algorithm, JsonWebKey? key)
     {
         if (!Algorithms.ContainsKey(algorithm))

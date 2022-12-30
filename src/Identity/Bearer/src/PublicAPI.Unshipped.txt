@@ -78,11 +78,11 @@ Microsoft.AspNetCore.Identity.JwtBuilder.SigningKey.set -> void
 Microsoft.AspNetCore.Identity.JwtBuilder.Subject.get -> string!
 Microsoft.AspNetCore.Identity.JwtBuilder.Subject.set -> void
 Microsoft.AspNetCore.Identity.TokenManager<TUser>
-Microsoft.AspNetCore.Identity.TokenManager<TUser>.ClaimsFactory.get -> Microsoft.AspNetCore.Identity.IBearerPayloadFactory<TUser!>!
-Microsoft.AspNetCore.Identity.TokenManager<TUser>.ClaimsFactory.set -> void
 Microsoft.AspNetCore.Identity.TokenManager<TUser>.Dispose() -> void
 Microsoft.AspNetCore.Identity.TokenManager<TUser>.ErrorDescriber.get -> Microsoft.AspNetCore.Identity.IdentityErrorDescriber!
 Microsoft.AspNetCore.Identity.TokenManager<TUser>.ErrorDescriber.set -> void
+Microsoft.AspNetCore.Identity.TokenManager<TUser>.PayloadFactory.get -> Microsoft.AspNetCore.Identity.IBearerPayloadFactory<TUser!>!
+Microsoft.AspNetCore.Identity.TokenManager<TUser>.PayloadFactory.set -> void
 Microsoft.AspNetCore.Identity.TokenManager<TUser>.ThrowIfDisposed() -> void
 Microsoft.AspNetCore.Identity.TokenManager<TUser>.TokenManager(Microsoft.AspNetCore.Identity.UserManager<TUser!>! userManager, Microsoft.AspNetCore.Identity.IdentityErrorDescriber! errors, Microsoft.Extensions.Logging.ILogger<Microsoft.AspNetCore.Identity.TokenManager<Microsoft.AspNetCore.Identity.IdentityToken!>!>! logger, Microsoft.AspNetCore.Identity.IBearerPayloadFactory<TUser!>! claimsFactory, Microsoft.Extensions.Options.IOptions<Microsoft.AspNetCore.Identity.IdentityBearerOptions!>! bearerOptions) -> void
 Microsoft.AspNetCore.Identity.TokenManager<TUser>.UserManager.get -> Microsoft.AspNetCore.Identity.UserManager<TUser!>!
@@ -115,6 +115,7 @@ virtual Microsoft.AspNetCore.Identity.TokenManager<TUser>.Dispose(bool disposing
 virtual Microsoft.AspNetCore.Identity.TokenManager<TUser>.GetBearerAsync(TUser! user) -> System.Threading.Tasks.Task<string!>!
 virtual Microsoft.AspNetCore.Identity.TokenManager<TUser>.Logger.get -> Microsoft.Extensions.Logging.ILogger!
 virtual Microsoft.AspNetCore.Identity.TokenManager<TUser>.Logger.set -> void
+virtual Microsoft.AspNetCore.Identity.TokenManager<TUser>.ValidateBearerPrincipalAsync(System.Security.Claims.ClaimsPrincipal? principal) -> System.Threading.Tasks.Task<bool>!
 virtual Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.Context.get -> TContext!
 virtual Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.CreateAsync(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.IdentityResult!>!
 virtual Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.DeleteAsync(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.IdentityResult!>!
