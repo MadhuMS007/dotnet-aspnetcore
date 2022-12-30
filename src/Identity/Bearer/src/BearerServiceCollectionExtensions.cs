@@ -57,8 +57,6 @@ public static class BearerServiceCollectionExtensions
             .AddCookie(IdentityConstants.BearerCookieScheme)
             .AddScheme<BearerSchemeOptions, IdentityBearerHandler>(IdentityConstants.BearerScheme, o => { });
 
-        services.AddScoped<IBearerTokenValidator, JwtTokenValidator<TUser>>();
-
         services.AddOptions<IdentityBearerOptions>().Configure<IAuthenticationConfigurationProvider>((o, cp) =>
         {
             // We're reading the authentication configuration for the Bearer scheme
@@ -107,6 +105,10 @@ public static class BearerServiceCollectionExtensions
 
         services.TryAddScoped<TokenManager<TUser>>();
         services.TryAddScoped<IBearerPayloadFactory<TUser>, BearerPayloadFactory<TUser>>();
+        // Important to not return a different token manager instance, we only want one scoped token manager
+        services.TryAddScoped<IAccessTokenValidator>(services => services.GetRequiredService<TokenManager<TUser>>());
+
+
         return services.AddIdentityCore<TUser>(setupAction);
     }
 }

@@ -37,7 +37,7 @@ public static class UsersApi
                 return TypedResults.BadRequest();
             }
 
-            return TypedResults.Ok(new AuthToken(await tokenService.GetBearerAsync(user)));
+            return TypedResults.Ok(new AuthToken(await tokenService.GetAccessTokenAsync(user)));
         });
 
         group.MapPost("/token/{provider}", async Task<Results<Ok<AuthToken>, ValidationProblem>> (string provider, ExternalUserInfo userInfo, UserManager<TodoUser> userManager, TokenManager<TodoUser> tokenService) =>
@@ -60,7 +60,7 @@ public static class UsersApi
 
             if (result.Succeeded)
             {
-                return TypedResults.Ok(new AuthToken(await tokenService.GetBearerAsync(user)));
+                return TypedResults.Ok(new AuthToken(await tokenService.GetAccessTokenAsync(user)));
             }
 
             return TypedResults.ValidationProblem(result.Errors.ToDictionary(e => e.Code, e => new[] { e.Description }));

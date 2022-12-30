@@ -12,7 +12,7 @@ namespace Microsoft.AspNetCore.Identity;
 /// Provides the APIs for managing roles in a persistence store.
 /// </summary>
 /// <typeparam name="TUser">The type encapsulating a user.</typeparam>
-public class TokenManager<TUser> : IDisposable where TUser : class
+public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUser : class
 {
     /// <summary>
     /// The token name used for all refresh tokens.
@@ -107,7 +107,7 @@ public class TokenManager<TUser> : IDisposable where TUser : class
     /// </summary>
     /// <param name="user">The user.</param>
     /// <returns></returns>
-    public virtual async Task<string> GetBearerAsync(TUser user)
+    public virtual async Task<string> GetAccessTokenAsync(TUser user)
     {
         // REVIEW: we could throw instead?
         if (user == null)
@@ -129,14 +129,26 @@ public class TokenManager<TUser> : IDisposable where TUser : class
     }
 
     /// <summary>
-    /// Given a principal representing the claims in a bearer token, determine if its valid
+    /// Given an access token, ensure its valid
     /// </summary>
-    /// <param name="principal"></param>
-    /// <returns>True if the bearer principal is valid.</returns>
-    public virtual Task<bool> ValidateBearerPrincipalAsync(ClaimsPrincipal? principal)
+    /// <param name="token">The access token to validate.</param>
+    /// <returns>A claims principal for the token if its valid, null otherwise.</returns>
+    public virtual async Task<ClaimsPrincipal?> ValidateAccessTokenAsync(string token)
     {
-        // TODO: Check for revocation etc.
-        return Task.FromResult(principal != null);
+        var reader = new JwtReader(
+            JWSAlg.HS256,
+            _bearerOptions.Issuer!,
+            _bearerOptions.SigningCredentials!,
+            _bearerOptions.Audiences.FirstOrDefault() ?? string.Empty);
+
+        var principal = await reader.ValidateJwtAsync(token);
+
+        if (principal != null)
+        {
+            // TODO: Check for revocation
+            return principal;
+        }
+        return null;
     }
 
     /*
@@ -157,16 +169,6 @@ public class TokenManager<TUser> : IDisposable where TUser : class
         };
         await Store.CreateAsync(refreshToken, CancellationToken);
         return refreshToken;
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="token"></param>
-    /// <returns></returns>
-    public virtual ClaimsPrincipal? ValidateAccessAsync(string token)
-    {
-        return null;
     }
 
     /// <summary>
@@ -225,4 +227,8 @@ public class TokenManager<TUser> : IDisposable where TUser : class
             throw new ObjectDisposedException(GetType().Name);
         }
     }
+
+    /// <inheritdoc/>
+    Task<ClaimsPrincipal?> IAccessTokenValidator.ValidateAsync(string token)
+        => ValidateAccessTokenAsync(token);
 }

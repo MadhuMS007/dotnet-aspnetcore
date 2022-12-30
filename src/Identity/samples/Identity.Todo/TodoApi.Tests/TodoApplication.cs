@@ -100,7 +100,7 @@ internal class TodoApplication : WebApplicationFactory<Program>
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<TodoUser>>();
         var tokenService = scope.ServiceProvider.GetRequiredService<TokenManager<TodoUser>>();
         var user = await userManager.FindByNameAsync(userName);
-        return await tokenService.GetBearerAsync(user!);
+        return await tokenService.GetAccessTokenAsync(user!);
     }
 
     protected override void Dispose(bool disposing)
