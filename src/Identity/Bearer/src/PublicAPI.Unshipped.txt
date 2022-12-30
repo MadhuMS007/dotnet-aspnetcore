@@ -2,8 +2,11 @@
 Microsoft.AspNetCore.Identity.BearerSchemeOptions
 Microsoft.AspNetCore.Identity.BearerSchemeOptions.BearerSchemeOptions() -> void
 Microsoft.AspNetCore.Identity.BearerServiceCollectionExtensions
-Microsoft.AspNetCore.Identity.IBearerPayloadFactory<TUser>
-Microsoft.AspNetCore.Identity.IBearerPayloadFactory<TUser>.BuildPayloadAsync(TUser! user, Microsoft.AspNetCore.Identity.JwtBuilder! jwtBuilder) -> System.Threading.Tasks.Task!
+Microsoft.AspNetCore.Identity.IAccessTokenClaimsFactory<TUser>
+Microsoft.AspNetCore.Identity.IAccessTokenClaimsFactory<TUser>.BuildPayloadAsync(TUser! user, System.Collections.Generic.IDictionary<string!, string!>! payload) -> System.Threading.Tasks.Task!
+Microsoft.AspNetCore.Identity.IAccessTokenPolicy
+Microsoft.AspNetCore.Identity.IAccessTokenPolicy.CreateAsync(string! tokenId, string! issuer, string! audience, System.Collections.Generic.IDictionary<string!, string!>! payload, System.DateTimeOffset notBefore, System.DateTimeOffset expires, System.DateTimeOffset issuedAt, string! subject) -> System.Threading.Tasks.Task<string!>!
+Microsoft.AspNetCore.Identity.IAccessTokenPolicy.ValidateAsync(string! accessToken, string! issuer, string! audience) -> System.Threading.Tasks.Task<System.Security.Claims.ClaimsPrincipal?>!
 Microsoft.AspNetCore.Identity.IdentityBearerOptions
 Microsoft.AspNetCore.Identity.IdentityBearerOptions.Audiences.get -> System.Collections.Generic.IList<string!>!
 Microsoft.AspNetCore.Identity.IdentityBearerOptions.Audiences.set -> void
@@ -81,13 +84,12 @@ Microsoft.AspNetCore.Identity.TokenManager<TUser>
 Microsoft.AspNetCore.Identity.TokenManager<TUser>.Dispose() -> void
 Microsoft.AspNetCore.Identity.TokenManager<TUser>.ErrorDescriber.get -> Microsoft.AspNetCore.Identity.IdentityErrorDescriber!
 Microsoft.AspNetCore.Identity.TokenManager<TUser>.ErrorDescriber.set -> void
-Microsoft.AspNetCore.Identity.TokenManager<TUser>.PayloadFactory.get -> Microsoft.AspNetCore.Identity.IBearerPayloadFactory<TUser!>!
+Microsoft.AspNetCore.Identity.TokenManager<TUser>.PayloadFactory.get -> Microsoft.AspNetCore.Identity.IAccessTokenClaimsFactory<TUser!>!
 Microsoft.AspNetCore.Identity.TokenManager<TUser>.PayloadFactory.set -> void
 Microsoft.AspNetCore.Identity.TokenManager<TUser>.ThrowIfDisposed() -> void
-Microsoft.AspNetCore.Identity.TokenManager<TUser>.TokenManager(Microsoft.AspNetCore.Identity.UserManager<TUser!>! userManager, Microsoft.AspNetCore.Identity.IdentityErrorDescriber! errors, Microsoft.Extensions.Logging.ILogger<Microsoft.AspNetCore.Identity.TokenManager<Microsoft.AspNetCore.Identity.IdentityToken!>!>! logger, Microsoft.AspNetCore.Identity.IBearerPayloadFactory<TUser!>! claimsFactory, Microsoft.Extensions.Options.IOptions<Microsoft.AspNetCore.Identity.IdentityBearerOptions!>! bearerOptions) -> void
+Microsoft.AspNetCore.Identity.TokenManager<TUser>.TokenManager(Microsoft.AspNetCore.Identity.UserManager<TUser!>! userManager, Microsoft.AspNetCore.Identity.IdentityErrorDescriber! errors, Microsoft.Extensions.Logging.ILogger<Microsoft.AspNetCore.Identity.TokenManager<Microsoft.AspNetCore.Identity.IdentityToken!>!>! logger, Microsoft.AspNetCore.Identity.IAccessTokenClaimsFactory<TUser!>! claimsFactory, Microsoft.Extensions.Options.IOptions<Microsoft.AspNetCore.Identity.IdentityBearerOptions!>! bearerOptions, Microsoft.AspNetCore.Identity.IAccessTokenPolicy! accessTokenPolicy) -> void
 Microsoft.AspNetCore.Identity.TokenManager<TUser>.UserManager.get -> Microsoft.AspNetCore.Identity.UserManager<TUser!>!
 Microsoft.AspNetCore.Identity.TokenManager<TUser>.UserManager.set -> void
-Microsoft.AspNetCore.Identity.TokenManager<TUser>.ValidateAsync(string! token) -> System.Threading.Tasks.Task<System.Security.Claims.ClaimsPrincipal?>!
 Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>
 Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.AutoSaveChanges.get -> bool
 Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.AutoSaveChanges.set -> void

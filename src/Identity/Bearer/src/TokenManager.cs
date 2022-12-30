@@ -1,6 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Globalization;
 using System.Linq;
 using System.Security.Claims;
 using Microsoft.Extensions.Logging;
@@ -27,6 +28,7 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
     private bool _disposed;
 
     private readonly IdentityBearerOptions _bearerOptions;
+    private readonly IAccessTokenPolicy _accessTokenPolicy;
 
     /// <summary>
     /// The cancellation token used to cancel operations.
@@ -41,6 +43,7 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
     /// <param name="logger">The logger used to log messages, warnings and errors.</param>
     /// <param name="claimsFactory">The factory to use to create claims principals for a user.</param>
     /// <param name="bearerOptions">The options which configure the bearer token such as signing key, audience, and issuer.</param>
+    /// <param name="accessTokenPolicy"></param>
     /// <exception cref="ArgumentNullException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
     public TokenManager(
@@ -48,8 +51,9 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
         UserManager<TUser> userManager,
         IdentityErrorDescriber errors,
         ILogger<TokenManager<IdentityToken>> logger,
-        IBearerPayloadFactory<TUser> claimsFactory,
-        IOptions<IdentityBearerOptions> bearerOptions)
+        IAccessTokenClaimsFactory<TUser> claimsFactory,
+        IOptions<IdentityBearerOptions> bearerOptions,
+        IAccessTokenPolicy accessTokenPolicy)
     {
         //Store = store ?? throw new ArgumentNullException(nameof(store));
         UserManager = userManager;
@@ -57,6 +61,7 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
         PayloadFactory = claimsFactory;
         Logger = logger;
         _bearerOptions = bearerOptions.Value;
+        _accessTokenPolicy = accessTokenPolicy;
     }
 
     /*
@@ -83,7 +88,7 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
     /// <summary>
     /// The <see cref="IUserClaimsPrincipalFactory{TUser}"/> used.
     /// </summary>
-    public IBearerPayloadFactory<TUser> PayloadFactory { get; set; }
+    public IAccessTokenClaimsFactory<TUser> PayloadFactory { get; set; }
 
     /// <summary>
     /// Gets the <see cref="IdentityErrorDescriber"/> used to provider error messages.
@@ -115,17 +120,30 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
             return string.Empty;
         }
 
-        var jwtBuilder = new JwtBuilder(
-            JWSAlg.HS256,
+        //var jwtBuilder = new JwtBuilder(
+        //    JWSAlg.HS256,
+        //    _bearerOptions.Issuer!,
+        //    _bearerOptions.SigningCredentials!,
+        //    audience: _bearerOptions.Audiences.FirstOrDefault() ?? string.Empty,
+        //    subject: string.Empty, // TODO: combine this with CreatePayload?
+        //    payload: null,
+        //    DateTimeOffset.UtcNow,
+        //    DateTimeOffset.UtcNow.AddMinutes(30));
+
+        var payload = new Dictionary<string, string>();
+        await PayloadFactory.BuildPayloadAsync(user, payload);
+        var userName = await UserManager.GetUserNameAsync(user).ConfigureAwait(false);
+
+        // REVIEW: Check that this logic is OK for jti claims
+        var jti = Guid.NewGuid().ToString().GetHashCode().ToString("x", CultureInfo.InvariantCulture);
+        return await _accessTokenPolicy.CreateAsync(jti,
             _bearerOptions.Issuer!,
-            _bearerOptions.SigningCredentials!,
-            audience: _bearerOptions.Audiences.FirstOrDefault() ?? string.Empty,
-            subject: string.Empty, // TODO: combine this with CreatePayload?
-            payload: null,
+            _bearerOptions.Audiences.FirstOrDefault() ?? string.Empty,
+            payload,
             DateTimeOffset.UtcNow,
-            DateTimeOffset.UtcNow.AddMinutes(30));
-        await PayloadFactory.BuildPayloadAsync(user, jwtBuilder);
-        return await jwtBuilder.CreateJwtAsync();
+            DateTimeOffset.UtcNow.AddMinutes(30),
+            DateTimeOffset.UtcNow,
+            subject: userName!);
     }
 
     /// <summary>
@@ -135,14 +153,7 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
     /// <returns>A claims principal for the token if its valid, null otherwise.</returns>
     public virtual async Task<ClaimsPrincipal?> ValidateAccessTokenAsync(string token)
     {
-        var reader = new JwtReader(
-            JWSAlg.HS256,
-            _bearerOptions.Issuer!,
-            _bearerOptions.SigningCredentials!,
-            _bearerOptions.Audiences.FirstOrDefault() ?? string.Empty);
-
-        var principal = await reader.ValidateJwtAsync(token);
-
+        var principal = await _accessTokenPolicy.ValidateAsync(token, _bearerOptions.Issuer!, _bearerOptions.Audiences.FirstOrDefault() ?? string.Empty);
         if (principal != null)
         {
             // TODO: Check for revocation

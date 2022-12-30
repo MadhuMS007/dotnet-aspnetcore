@@ -104,11 +104,10 @@ public static class BearerServiceCollectionExtensions
         });
 
         services.TryAddScoped<TokenManager<TUser>>();
-        services.TryAddScoped<IBearerPayloadFactory<TUser>, BearerPayloadFactory<TUser>>();
+        services.TryAddTransient<IAccessTokenPolicy, JwtAccessTokenPolicy>();
+        services.TryAddScoped<IAccessTokenClaimsFactory<TUser>, AccessTokenClaimsFactory<TUser>>();
         // Important to not return a different token manager instance, we only want one scoped token manager
         services.TryAddScoped<IAccessTokenValidator>(services => services.GetRequiredService<TokenManager<TUser>>());
-
-
         return services.AddIdentityCore<TUser>(setupAction);
     }
 }

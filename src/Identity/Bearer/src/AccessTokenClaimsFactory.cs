@@ -1,7 +1,6 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.Globalization;
 using System.Security.Claims;
 using Microsoft.Extensions.Options;
 
@@ -10,22 +9,22 @@ namespace Microsoft.AspNetCore.Identity;
 /// <summary>
 /// Create the payload for a user's bearer token.
 /// </summary>
-public interface IBearerPayloadFactory<TUser> where TUser : class
+public interface IAccessTokenClaimsFactory<TUser> where TUser : class
 {
     /// <summary>
     /// 
     /// </summary>
     /// <param name="user"></param>
-    /// <param name="jwtBuilder"></param>
+    /// <param name="payload">The payload to add to</param>
     /// <returns></returns>
-    Task BuildPayloadAsync(TUser user, JwtBuilder jwtBuilder);
+    Task BuildPayloadAsync(TUser user, IDictionary<string, string> payload);
 }
 
 /// <summary>
 /// 
 /// </summary>
 /// <typeparam name="TUser"></typeparam>
-internal sealed class BearerPayloadFactory<TUser> : IBearerPayloadFactory<TUser> where TUser : class
+internal sealed class AccessTokenClaimsFactory<TUser> : IAccessTokenClaimsFactory<TUser> where TUser : class
 {
     private readonly IdentityBearerOptions _bearerOptions;
     private UserManager<TUser> UserManager { get; set; }
@@ -37,20 +36,17 @@ internal sealed class BearerPayloadFactory<TUser> : IBearerPayloadFactory<TUser>
     /// <param name="userManager"></param>
     /// <param name="bearerOptions"></param>
     /// <exception cref="InvalidOperationException"></exception>
-    public BearerPayloadFactory(UserManager<TUser> userManager, IOptions<IdentityBearerOptions> bearerOptions)
+    public AccessTokenClaimsFactory(UserManager<TUser> userManager, IOptions<IdentityBearerOptions> bearerOptions)
     {
         UserManager = userManager;
         _bearerOptions = bearerOptions.Value;
     }
 
-    public async Task BuildPayloadAsync(TUser user, JwtBuilder jwtBuilder)
+    public async Task BuildPayloadAsync(TUser user, IDictionary<string, string> payload)
     {
-        var payload = jwtBuilder.Payload;
-
         // Based on UserClaimsPrincipalFactory
         //var userId = await UserManager.GetUserIdAsync(user).ConfigureAwait(false);
         var userName = await UserManager.GetUserNameAsync(user).ConfigureAwait(false);
-        jwtBuilder.Subject = userName!;
         payload[ClaimTypes.NameIdentifier] = userName!;
 
         if (UserManager.SupportsUserEmail)
@@ -74,9 +70,6 @@ internal sealed class BearerPayloadFactory<TUser> : IBearerPayloadFactory<TUser>
                 payload[claim.Type] = claim.Value;
             }
         }
-
-        // REVIEW: Check that this logic is OK for jti claims
-        jwtBuilder.Jti = Guid.NewGuid().ToString().GetHashCode().ToString("x", CultureInfo.InvariantCulture);
 
         // REVIEW: why more than one aud?
         //payload["aud"] = _bearerOptions.Audiences.LastOrDefault()!;

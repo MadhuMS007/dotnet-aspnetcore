@@ -120,7 +120,7 @@ public class JwtBuilder
         // Generate JTI if null
         if (Jti == null)
         {
-            Jti = Guid.NewGuid().ToString();
+            Jti = Guid.NewGuid().ToString().GetHashCode().ToString("x", CultureInfo.InvariantCulture);
         }
 
         // TODO: add the metadata claims
