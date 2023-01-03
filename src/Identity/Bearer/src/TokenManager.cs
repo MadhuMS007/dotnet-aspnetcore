@@ -4,6 +4,7 @@
 using System.Globalization;
 using System.Linq;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -29,6 +30,7 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
 
     private readonly IdentityBearerOptions _bearerOptions;
     private readonly IAccessTokenPolicy _accessTokenPolicy;
+    private readonly ISystemClock _clock;
 
     /// <summary>
     /// The cancellation token used to cancel operations.
@@ -45,6 +47,7 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
     /// <param name="claimsFactory">The factory to use to create claims principals for a user.</param>
     /// <param name="bearerOptions">The options which configure the bearer token such as signing key, audience, and issuer.</param>
     /// <param name="accessTokenPolicy"></param>
+    /// <param name="clock"></param>
     /// <exception cref="ArgumentNullException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
     public TokenManager(
@@ -54,7 +57,8 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
         ILogger<TokenManager<IdentityToken>> logger,
         IAccessTokenClaimsFactory<TUser> claimsFactory,
         IOptions<IdentityBearerOptions> bearerOptions,
-        IAccessTokenPolicy accessTokenPolicy)
+        IAccessTokenPolicy accessTokenPolicy,
+        ISystemClock clock)
     {
         Store = store ?? throw new ArgumentNullException(nameof(store));
         UserManager = userManager;
@@ -63,13 +67,14 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
         Logger = logger;
         _bearerOptions = bearerOptions.Value;
         _accessTokenPolicy = accessTokenPolicy;
+        _clock = clock;
     }
 
     /// <summary>
     /// Gets the persistence store this instance operates over.
     /// </summary>
     /// <value>The persistence store this instance operates over.</value>
-    protected ITokenStore<IdentityToken> Store { get; private set; }
+    protected internal ITokenStore<IdentityToken> Store { get; private set; }
 
     /// <summary>
     /// Gets the <see cref="ILogger"/> used to log messages from the manager.
@@ -96,6 +101,8 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
     /// The <see cref="IdentityErrorDescriber"/> used to provider error messages.
     /// </value>
     public IdentityErrorDescriber ErrorDescriber { get; set; }
+
+
 
     /// <summary>
     /// Releases all resources.
@@ -188,11 +195,15 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
     /// consume the refreshToken via calling Revoke on it.
     /// </summary>
     /// <param name="refreshToken"></param>
-    /// <returns>(access token, refresh token) if successfull, (null, null) otherwise.</returns>
+    /// <returns>(access token, refresh token) if successful, (null, null) otherwise.</returns>
     public virtual async Task<(string?, string?)> RefreshTokensAsync(string refreshToken)
     {
+        // TODO: tests to write:
+        // with revoked token
+        // with deleted user
+
         var tok = await Store.FindAsync(RefreshTokenName, refreshToken, CancellationToken).ConfigureAwait(false); ;
-        if (tok == null || tok.Revoked)
+        if (tok == null || tok.Revoked || _clock.UtcNow > tok.ValidUntil)
         {
             return (null, null);
         }

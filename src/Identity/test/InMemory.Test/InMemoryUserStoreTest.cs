@@ -12,19 +12,13 @@ namespace Microsoft.AspNetCore.Identity.InMemory.Test;
 public class InMemoryUserStoreTest : UserManagerSpecificationTestBase<PocoUser, string>, IClassFixture<InMemoryUserStoreTest.Fixture>
 {
     protected override object CreateTestContext()
-    {
-        return new InMemoryUserStore<PocoUser>();
-    }
+        => new InMemoryUserStore<PocoUser>();
 
     protected override void AddUserStore(IServiceCollection services, object context = null)
-    {
-        services.AddSingleton<IUserStore<PocoUser>>((InMemoryUserStore<PocoUser>)context);
-    }
+        => services.AddSingleton<IUserStore<PocoUser>>((InMemoryUserStore<PocoUser>)context);
 
     protected override void SetUserPasswordHash(PocoUser user, string hashedPassword)
-    {
-        user.PasswordHash = hashedPassword;
-    }
+        => user.PasswordHash = hashedPassword;
 
     protected override PocoUser CreateTestUser(string namePrefix = "", string email = "", string phoneNumber = "",
         bool lockoutEnabled = false, DateTimeOffset? lockoutEnd = default(DateTimeOffset?), bool useNamePrefixAsUserName = false)
