@@ -7,39 +7,24 @@ using Microsoft.EntityFrameworkCore;
 namespace Microsoft.AspNetCore.Identity;
 
 /// <summary>
-/// 
+/// Represents a user's device, i.e. browser, phone, TV
 /// </summary>
-public class IdentityToken
+internal sealed class IdentityDevice
 {
     /// <summary>
-    /// The userId for the owner of the token
+    /// The Id for the device.
+    /// </summary>
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+
+    /// <summary>
+    /// The userId for the user who owns this device.
     /// </summary>
     public string UserId { get; set; } = string.Empty;
 
     /// <summary>
-    /// The purpose for the token
+    /// The name of the device.
     /// </summary>
-    public string Purpose { get; set; } = string.Empty;
-
-    /// <summary>
-    /// The value for the token
-    /// </summary>
-    public string Value { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Get or set how long this token is valid until.
-    /// </summary>
-    public DateTimeOffset ValidUntil { get; set; }
-
-    /// <summary>
-    /// Get or set whether the token is revoked.
-    /// </summary>
-    public bool Revoked { get; set; }
-
-    /// <summary>
-    /// A random value that must change whenever a token is persisted to the store
-    /// </summary>
-    public virtual string? ConcurrencyStamp { get; set; } = Guid.NewGuid().ToString();
+    public string Name { get; set; } = string.Empty;
 }
 
 /// <summary>

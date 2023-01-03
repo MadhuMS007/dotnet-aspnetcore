@@ -29,3 +29,9 @@ public class ExternalUserInfo
     [Required]
     public string ProviderKey { get; set; } = default!;
 }
+
+public class RefreshToken
+{
+    [Required]
+    public string Token { get; set; } = default!;
+}

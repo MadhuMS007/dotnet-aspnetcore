@@ -20,6 +20,6 @@ public class TodoDbContext : IdentityDbContext<TodoUser>
                .HasForeignKey(t => t.OwnerId)
                .HasPrincipalKey(u => u.UserName);
 
-        base.OnModelCreating(builder);
+        base.OnModelCreatingVersion2(builder);
     }
 }

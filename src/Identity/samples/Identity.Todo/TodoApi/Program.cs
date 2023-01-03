@@ -19,7 +19,8 @@ builder.Services.AddSqlite<TodoDbContext>(connectionString);
 
 // Configure identity
 builder.Services.AddDefaultIdentityBearer<TodoUser>()
-                .AddEntityFrameworkStores<TodoDbContext>();
+                .AddEntityFrameworkStores<TodoDbContext>()
+                .AddTokenStore<TodoDbContext>();
 
 // State that represents the current user from the database *and* the request
 builder.Services.AddCurrentUser();

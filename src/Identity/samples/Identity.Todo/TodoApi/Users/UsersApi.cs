@@ -37,7 +37,7 @@ public static class UsersApi
                 return TypedResults.BadRequest();
             }
 
-            return TypedResults.Ok(new AuthToken(await tokenService.GetAccessTokenAsync(user)));
+            return TypedResults.Ok(new AuthToken(await tokenService.GetAccessTokenAsync(user), await tokenService.GetRefreshTokenAsync(user)));
         });
 
         group.MapPost("/token/{provider}", async Task<Results<Ok<AuthToken>, ValidationProblem>> (string provider, ExternalUserInfo userInfo, UserManager<TodoUser> userManager, TokenManager<TodoUser> tokenService) =>
@@ -60,10 +60,51 @@ public static class UsersApi
 
             if (result.Succeeded)
             {
-                return TypedResults.Ok(new AuthToken(await tokenService.GetAccessTokenAsync(user)));
+                return TypedResults.Ok(new AuthToken(await tokenService.GetAccessTokenAsync(user), await tokenService.GetRefreshTokenAsync(user)));
             }
 
             return TypedResults.ValidationProblem(result.Errors.ToDictionary(e => e.Code, e => new[] { e.Description }));
+        });
+
+        group.MapPost("/refreshToken", async Task<Results<BadRequest, Ok<AuthToken>>> (RefreshToken tokenInfo, UserManager<TodoUser> userManager, TokenManager<TodoUser> tokenService) =>
+        {
+            if (tokenInfo.Token is null)
+            {
+                return TypedResults.BadRequest();
+            }
+
+            (var accessToken, var refreshToken) = await tokenService.RefreshTokensAsync(tokenInfo.Token);
+
+            if (accessToken is null || refreshToken is null)
+            {
+                return TypedResults.BadRequest();
+            }
+
+            return TypedResults.Ok(new AuthToken(accessToken, refreshToken));
+            //var isValid = await tokenService.ValidateRefreshToken(refreshTokenDTO.RefreshToken);
+
+            //if (isValid)
+            //{
+            //    var user = await userManager.FindByIdAsync(refreshTokenDTO.UserId);
+
+            //    if (user == null)
+            //    {
+            //        return Results.NotFound(new AuthResultDTO
+            //        {
+            //            Succeeded = false,
+            //            StatusCode = 404,
+            //            Message = "Could find the principal of the provided refresh token",
+            //            TimeStamp = DateTime.Now,
+            //        });
+            //    }
+
+            //    var tokens = await tokenService.GetTokensAsync(user);
+            //    //Revoke the current refresh token by changing the expiry time and setting the isRevoked flag to true. 
+            //    await tokenService.RevokeRefreshTokenAsync(user, refreshTokenDTO.RefreshToken);
+            //    return Results.Ok(tokens);
+            //}
+
+            //return Results.UnprocessableEntity(new { Message = "Could not refresh the tokens" });
         });
 
         return group;

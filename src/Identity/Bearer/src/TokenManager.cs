@@ -38,6 +38,7 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
     /// <summary>
     /// Constructs a new instance of <see cref="TokenManager{TUser}"/>.
     /// </summary>
+    /// <param name="store"></param>
     /// <param name="userManager">An instance of <see cref="UserManager"/> used to retrieve users from and persist users.</param>
     /// <param name="errors">The <see cref="IdentityErrorDescriber"/> used to provider error messages.</param>
     /// <param name="logger">The logger used to log messages, warnings and errors.</param>
@@ -47,7 +48,7 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
     /// <exception cref="ArgumentNullException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
     public TokenManager(
-//        ITokenStore<IdentityToken> store,
+        ITokenStore<IdentityToken> store,
         UserManager<TUser> userManager,
         IdentityErrorDescriber errors,
         ILogger<TokenManager<IdentityToken>> logger,
@@ -55,7 +56,7 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
         IOptions<IdentityBearerOptions> bearerOptions,
         IAccessTokenPolicy accessTokenPolicy)
     {
-        //Store = store ?? throw new ArgumentNullException(nameof(store));
+        Store = store ?? throw new ArgumentNullException(nameof(store));
         UserManager = userManager;
         ErrorDescriber = errors;
         PayloadFactory = claimsFactory;
@@ -64,13 +65,11 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
         _accessTokenPolicy = accessTokenPolicy;
     }
 
-    /*
     /// <summary>
     /// Gets the persistence store this instance operates over.
     /// </summary>
     /// <value>The persistence store this instance operates over.</value>
     protected ITokenStore<IdentityToken> Store { get; private set; }
-    */
 
     /// <summary>
     /// Gets the <see cref="ILogger"/> used to log messages from the manager.
@@ -114,6 +113,8 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
     /// <returns></returns>
     public virtual async Task<string> GetAccessTokenAsync(TUser user)
     {
+        // TODO: Device/SessionId needs should be passed in or set on TokenManager?
+
         // REVIEW: we could throw instead?
         if (user == null)
         {
@@ -162,15 +163,15 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
         return null;
     }
 
-    /*
     /// <summary>
     /// Get a refresh token for the user.
     /// </summary>
     /// <param name="user">The user.</param>
     /// <returns></returns>
-    public virtual async Task<IdentityToken> GetRefreshAsync(TUser user)
+    public virtual async Task<string> GetRefreshTokenAsync(TUser user)
     {
         var userId = await UserManager.GetUserIdAsync(user);
+
         var refreshToken = new IdentityToken()
         {
             UserId = userId,
@@ -179,22 +180,30 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
             ValidUntil = DateTimeOffset.UtcNow.AddDays(1)
         };
         await Store.CreateAsync(refreshToken, CancellationToken);
-        return refreshToken;
+        return refreshToken.Value;
     }
 
     /// <summary>
-    /// Returns the user given a valid (non expired) refresh token.
+    /// Returns a new access and refresh token if refreshToken is valid, will also
+    /// consume the refreshToken via calling Revoke on it.
     /// </summary>
-    /// <param name="token">The refresh token.</param>
-    /// <returns></returns>
-    public virtual async Task<TUser?> FindByRefreshAsync(string token)
+    /// <param name="refreshToken"></param>
+    /// <returns>(access token, refresh token) if successfull, (null, null) otherwise.</returns>
+    public virtual async Task<(string?, string?)> RefreshTokensAsync(string refreshToken)
     {
-        var refreshToken = await Store.FindAsync(RefreshTokenName, token, CancellationToken).ConfigureAwait(false); ;
-        if (refreshToken != null)
+        var tok = await Store.FindAsync(RefreshTokenName, refreshToken, CancellationToken).ConfigureAwait(false); ;
+        if (tok == null || tok.Revoked)
         {
-            return await UserManager.FindByIdAsync(refreshToken.UserId).ConfigureAwait(false); ;
+            return (null, null);
         }
-        return null;
+
+        var user = await UserManager.FindByIdAsync(tok.UserId).ConfigureAwait(false);
+        if (user != null)
+        {
+            await RevokeRefreshAsync(user, refreshToken);
+            return (await GetAccessTokenAsync(user), await GetRefreshTokenAsync(user));
+        }
+        return (null, null);
     }
 
     /// <summary>
@@ -209,12 +218,13 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
         var refreshToken = await Store.FindAsync(RefreshTokenName, token, CancellationToken);
         if (refreshToken != null)
         {
+            // TODO: this shouldn't use the POCO
             refreshToken.Revoked = true;
             return await Store.UpdateAsync(refreshToken, CancellationToken).ConfigureAwait(false); ;
         }
         return IdentityResult.Success;
     }
-    */
+
     /// <summary>
     /// Releases the unmanaged resources used by the role manager and optionally releases the managed resources.
     /// </summary>

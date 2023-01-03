@@ -131,6 +131,26 @@ public abstract class IdentityDbContext<TUser, TRole, TKey, TUserClaim, TUserRol
     {
         // TODO: Any changes for the role version?
         OnModelCreatingVersion1(builder);
+
+        builder.Entity<TUser>(b =>
+        {
+            b.HasMany<IdentityToken>().WithOne().HasForeignKey(ur => ur.UserId).IsRequired();
+        });
+
+        builder.Entity<IdentityToken>(b =>
+        {
+            b.HasKey(t => t.Id);
+            // REVIEW: is this correct for index?
+            b.HasIndex(t => new { t.Purpose, t.Value }).HasDatabaseName("TokenPurposeValueIndex");
+            b.ToTable("AspNetTokens");
+            b.Property(r => r.ConcurrencyStamp).IsConcurrencyToken();
+
+            // REVIEW should we cap the purpose/value lengths?
+            b.Property(u => u.Purpose).HasMaxLength(256);
+            b.Property(u => u.Value).HasMaxLength(256);
+        });
+
+
     }
 
     /// <summary>
