@@ -3,6 +3,7 @@
 
 using System.Globalization;
 using System.Linq.Expressions;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity.InMemory.Test;
@@ -15,6 +16,9 @@ namespace Microsoft.AspNetCore.Identity.InMemory;
 
 public class InMemoryTokenStoreTest : IClassFixture<InMemoryUserStoreTest.Fixture>
 {
+    private readonly string Issuer = "dotnet-user-jwts";
+    private readonly string Audience = "<audience>";
+
     /// <summary>
     /// Configure the service collection used for tests.
     /// </summary>
@@ -51,8 +55,8 @@ public class InMemoryTokenStoreTest : IClassFixture<InMemoryUserStoreTest.Fixtur
         services.AddSingleton<IConfiguration>(new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["Authentication:Schemes:Identity.Bearer:Issuer"] = "dotnet-user-jwts",
-                ["Authentication:Schemes:Identity.Bearer:Audiences:0:Value"] = "whateverAudience",
+                ["Authentication:Schemes:Identity.Bearer:Issuer"] = Issuer,
+                ["Authentication:Schemes:Identity.Bearer:Audiences:0"] = Audience,
                 ["Authentication:Schemes:Identity.Bearer:SigningCredentials:kty"] = "oct",
                 ["Authentication:Schemes:Identity.Bearer:SigningCredentials:alg"] = "HS256",
                 ["Authentication:Schemes:Identity.Bearer:SigningCredentials:kid"] = "someguid",
@@ -126,6 +130,76 @@ public class InMemoryTokenStoreTest : IClassFixture<InMemoryUserStoreTest.Fixtur
         configureServices?.Invoke(services);
         return services.BuildServiceProvider().GetService<TokenManager<PocoUser>>();
     }
+
+    /// <summary>
+    /// Test.
+    /// </summary>
+    /// <returns>Task</returns>
+    [Fact]
+    public async Task AccessTokenFormat()
+    {
+        var manager = CreateManager();
+        var user = CreateTestUser();
+        IdentityResultAssert.IsSuccess(await manager.UserManager.CreateAsync(user));
+
+        var claims = new[] {
+            new Claim("custom", "value"),
+            new Claim("custom2", "value"),
+        };
+
+        await manager.UserManager.AddClaimsAsync(user, claims);
+
+        var token = await manager.GetAccessTokenAsync(user);
+        Assert.NotNull(token);
+
+        var principal = await manager.ValidateAccessTokenAsync(token);
+
+        Assert.NotNull(principal);
+        foreach (var cl in claims)
+        {
+            Assert.Contains(principal.Claims, c => c.Type == cl.Type && c.Value == cl.Value);
+        }
+        EnsureClaim(principal, "iss", Issuer);
+        EnsureClaim(principal, "aud", Audience);
+        EnsureClaim(principal, "sub", user.UserName);
+    }
+
+    /// <summary>
+    /// Test.
+    /// </summary>
+    /// <returns>Task</returns>
+    [Fact]
+    public async Task AccessTokenDupcliateClaimsFormat()
+    {
+        var manager = CreateManager();
+        var user = CreateTestUser();
+        IdentityResultAssert.IsSuccess(await manager.UserManager.CreateAsync(user));
+
+        var claims = new[] {
+            new Claim("custom", "value"),
+            new Claim("custom", "value2"),
+            new Claim("custom2", "value"),
+            new Claim("custom2", "value2"),
+        };
+
+        await manager.UserManager.AddClaimsAsync(user, claims);
+
+        var token = await manager.GetAccessTokenAsync(user);
+        Assert.NotNull(token);
+
+        var principal = await manager.ValidateAccessTokenAsync(token);
+
+        Assert.NotNull(principal);
+        EnsureClaim(principal, "custom", "value2");
+        EnsureClaim(principal, "custom2", "value2");
+        EnsureClaim(principal, "iss", Issuer);
+        EnsureClaim(principal, "aud", Audience);
+        EnsureClaim(principal, "sub", user.UserName);
+    }
+
+
+    private void EnsureClaim(ClaimsPrincipal principal, string name, string value)
+        => Assert.Contains(principal.Claims, c => c.Type == name && c.Value == value);
 
     /// <summary>
     /// Test.

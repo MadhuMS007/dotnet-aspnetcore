@@ -128,16 +128,6 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
             return string.Empty;
         }
 
-        //var jwtBuilder = new JwtBuilder(
-        //    JWSAlg.HS256,
-        //    _bearerOptions.Issuer!,
-        //    _bearerOptions.SigningCredentials!,
-        //    audience: _bearerOptions.Audiences.FirstOrDefault() ?? string.Empty,
-        //    subject: string.Empty, // TODO: combine this with CreatePayload?
-        //    payload: null,
-        //    DateTimeOffset.UtcNow,
-        //    DateTimeOffset.UtcNow.AddMinutes(30));
-
         var payload = new Dictionary<string, string>();
         await PayloadFactory.BuildPayloadAsync(user, payload);
         var userName = await UserManager.GetUserNameAsync(user).ConfigureAwait(false);
@@ -199,7 +189,6 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
     public virtual async Task<(string?, string?)> RefreshTokensAsync(string refreshToken)
     {
         // TODO: tests to write:
-        // with revoked token
         // with deleted user
 
         var tok = await Store.FindAsync(RefreshTokenName, refreshToken, CancellationToken).ConfigureAwait(false); ;
