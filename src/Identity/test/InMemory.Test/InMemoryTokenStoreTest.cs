@@ -53,7 +53,7 @@ public class InMemoryTokenStoreTest : IClassFixture<InMemoryUserStoreTest.Fixtur
         //   }
 
         services.AddSingleton<IConfiguration>(new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
+            .AddInMemoryCollection(new Dictionary<string, string>
             {
                 ["Authentication:Schemes:Identity.Bearer:Issuer"] = Issuer,
                 ["Authentication:Schemes:Identity.Bearer:Audiences:0"] = Audience,
@@ -197,7 +197,6 @@ public class InMemoryTokenStoreTest : IClassFixture<InMemoryUserStoreTest.Fixtur
         EnsureClaim(principal, "sub", user.UserName);
     }
 
-
     private void EnsureClaim(ClaimsPrincipal principal, string name, string value)
         => Assert.Contains(principal.Claims, c => c.Type == name && c.Value == value);
 
@@ -286,4 +285,57 @@ public class InMemoryTokenStoreTest : IClassFixture<InMemoryUserStoreTest.Fixtur
         Assert.Null(await manager.UserManager.FindByIdAsync(userId));
         Assert.Null(await manager.Store.FindAsync("", token, CancellationToken.None));
     }
+
+    /// <summary>
+    /// Test.
+    /// </summary>
+    /// <returns>Task</returns>
+    [Fact]
+    public async Task CanStoreJWK()
+    {
+        var manager = CreateManager();
+
+        var keyId = Guid.NewGuid().ToString();
+        var data = new Dictionary<string, string>();
+        data["kty"] = "oct";
+        data["alg"] = "HS256";
+        data["kid"] = keyId;
+        data["k"] = "(G+KbPeShVmYq3t6w9z$C&F)J@McQfTj";
+        var jwk = new JsonSigningKey(keyId, data);
+
+        await manager.AddSigningKeyAsync(JsonKeySerializer.ProviderId, jwk);
+
+        var key = await manager.GetSigningKeyAsync(keyId);
+
+        Assert.NotNull(key);
+        foreach (var k in data.Keys)
+        {
+            Assert.Equal(data[k], key[k]);
+        }
+    }
+
+    /// <summary>
+    /// Test.
+    /// </summary>
+    /// <returns>Task</returns>
+    [Fact]
+    public async Task CanStoreBase64Key()
+    {
+        var manager = CreateManager();
+
+        var keyId = Guid.NewGuid().ToString();
+        var base64Key = "(G+KbPeShVmYq3t6w9z$C&F)J@McQfTj";
+        var baseKey = new Base64Key(keyId, base64Key);
+
+        await manager.AddSigningKeyAsync(Base64KeySerializer.ProviderId, baseKey);
+
+        var key = await manager.GetSigningKeyAsync(keyId);
+
+        Assert.NotNull(key);
+        foreach (var k in baseKey.Data.Keys)
+        {
+            Assert.Equal(baseKey.Data[k], key.Data[k]);
+        }
+    }
+
 }

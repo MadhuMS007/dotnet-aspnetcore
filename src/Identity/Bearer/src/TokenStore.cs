@@ -96,6 +96,16 @@ public abstract class IdentityDbContext<TUser, TRole, TToken, TKey, TUserClaim, 
             b.Property(u => u.Purpose).HasMaxLength(256);
             b.Property(u => u.Value).HasMaxLength(256);
         });
+
+        builder.Entity<IdentityKeyData>(b =>
+        {
+            b.ToTable("AspNetSigningKeys");
+
+            // REVIEW should we cap the purpose/value lengths?
+            b.Property(u => u.ProviderId).HasMaxLength(256);
+            b.Property(u => u.Format).HasMaxLength(256);
+        });
+
     }
 }
 
@@ -136,6 +146,33 @@ public interface ITokenStore<TToken> : IDisposable where TToken : class
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
     /// <returns>A <see cref="Task{TResult}"/> that result of the look up.</returns>
     Task<TToken?> FindAsync(string purpose, string value, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Add a new key in the store as an asynchronous operation.
+    /// </summary>
+    /// <param name="keyId">The string used to identify the key.</param>
+    /// <param name="providerId">The string used to identify the key provider.</param>
+    /// <param name="format">The string used to identify the format for the key.</param>
+    /// <param name="data">The string containing the key data.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+    /// <returns>A <see cref="Task{TResult}"/> that represents the <see cref="IdentityResult"/> of the asynchronous query.</returns>
+    Task<IdentityResult> AddKeyAsync(string keyId, string providerId, string format, string data, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Get a key from the store as an asynchronous operation.
+    /// </summary>
+    /// <param name="keyId">The key to retrieve from the store.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+    /// <returns>A <see cref="Task{TResult}"/> that represents the <see cref="IdentityResult"/> of the asynchronous query.</returns>
+    Task<IdentityKeyData?> GetKeyAsync(string keyId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Remove a key from the store as an asynchronous operation.
+    /// </summary>
+    /// <param name="keyId">The key to remove from the store.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+    /// <returns>A <see cref="Task{TResult}"/> that represents the <see cref="IdentityResult"/> of the asynchronous query.</returns>
+    Task<IdentityResult> RemoveKeyAsync(string keyId, CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -275,4 +312,54 @@ public class TokenStore<TToken, TContext> : ITokenStore<TToken>
     /// </summary>
     public void Dispose()
         => _disposed = true;
+
+    /// <inheritdoc/>
+    public virtual async Task<IdentityResult> AddKeyAsync(string keyId, string providerId, string format, string data, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ThrowIfDisposed();
+        var key = new IdentityKeyData()
+        {
+            Id = keyId,
+            ProviderId = providerId,
+            Format = format,
+            Data = data,
+            Created = DateTimeOffset.UtcNow
+        };
+        Context.Add(key);
+        await SaveChanges(cancellationToken);
+        return IdentityResult.Success;
+    }
+
+    /// <inheritdoc/>
+    public virtual async Task<IdentityResult> RemoveKeyAsync(string keyId, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ThrowIfDisposed();
+
+        var key = Context.Set<IdentityKeyData>().Find(keyId);
+        if (key == null)
+        {
+            return IdentityResult.Success;
+        }
+        Context.Remove(key);
+        try
+        {
+            await SaveChanges(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return IdentityResult.Failed(ErrorDescriber.ConcurrencyFailure());
+        }
+        return IdentityResult.Success;
+    }
+
+    /// <inheritdoc/>
+    public async Task<IdentityKeyData?> GetKeyAsync(string keyId, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ThrowIfDisposed();
+
+        return await Context.Set<IdentityKeyData>().FindAsync(new object?[] { keyId }, cancellationToken: cancellationToken);
+    }
 }
