@@ -7,8 +7,8 @@ using System.Text.Json;
 
 internal interface IIdentityKeyDataSerializer
 {
-    string Serialize(SigningKey key);
-    SigningKey Deserialize(IdentityKeyData key);
+    string Serialize(SigningKeyInfo key);
+    SigningKeyInfo Deserialize(KeyInfo key);
 
     string ProviderId { get; }
     string Format { get; }
@@ -26,7 +26,7 @@ internal sealed class JsonKeySerializer : IIdentityKeyDataSerializer
     string IIdentityKeyDataSerializer.Format => FormatVersion0;
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
-    public SigningKey Deserialize(IdentityKeyData key)
+    public SigningKeyInfo Deserialize(KeyInfo key)
     {
         // TODO: check for format/version usage?
         var data = JsonSerializer.Deserialize<IDictionary<string, string>>(key.Data);
@@ -38,7 +38,7 @@ internal sealed class JsonKeySerializer : IIdentityKeyDataSerializer
     }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
-    public string Serialize(SigningKey key)
+    public string Serialize(SigningKeyInfo key)
         => JsonSerializer.Serialize(key.Data);
 }
 
@@ -52,12 +52,12 @@ internal sealed class Base64KeySerializer : IIdentityKeyDataSerializer
     string IIdentityKeyDataSerializer.ProviderId => ProviderId;
     string IIdentityKeyDataSerializer.Format => FormatVersion0;
 
-    public SigningKey Deserialize(IdentityKeyData key)
+    public SigningKeyInfo Deserialize(KeyInfo key)
     {
         return new Base64Key(key.Id, key.Data);
     }
 
-    public string Serialize(SigningKey key)
+    public string Serialize(SigningKeyInfo key)
     {
         var base64Key = Base64Key.ToBase64Key(key);
         if (base64Key == null)
@@ -68,11 +68,11 @@ internal sealed class Base64KeySerializer : IIdentityKeyDataSerializer
     }
 }
 
-internal abstract class SigningKey
+internal abstract class SigningKeyInfo
 {
     private readonly IDictionary<string, string> _data;
 
-    public SigningKey(string id, IDictionary<string, string>? data = null)
+    public SigningKeyInfo(string id, IDictionary<string, string>? data = null)
     {
         Id = id;
         _data = data ?? new Dictionary<string, string>();
@@ -85,19 +85,19 @@ internal abstract class SigningKey
     public IDictionary<string, string> Data { get => _data; }
 }
 
-internal class JsonSigningKey : SigningKey
+internal class JsonSigningKey : SigningKeyInfo
 {
     public JsonSigningKey(string id, IDictionary<string, string> data) : base(id, data) { }
 }
 
-internal class Base64Key : SigningKey
+internal class Base64Key : SigningKeyInfo
 {
     public Base64Key(string id, string base64key) : base(id)
         => Key = base64key;
 
     public string Key { get => this["k"]; set => this["k"] = value; }
 
-    public static Base64Key? ToBase64Key(SigningKey key)
+    public static Base64Key? ToBase64Key(SigningKeyInfo key)
     {
         if (key.Data.ContainsKey("k"))
         {

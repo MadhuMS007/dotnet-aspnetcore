@@ -39,19 +39,21 @@ public static class BearerServiceCollectionExtensions
     /// <returns></returns>
     public static IdentityBuilder AddDefaultIdentityBearer<TUser>(this IServiceCollection services)
         where TUser : class
-    => services.AddDefaultIdentityBearer<TUser>(_ => { });
+    => services.AddDefaultIdentityBearer<TUser, IdentityToken>(_ => { });
 
     /// <summary>
     /// 
     /// </summary>
     /// <typeparam name="TUser"></typeparam>
+    /// <typeparam name="TToken"></typeparam>
     /// <param name="services"></param>
     /// <param name="setupAction"></param>
     /// <returns></returns>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
-    public static IdentityBuilder AddDefaultIdentityBearer<TUser>(this IServiceCollection services,
+    public static IdentityBuilder AddDefaultIdentityBearer<TUser, TToken>(this IServiceCollection services,
         Action<IdentityOptions> setupAction)
         where TUser : class
+        where TToken : class
     {
         services.AddAuthentication(IdentityConstants.BearerScheme)
             .AddCookie(IdentityConstants.BearerCookieScheme)
@@ -68,7 +70,7 @@ public static class BearerServiceCollectionExtensions
             //       "Identity.Bearer": {
             //         "Audience": "",
             //         "Issuer": "",
-            //         "SigningKeys": [ { "Issuer": .., "Value": base64Key, "Length": 32 } ]
+            //         "SigningKeys": [ { "Issuer": .., "Payload": base64Key, "Length": 32 } ]
             //       }
             //     }
             //   }
@@ -76,7 +78,7 @@ public static class BearerServiceCollectionExtensions
 //            var section = bearerSection.GetSection("SigningKeys:0");
 
             o.Issuer = bearerSection["Issuer"] ?? throw new InvalidOperationException("Issuer is not specified");
-            //            var signingKeyBase64 = section["Value"] ?? throw new InvalidOperationException("Signing key is not specified");
+            //            var signingKeyBase64 = section["Payload"] ?? throw new InvalidOperationException("Signing key is not specified");
 
             //var signingKeyBytes = Convert.FromBase64String(signingKeyBase64);
 
@@ -103,11 +105,11 @@ public static class BearerServiceCollectionExtensions
                         .ToList();
         });
 
-        services.TryAddScoped<TokenManager<TUser>>();
+        services.TryAddScoped<TokenManager<TUser, TToken>>();
         services.TryAddTransient<IAccessTokenPolicy, JwtAccessTokenPolicy>();
         services.TryAddScoped<IAccessTokenClaimsFactory<TUser>, AccessTokenClaimsFactory<TUser>>();
         // Important to not return a different token manager instance, we only want one scoped token manager
-        services.TryAddScoped<IAccessTokenValidator>(services => services.GetRequiredService<TokenManager<TUser>>());
+        services.TryAddScoped<IAccessTokenValidator>(services => services.GetRequiredService<TokenManager<TUser, TToken>>());
         services.Configure<IdentityOptions>(o => o.Stores.SchemaVersion = IdentityVersions.Version2);
         return services.AddIdentityCore<TUser>(setupAction);
     }

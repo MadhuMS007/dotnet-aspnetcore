@@ -10,7 +10,7 @@ namespace Microsoft.AspNetCore.Identity;
 /// <summary>
 /// Represents a key used for signing.
 /// </summary>
-public class IdentityKeyData
+public class KeyInfo
 {
     /// <summary>
     /// Get or set the Id for the key.

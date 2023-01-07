@@ -66,7 +66,7 @@ public class InMemoryTokenStoreTest : IClassFixture<InMemoryUserStoreTest.Fixtur
         services.AddAuthentication();
         services.AddDataProtection();
         services.AddSingleton<IDataProtectionProvider, EphemeralDataProtectionProvider>();
-        var builder = services.AddDefaultIdentityBearer<PocoUser>(options =>
+        var builder = services.AddDefaultIdentityBearer<PocoUser, IdentityToken>(options =>
         {
             options.Password.RequireDigit = false;
             options.Password.RequireLowercase = false;
@@ -116,7 +116,7 @@ public class InMemoryTokenStoreTest : IClassFixture<InMemoryUserStoreTest.Fixtur
     /// <param name="services">The service collection to use, optional.</param>
     /// <param name="configureServices">Delegate used to configure the services, optional.</param>
     /// <returns>The user manager to use for tests.</returns>
-    protected virtual TokenManager<PocoUser> CreateManager(object context = null, IServiceCollection services = null, Action<IServiceCollection> configureServices = null)
+    protected virtual TokenManager<PocoUser, IdentityToken> CreateManager(object context = null, IServiceCollection services = null, Action<IServiceCollection> configureServices = null)
     {
         if (services == null)
         {
@@ -128,7 +128,7 @@ public class InMemoryTokenStoreTest : IClassFixture<InMemoryUserStoreTest.Fixtur
         }
         SetupIdentityServices(services, context);
         configureServices?.Invoke(services);
-        return services.BuildServiceProvider().GetService<TokenManager<PocoUser>>();
+        return services.BuildServiceProvider().GetService<TokenManager<PocoUser, IdentityToken>>();
     }
 
     /// <summary>

@@ -14,23 +14,15 @@ namespace Microsoft.AspNetCore.Identity;
 /// Provides the APIs for managing roles in a persistence store.
 /// </summary>
 /// <typeparam name="TUser">The type encapsulating a user.</typeparam>
-public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUser : class
+/// <typeparam name="TToken">The type encapsulating a token.</typeparam>
+public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
+    where TUser : class
+    where TToken : class
 {
-    /// <summary>
-    /// The token name used for all refresh tokens.
-    /// </summary>
-    public static readonly string RefreshTokenName = "Refresh";
-
-    /// <summary>
-    /// The token name used for all access tokens.
-    /// </summary>
-    public static readonly string AccessTokenName = "Access";
-
-    private bool _disposed;
-
     private readonly IdentityBearerOptions _bearerOptions;
     private readonly IAccessTokenPolicy _accessTokenPolicy;
     private readonly ISystemClock _clock;
+    private bool _disposed;
 
     /// <summary>
     /// The cancellation token used to cancel operations.
@@ -38,7 +30,7 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
     protected virtual CancellationToken CancellationToken => CancellationToken.None;
 
     /// <summary>
-    /// Constructs a new instance of <see cref="TokenManager{TUser}"/>.
+    /// Constructs a new instance of <see cref="TokenManager{TUser,TToken}"/>.
     /// </summary>
     /// <param name="store"></param>
     /// <param name="userManager">An instance of <see cref="UserManager"/> used to retrieve users from and persist users.</param>
@@ -51,10 +43,10 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
     /// <exception cref="ArgumentNullException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
     public TokenManager(
-        ITokenStore<IdentityToken> store,
+        ITokenStore<TToken> store,
         UserManager<TUser> userManager,
         IdentityErrorDescriber errors,
-        ILogger<TokenManager<IdentityToken>> logger,
+        ILogger<TokenManager<TUser,TToken>> logger,
         IAccessTokenClaimsFactory<TUser> claimsFactory,
         IOptions<IdentityBearerOptions> bearerOptions,
         IAccessTokenPolicy accessTokenPolicy,
@@ -78,7 +70,7 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
     /// Gets the persistence store this instance operates over.
     /// </summary>
     /// <value>The persistence store this instance operates over.</value>
-    protected internal ITokenStore<IdentityToken> Store { get; private set; }
+    protected internal ITokenStore<TToken> Store { get; }
 
     /// <summary>
     /// Gets the <see cref="ILogger"/> used to log messages from the manager.
@@ -163,6 +155,15 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
     }
 
     /// <summary>
+    /// Create a new token instance with the specified token info. This should not be stored
+    /// in the token store yet.
+    /// </summary>
+    /// <param name="info">The <see cref="TokenInfo"/> for the token.</param>
+    /// <returns></returns>
+    public virtual Task<TToken> NewAsync(TokenInfo info)
+        => Store.NewAsync(info, CancellationToken);
+
+    /// <summary>
     /// Get a refresh token for the user.
     /// </summary>
     /// <param name="user">The user.</param>
@@ -170,17 +171,24 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
     public virtual async Task<string> GetRefreshTokenAsync(TUser user)
     {
         var userId = await UserManager.GetUserIdAsync(user);
-
-        var refreshToken = new IdentityToken()
+        var info = new TokenInfo(userId, TokenPurpose.RefreshToken, payload: Guid.NewGuid().ToString())
         {
-            UserId = userId,
-            Purpose = RefreshTokenName,
-            Value = Guid.NewGuid().ToString(),
-            ValidUntil = DateTimeOffset.UtcNow.AddDays(1)
+            Expiration = DateTimeOffset.UtcNow.AddDays(1),
+            Status = TokenStatus.Active
         };
-        await Store.CreateAsync(refreshToken, CancellationToken);
-        return refreshToken.Value;
+        var token = await Store.NewAsync(info, CancellationToken).ConfigureAwait(false);
+        await Store.CreateAsync(token, CancellationToken);
+        // TODO: check for success
+        return info.Payload;
     }
+
+    /// <summary>
+    /// Check if the token status is valid. Defaults to only active token status.
+    /// </summary>
+    /// <param name="status">The token status.</param>
+    /// <returns>true if the token is should be allowed.</returns>
+    protected virtual bool CheckTokenStatus(string status)
+        => status == TokenStatus.Active;
 
     /// <summary>
     /// Returns a new access and refresh token if refreshToken is valid, will also
@@ -193,16 +201,31 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
         // TODO: tests to write:
         // with deleted user
 
-        var tok = await Store.FindAsync(RefreshTokenName, refreshToken, CancellationToken).ConfigureAwait(false); ;
-        if (tok == null || tok.Revoked || _clock.UtcNow > tok.ValidUntil)
+        var tok = await Store.FindAsync(TokenPurpose.RefreshToken, refreshToken, CancellationToken).ConfigureAwait(false);
+        if (tok == null)
         {
             return (null, null);
         }
 
-        var user = await UserManager.FindByIdAsync(tok.UserId).ConfigureAwait(false);
+        var status = await Store.GetStatusAsync(tok, CancellationToken).ConfigureAwait(false);
+        if (!CheckTokenStatus(status))
+        {
+            return (null, null);
+        }
+
+        var expires = await Store.GetExpirationAsync(tok, CancellationToken).ConfigureAwait(false);
+        if (expires < _clock.UtcNow)
+        {
+            return (null, null);
+        }
+
+        var userId = await Store.GetSubjectAsync(tok, CancellationToken).ConfigureAwait(false);
+        var user = await UserManager.FindByIdAsync(userId).ConfigureAwait(false);
         if (user != null)
         {
-            await RevokeRefreshAsync(user, refreshToken);
+            // Mark the refresh token as used
+            await Store.SetStatusAsync(tok, TokenStatus.Inactive, CancellationToken).ConfigureAwait(false);
+            await Store.UpdateAsync(tok, CancellationToken).ConfigureAwait(false);
             return (await GetAccessTokenAsync(user), await GetRefreshTokenAsync(user));
         }
         return (null, null);
@@ -211,7 +234,7 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
     private readonly IDictionary<string, IIdentityKeyDataSerializer> _keyFormatProviders = new Dictionary<string, IIdentityKeyDataSerializer>();
 
     // TODO: move these
-    internal virtual async Task AddSigningKeyAsync(string keyProvider, SigningKey key)
+    internal virtual async Task AddSigningKeyAsync(string keyProvider, SigningKeyInfo key)
     {
         if (!_keyFormatProviders.ContainsKey(keyProvider))
         {
@@ -220,12 +243,12 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
         var provider = _keyFormatProviders[keyProvider];
         var keyData = provider.Serialize(key);
 
-        await Store.AddKeyAsync(key.Id, provider.ProviderId, provider.Format, keyData, CancellationToken);
+        await ((IKeyStore)Store).AddAsync(key.Id, provider.ProviderId, provider.Format, keyData, CancellationToken);
     }
 
-    internal virtual async Task<SigningKey?> GetSigningKeyAsync(string keyId)
+    internal virtual async Task<SigningKeyInfo?> GetSigningKeyAsync(string keyId)
     {
-        var keyData = await Store.GetKeyAsync(keyId, CancellationToken);
+        var keyData = await ((IKeyStore)Store).FindByIdAsync(keyId, CancellationToken);
         if (keyData == null)
         {
             return null;
@@ -247,11 +270,10 @@ public class TokenManager<TUser> : IAccessTokenValidator, IDisposable where TUse
     public virtual async Task<IdentityResult> RevokeRefreshAsync(TUser user, string token)
     {
         // TODO: this needs to go through store
-        var refreshToken = await Store.FindAsync(RefreshTokenName, token, CancellationToken);
+        var refreshToken = await Store.FindAsync(TokenPurpose.RefreshToken, token, CancellationToken);
         if (refreshToken != null)
         {
-            // TODO: this shouldn't use the POCO
-            refreshToken.Revoked = true;
+            await Store.SetStatusAsync(refreshToken, TokenStatus.Revoked, CancellationToken);
             return await Store.UpdateAsync(refreshToken, CancellationToken).ConfigureAwait(false); ;
         }
         return IdentityResult.Success;

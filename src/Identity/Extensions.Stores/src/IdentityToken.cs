@@ -11,14 +11,42 @@ namespace Microsoft.AspNetCore.Identity;
 public class IdentityToken
 {
     /// <summary>
+    /// Default constructor.
+    /// </summary>
+    public IdentityToken()
+    {
+    }
+
+    /// <summary>
+    /// Import the token info into this instance.
+    /// </summary>
+    /// <param name="info">The token info to import.</param>
+    public IdentityToken(TokenInfo info)
+        => Import(info);
+
+    /// <summary>
+    /// Import the token info into this instance.
+    /// </summary>
+    /// <param name="info">The token info to import.</param>
+    public void Import(TokenInfo info)
+    {
+        Subject = info.Subject;
+        Status = info.Status;
+        Purpose = info.Purpose;
+        Payload = info.Payload;
+        Expiration = info.Expiration.GetValueOrDefault();
+        Created = info.Created ?? DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>
     /// The Id for the token.
     /// </summary>
     public string Id { get; set; } = Guid.NewGuid().ToString();
 
     /// <summary>
-    /// The userId for the owner of the token.
+    /// The subject for the token.
     /// </summary>
-    public string UserId { get; set; } = default!;
+    public string Subject { get; set; } = default!;
 
     /// <summary>
     /// The purpose for the token.
@@ -26,19 +54,24 @@ public class IdentityToken
     public string Purpose { get; set; } = default!;
 
     /// <summary>
-    /// The value for the token.
+    /// The payload for the token.
     /// </summary>
-    public string Value { get; set; } = default!;
+    public string Payload { get; set; } = default!;
 
     /// <summary>
-    /// Get or set how long this token is valid until.
+    /// Get or set when this token was created.
     /// </summary>
-    public DateTimeOffset ValidUntil { get; set; }
+    public DateTimeOffset Created { get; set; }
 
     /// <summary>
-    /// Get or set whether the token is revoked.
+    /// Get or set when this token expires.
     /// </summary>
-    public bool Revoked { get; set; }
+    public DateTimeOffset Expiration { get; set; }
+
+    /// <summary>
+    /// Get or set the token status, i.e. active, revoked.
+    /// </summary>
+    public string Status { get; set; } = default!;
 
     /// <summary>
     /// A random value that must change whenever a token is persisted to the store

@@ -85,7 +85,7 @@ public static class UsersApi
 
             //if (isValid)
             //{
-            //    var user = await userManager.FindByIdAsync(refreshTokenDTO.UserId);
+            //    var user = await userManager.FindByIdAsync(refreshTokenDTO.Subject);
 
             //    if (user == null)
             //    {
