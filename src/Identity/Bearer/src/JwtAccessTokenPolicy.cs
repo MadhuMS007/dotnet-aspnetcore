@@ -1,10 +1,29 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Linq;
 using System.Security.Claims;
 using Microsoft.Extensions.Options;
 
 namespace Microsoft.AspNetCore.Identity;
+
+internal class JwtTokenFormat : ITokenFormatProvider
+{
+    public Task<string> SerializeAsync(IDictionary<string, string> data)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+internal class GuidTokenFormat : ITokenFormatProvider
+{
+    public Task<string> SerializeAsync(IDictionary<string, string> data)
+        => Task.FromResult(data["t"]);
+}
+
+internal class RefreshTokenPolicy
+{
+}
 
 internal class JwtAccessTokenPolicy : IAccessTokenPolicy
 {
@@ -17,9 +36,9 @@ internal class JwtAccessTokenPolicy : IAccessTokenPolicy
     {
         var jwtBuilder = new JwtBuilder(
             JWSAlg.HS256,
-            issuer,
+            _bearerOptions.Issuer!,
             _bearerOptions.SigningCredentials!,
-            audience,
+            _bearerOptions.Audiences.LastOrDefault()!,
             subject,
             payload,
             notBefore,
@@ -36,5 +55,15 @@ internal class JwtAccessTokenPolicy : IAccessTokenPolicy
             _bearerOptions.SigningCredentials!,
             audience);
         return reader.ValidateJwtAsync(accessToken);
+    }
+
+    Task<ClaimsPrincipal?> IAccessTokenPolicy.ValidateAsync(TokenInfo token, string issuer, string audience)
+    {
+        var reader = new JwtReader(
+            JWSAlg.HS256,
+            _bearerOptions.Issuer!,
+            _bearerOptions.SigningCredentials!,
+            _bearerOptions.Audiences.LastOrDefault()!);
+        return reader.ValidateJwtAsync(token.Payload);
     }
 }

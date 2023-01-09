@@ -40,7 +40,7 @@ internal sealed class JwtHeader : IDictionary<string, string>
     }
 
     /// <summary>
-    /// Maps to the Headers["typ"] representing the Purpose of the JWT.
+    /// Maps to the Headers["typ"] representing the type of the JWT.
     /// </summary>
     public string Type
     {

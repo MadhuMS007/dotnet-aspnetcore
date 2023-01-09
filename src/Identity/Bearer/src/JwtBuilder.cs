@@ -9,7 +9,7 @@ namespace Microsoft.AspNetCore.Identity;
 /// <summary>
 /// 
 /// </summary>
-public class JwtBuilder
+public class JwtBuilder : TokenBuilder
 {
     /// <summary>
     /// 
@@ -22,16 +22,14 @@ public class JwtBuilder
     /// <param name="payload"></param>
     /// <param name="notBefore"></param>
     /// <param name="expires"></param>
-    public JwtBuilder(string algorithm, string issuer, JsonWebKey signingKey, string audience, string subject, IDictionary<string, string>? payload, DateTimeOffset notBefore, DateTimeOffset expires)
+    public JwtBuilder(string algorithm, string issuer, JsonWebKey signingKey, string audience, string subject, IDictionary<string, string> payload, DateTimeOffset notBefore, DateTimeOffset expires)
+        : base(subject, expires, payload)
     {
         Algorithm = algorithm;
         Issuer = issuer;
         SigningKey = signingKey;
         Audience = audience;
-        Subject = subject;
-        Payload = payload ?? new Dictionary<string, string>();
         NotBefore = notBefore;
-        Expires = expires;
     }
 
     /// <summary>
@@ -55,29 +53,14 @@ public class JwtBuilder
     public string Audience { get; set; }
 
     /// <summary>
-    /// The claims payload for the JWT.
-    /// </summary>
-    public IDictionary<string, string> Payload { get; set; }
-
-    /// <summary>
     /// Specifies when the JWT must not be accepted before.
     /// </summary>
     public DateTimeOffset NotBefore { get; set; }
 
     /// <summary>
-    /// Specifies when the JWT expires.
-    /// </summary>
-    public DateTimeOffset Expires { get; set; }
-
-    /// <summary>
     /// The time this JWT was issued, if null, DateTimeOffset.Now will be used.
     /// </summary>
     public DateTimeOffset? IssuedAt { get; set; }
-
-    /// <summary>
-    /// The subject(user) of the JWT.
-    /// </summary>
-    public string Subject { get; set; }
 
     /// <summary>
     /// The JWT ID, a unique identifier which can be used to prevent replay.
@@ -86,11 +69,11 @@ public class JwtBuilder
 
     private void SetReservedPayload(string key, string value)
     {
-        if (Payload.ContainsKey(key))
+        if (RawToken.ContainsKey(key))
         {
             throw new InvalidOperationException($"The key: {key} is reserved and must not be set in Payload.");
         }
-        Payload[key] = value;
+        RawToken[key] = value;
     }
 
     // Add the validation settings to the payload and make sure the reserved keys aren't set.
@@ -128,7 +111,7 @@ public class JwtBuilder
 
         var jwtData = new Jwt(Algorithm)
         {
-            Payload = JsonSerializer.Serialize(Payload)
+            Payload = JsonSerializer.Serialize(RawToken)
         };
 
         return Jwt.CreateAsync(jwtData, Algorithm, SigningKey);

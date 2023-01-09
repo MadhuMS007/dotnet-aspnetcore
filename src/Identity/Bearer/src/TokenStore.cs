@@ -44,6 +44,58 @@ public static class TokenPurpose
 }
 
 /// <summary>
+/// Constants used to represent token claims.
+/// </summary>
+public static class TokenClaims
+{
+    /// <summary>
+    /// The Issuer for the token.
+    /// </summary>
+    public const string Issuer = "iss";
+
+    /// <summary>
+    /// The Subject for the token.
+    /// </summary>
+    public const string Subject = "sub";
+
+    /// <summary>
+    /// The intended audience for the token.
+    /// </summary>
+    public const string Audience = "aud";
+
+    /// <summary>
+    /// When the token expires.
+    /// </summary>
+    public const string Expires = "exp";
+
+    /// <summary>
+    /// Specifies when the token must not be accepted before.
+    /// </summary>
+    public const string NotBefore = "nbf";
+
+    /// <summary>
+    /// When the token was issued.
+    /// </summary>
+    public const string IssuedAt = "iat";
+}
+
+/// <summary>
+/// Constants used to represent token formats.
+/// </summary>
+public static class TokenFormat
+{
+    /// <summary>
+    /// JWT format
+    /// </summary>
+    public const string JWT = "jwt";
+
+    /// <summary>
+    /// Single use redemption
+    /// </summary>
+    public const string Single = "single";
+}
+
+/// <summary>
 /// Represents a user's device, i.e. browser, phone, TV
 /// </summary>
 internal sealed class IdentityDevice

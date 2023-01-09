@@ -57,6 +57,14 @@ public class IdentityOptions
     public TokenOptions Tokens { get; set; } = new TokenOptions();
 
     /// <summary>
+    /// Gets or sets the <see cref="TokenManagerOptions"/> for the identity system.
+    /// </summary>
+    /// <value>
+    /// The <see cref="TokenManagerOptions"/> for the identity system.
+    /// </value>
+    public TokenManagerOptions TokenManager { get; set; } = new TokenManagerOptions();
+
+    /// <summary>
     /// Gets or sets the <see cref="StoreOptions"/> for the identity system.
     /// </summary>
     /// <value>

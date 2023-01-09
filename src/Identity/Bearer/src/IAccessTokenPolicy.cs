@@ -5,11 +5,26 @@ using System.Security.Claims;
 
 namespace Microsoft.AspNetCore.Identity;
 
+internal interface IRefreshTokenPolicy
+{
+    Task<string> CreateAsync(string userId);
+    Task<(string?, string?)> RefreshTokensAsync(string refreshToken);
+}
+
 /// <summary>
 /// Responsible for creating and validating access tokens.
 /// </summary>
 public interface IAccessTokenPolicy
 {
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="token"></param>
+    /// <param name="issuer"></param>
+    /// <param name="audience"></param>
+    /// <returns></returns>
+    internal Task<ClaimsPrincipal?> ValidateAsync(TokenInfo token, string issuer, string audience);
+
     /// <summary>
     /// 
     /// </summary>

@@ -32,6 +32,7 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
     /// <summary>
     /// Constructs a new instance of <see cref="TokenManager{TUser,TToken}"/>.
     /// </summary>
+    /// <param name="identityOptions">The options which configure the identity system.</param>
     /// <param name="store"></param>
     /// <param name="userManager">An instance of <see cref="UserManager"/> used to retrieve users from and persist users.</param>
     /// <param name="errors">The <see cref="IdentityErrorDescriber"/> used to provider error messages.</param>
@@ -43,6 +44,7 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
     /// <exception cref="ArgumentNullException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
     public TokenManager(
+        IOptions<IdentityOptions> identityOptions,
         ITokenStore<TToken> store,
         UserManager<TUser> userManager,
         IdentityErrorDescriber errors,
@@ -52,6 +54,7 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
         IAccessTokenPolicy accessTokenPolicy,
         ISystemClock clock)
     {
+        Options = identityOptions.Value.TokenManager;
         Store = store ?? throw new ArgumentNullException(nameof(store));
         UserManager = userManager;
         ErrorDescriber = errors;
@@ -61,9 +64,15 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
         _accessTokenPolicy = accessTokenPolicy;
         _clock = clock;
 
-        // Move these to registered named options?
+        // TODO: Move these to registered named options?
         _keyFormatProviders[JsonKeySerializer.ProviderId] = new JsonKeySerializer();
         _keyFormatProviders[Base64KeySerializer.ProviderId] = new Base64KeySerializer();
+
+        Options.FormatProviderMap[TokenFormat.JWT] = new JwtTokenFormat();
+        Options.FormatProviderMap[TokenFormat.Single] = new GuidTokenFormat();
+
+        Options.PurposeFormatMap[TokenPurpose.RefreshToken] = TokenFormat.Single;
+        Options.PurposeFormatMap[TokenPurpose.AccessToken] = TokenFormat.JWT;
     }
 
     /// <summary>
@@ -79,6 +88,11 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
     /// The <see cref="ILogger"/> used to log messages from the manager.
     /// </value>
     public virtual ILogger Logger { get; set; }
+
+    /// <summary>
+    /// The <see cref="TokenManagerOptions"/>.
+    /// </summary>
+    public TokenManagerOptions Options { get; set; }
 
     /// <summary>
     /// The <see cref="UserManager{TUser}"/> used.
@@ -163,6 +177,17 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
     public virtual Task<TToken> NewAsync(TokenInfo info)
         => Store.NewAsync(info, CancellationToken);
 
+    private (string, ITokenFormatProvider) GetFormatProvider(string tokenPurpose)
+    {
+        // TODO: someone should be validating these
+        var format = Options.PurposeFormatMap[tokenPurpose];
+        if (!Options.FormatProviderMap.TryGetValue(format, out var provider))
+        {
+            throw new InvalidOperationException($"Could not find token format provider {format} registered for purpose: {tokenPurpose}.");
+        }
+        return (format, provider);
+    }
+
     /// <summary>
     /// Get a refresh token for the user.
     /// </summary>
@@ -170,8 +195,16 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
     /// <returns></returns>
     public virtual async Task<string> GetRefreshTokenAsync(TUser user)
     {
+        (var format, var provider) = GetFormatProvider(TokenPurpose.RefreshToken);
+
+        // Build the raw token and payload
         var userId = await UserManager.GetUserIdAsync(user);
-        var info = new TokenInfo(userId, TokenPurpose.RefreshToken, payload: Guid.NewGuid().ToString())
+        var refreshBuilder = new TokenBuilder(userId, DateTimeOffset.UtcNow.AddDays(1));
+        refreshBuilder.RawToken["t"] = Guid.NewGuid().ToString();
+        var payload = await provider.SerializeAsync(refreshBuilder.RawToken);
+
+        // Store the token payload and metadata
+        var info = new TokenInfo(format, userId, TokenPurpose.RefreshToken, payload)
         {
             Expiration = DateTimeOffset.UtcNow.AddDays(1),
             Status = TokenStatus.Active
@@ -200,7 +233,6 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
     {
         // TODO: tests to write:
         // with deleted user
-
         var tok = await Store.FindAsync(TokenPurpose.RefreshToken, refreshToken, CancellationToken).ConfigureAwait(false);
         if (tok == null)
         {

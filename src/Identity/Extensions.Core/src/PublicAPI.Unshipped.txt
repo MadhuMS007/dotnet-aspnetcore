@@ -1,9 +1,17 @@
 #nullable enable
+Microsoft.AspNetCore.Identity.IdentityBearerTokenBuilder
+Microsoft.AspNetCore.Identity.IdentityBearerTokenBuilder.IdentityBearerTokenBuilder(Microsoft.AspNetCore.Identity.IdentityBuilder! builder, System.Type! tokenType) -> void
+Microsoft.AspNetCore.Identity.IdentityBearerTokenBuilder.IdentityBuilder.get -> Microsoft.AspNetCore.Identity.IdentityBuilder!
+Microsoft.AspNetCore.Identity.IdentityBuilder.TokenType.get -> System.Type?
+Microsoft.AspNetCore.Identity.IdentityOptions.TokenManager.get -> Microsoft.AspNetCore.Identity.TokenManagerOptions!
+Microsoft.AspNetCore.Identity.IdentityOptions.TokenManager.set -> void
 Microsoft.AspNetCore.Identity.IdentityVersions
 Microsoft.AspNetCore.Identity.IKeyStore
 Microsoft.AspNetCore.Identity.IKeyStore.AddAsync(string! keyId, string! providerId, string! format, string! data, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.IdentityResult!>!
 Microsoft.AspNetCore.Identity.IKeyStore.FindByIdAsync(string! keyId, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.KeyInfo?>!
 Microsoft.AspNetCore.Identity.IKeyStore.RemoveAsync(string! keyId, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.IdentityResult!>!
+Microsoft.AspNetCore.Identity.ITokenFormatProvider
+Microsoft.AspNetCore.Identity.ITokenFormatProvider.SerializeAsync(System.Collections.Generic.IDictionary<string!, string!>! data) -> System.Threading.Tasks.Task<string!>!
 Microsoft.AspNetCore.Identity.ITokenStore<TToken>
 Microsoft.AspNetCore.Identity.ITokenStore<TToken>.CreateAsync(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.IdentityResult!>!
 Microsoft.AspNetCore.Identity.ITokenStore<TToken>.DeleteAsync(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.IdentityResult!>!
@@ -30,11 +38,23 @@ Microsoft.AspNetCore.Identity.KeyInfo.ProviderId.get -> string!
 Microsoft.AspNetCore.Identity.KeyInfo.ProviderId.set -> void
 Microsoft.AspNetCore.Identity.StoreOptions.SchemaVersion.get -> System.Version!
 Microsoft.AspNetCore.Identity.StoreOptions.SchemaVersion.set -> void
+Microsoft.AspNetCore.Identity.TokenBuilder
+Microsoft.AspNetCore.Identity.TokenBuilder.Created.get -> System.DateTimeOffset?
+Microsoft.AspNetCore.Identity.TokenBuilder.Created.set -> void
+Microsoft.AspNetCore.Identity.TokenBuilder.Expires.get -> System.DateTimeOffset
+Microsoft.AspNetCore.Identity.TokenBuilder.Expires.set -> void
+Microsoft.AspNetCore.Identity.TokenBuilder.RawToken.get -> System.Collections.Generic.IDictionary<string!, string!>!
+Microsoft.AspNetCore.Identity.TokenBuilder.RawToken.set -> void
+Microsoft.AspNetCore.Identity.TokenBuilder.Subject.get -> string!
+Microsoft.AspNetCore.Identity.TokenBuilder.Subject.set -> void
+Microsoft.AspNetCore.Identity.TokenBuilder.TokenBuilder(string! subject, System.DateTimeOffset expires, System.Collections.Generic.IDictionary<string!, string!>? data = null) -> void
 Microsoft.AspNetCore.Identity.TokenInfo
 Microsoft.AspNetCore.Identity.TokenInfo.Created.get -> System.DateTimeOffset?
 Microsoft.AspNetCore.Identity.TokenInfo.Created.set -> void
 Microsoft.AspNetCore.Identity.TokenInfo.Expiration.get -> System.DateTimeOffset?
 Microsoft.AspNetCore.Identity.TokenInfo.Expiration.set -> void
+Microsoft.AspNetCore.Identity.TokenInfo.Format.get -> string!
+Microsoft.AspNetCore.Identity.TokenInfo.Format.set -> void
 Microsoft.AspNetCore.Identity.TokenInfo.Payload.get -> string!
 Microsoft.AspNetCore.Identity.TokenInfo.Payload.set -> void
 Microsoft.AspNetCore.Identity.TokenInfo.Purpose.get -> string!
@@ -43,6 +63,13 @@ Microsoft.AspNetCore.Identity.TokenInfo.Status.get -> string?
 Microsoft.AspNetCore.Identity.TokenInfo.Status.set -> void
 Microsoft.AspNetCore.Identity.TokenInfo.Subject.get -> string!
 Microsoft.AspNetCore.Identity.TokenInfo.Subject.set -> void
-Microsoft.AspNetCore.Identity.TokenInfo.TokenInfo(string! subject, string! purpose, string! payload) -> void
+Microsoft.AspNetCore.Identity.TokenInfo.TokenInfo(string! format, string! subject, string! purpose, string! payload) -> void
+Microsoft.AspNetCore.Identity.TokenManagerOptions
+Microsoft.AspNetCore.Identity.TokenManagerOptions.FormatProviderMap.get -> System.Collections.Generic.IDictionary<string!, Microsoft.AspNetCore.Identity.ITokenFormatProvider!>!
+Microsoft.AspNetCore.Identity.TokenManagerOptions.FormatProviderMap.set -> void
+Microsoft.AspNetCore.Identity.TokenManagerOptions.PurposeFormatMap.get -> System.Collections.Generic.IDictionary<string!, string!>!
+Microsoft.AspNetCore.Identity.TokenManagerOptions.PurposeFormatMap.set -> void
+Microsoft.AspNetCore.Identity.TokenManagerOptions.TokenManagerOptions() -> void
 static readonly Microsoft.AspNetCore.Identity.IdentityVersions.Version1 -> System.Version!
 static readonly Microsoft.AspNetCore.Identity.IdentityVersions.Version2 -> System.Version!
+virtual Microsoft.AspNetCore.Identity.IdentityBearerTokenBuilder.TokenType.get -> System.Type!

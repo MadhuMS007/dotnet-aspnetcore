@@ -10,6 +10,21 @@ using System;
 /// </summary>
 public class StoreOptions
 {
+    ///// <summary>
+    ///// Represents the concrete type for users.
+    ///// </summary>
+    //public Type? UserType { get; set; }
+
+    ///// <summary>
+    ///// Represents the concrete type for roles.
+    ///// </summary>
+    //public Type? RoleType { get; set; }
+
+    ///// <summary>
+    ///// Represents the concrete type for tokens.
+    ///// </summary>
+    //public Type? TokenType { get; set; }
+
     /// <summary>
     /// If set to a positive number, the default OnModelCreating will use this value as the max length for any
     /// properties used as keys, i.e. UserId, LoginProvider, ProviderKey.

@@ -3,9 +3,8 @@
 
 using System.Linq;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Microsoft.AspNetCore.Identity;
 
@@ -14,6 +13,20 @@ namespace Microsoft.AspNetCore.Identity;
 /// </summary>
 public static class BearerServiceCollectionExtensions
 {
+    /// <summary>
+    /// Adds and configures the identity system for the specified User and Token types. Role services are not added
+    /// by default but can be added with <see cref="IdentityBuilder.AddRoles{TRole}"/>.
+    /// </summary>
+    /// <typeparam name="TUser">The type representing a User in the system.</typeparam>
+    /// <typeparam name="TToken">The type representing a Token in the system.</typeparam>
+    /// <param name="services">The services available in the application.</param>
+    /// <param name="setupAction">An action to configure the <see cref="IdentityOptions"/>.</param>
+    /// <returns>An <see cref="IdentityBuilder"/> for creating and configuring the identity system.</returns>
+    public static IdentityBearerTokenBuilder AddIdentityCore<TUser, TToken>(this IServiceCollection services, Action<IdentityOptions> setupAction)
+        where TUser : class
+        where TToken : class
+        => services.AddIdentityCore<TUser>(setupAction).AddBearerTokens<TToken>();
+
     /// <summary>
     /// 
     /// </summary>
@@ -105,12 +118,7 @@ public static class BearerServiceCollectionExtensions
                         .ToList();
         });
 
-        services.TryAddScoped<TokenManager<TUser, TToken>>();
-        services.TryAddTransient<IAccessTokenPolicy, JwtAccessTokenPolicy>();
-        services.TryAddScoped<IAccessTokenClaimsFactory<TUser>, AccessTokenClaimsFactory<TUser>>();
-        // Important to not return a different token manager instance, we only want one scoped token manager
-        services.TryAddScoped<IAccessTokenValidator>(services => services.GetRequiredService<TokenManager<TUser, TToken>>());
         services.Configure<IdentityOptions>(o => o.Stores.SchemaVersion = IdentityVersions.Version2);
-        return services.AddIdentityCore<TUser>(setupAction);
+        return services.AddIdentityCore<TUser, TToken>(setupAction).IdentityBuilder;
     }
 }

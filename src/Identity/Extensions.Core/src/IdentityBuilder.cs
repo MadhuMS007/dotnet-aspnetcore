@@ -11,6 +11,36 @@ using Microsoft.Extensions.Identity.Core;
 namespace Microsoft.AspNetCore.Identity;
 
 /// <summary>
+/// Helper functions for configuring identity token services.
+/// </summary>
+public class IdentityBearerTokenBuilder
+{
+    /// <summary>
+    /// Creates a new instance of <see cref="IdentityBearerTokenBuilder"/>.
+    /// </summary>
+    /// <param name="builder">The <see cref="IdentityBuilder"/> being used.</param>
+    /// <param name="tokenType">The <see cref="Type"/> representing tokens..</param>
+    public IdentityBearerTokenBuilder(IdentityBuilder builder, Type tokenType)
+    {
+        IdentityBuilder = builder;
+        TokenType = tokenType;
+    }
+
+    /// <summary>
+    /// Gets the <see cref="Type"/> used for tokens.
+    /// </summary>
+    /// <value>
+    /// The <see cref="Type"/> used for tokens.
+    /// </value>
+    public virtual Type TokenType { get; }
+
+    /// <summary>
+    /// Gets the <see cref="IdentityBuilder"/> used..
+    /// </summary>
+    public IdentityBuilder IdentityBuilder { get; }
+}
+
+/// <summary>
 /// Helper functions for configuring identity services.
 /// </summary>
 public class IdentityBuilder
@@ -63,6 +93,15 @@ public class IdentityBuilder
     /// </value>
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
     public Type? RoleType { get; private set; }
+
+    /// <summary>
+    /// Gets the <see cref="Type"/> used for tokens.
+    /// </summary>
+    /// <value>
+    /// The <see cref="Type"/> used for tokens.
+    /// </value>
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+    public Type? TokenType { get; private set; }
 
     /// <summary>
     /// Gets the <see cref="IServiceCollection"/> services are attached to.

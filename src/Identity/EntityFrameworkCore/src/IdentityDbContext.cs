@@ -149,8 +149,6 @@ public abstract class IdentityDbContext<TUser, TRole, TKey, TUserClaim, TUserRol
             b.Property(u => u.Purpose).HasMaxLength(256);
             b.Property(u => u.Payload).HasMaxLength(256);
         });
-
-
     }
 
     /// <summary>
