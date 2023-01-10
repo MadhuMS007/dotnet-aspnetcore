@@ -105,9 +105,10 @@ Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.AutoSaveChanges.set -
 Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.Dispose() -> void
 Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.ErrorDescriber.get -> Microsoft.AspNetCore.Identity.IdentityErrorDescriber!
 Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.ErrorDescriber.set -> void
+Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.FindByIdAsync(string! tokenId, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<TToken?>!
 Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.SaveChanges(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
 Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.ThrowIfDisposed() -> void
-Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.TokenStore(TContext! context, Microsoft.AspNetCore.Identity.IdentityErrorDescriber? describer = null) -> void
+Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.TokenStore(TContext! context, Microsoft.AspNetCore.Identity.ITokenSerializer! serializer, Microsoft.AspNetCore.Identity.IdentityErrorDescriber? describer = null) -> void
 Microsoft.Extensions.DependencyInjection.BearerBuilderExtensions
 override Microsoft.AspNetCore.Identity.IdentityDbContext<TUser, TRole, TToken, TKey, TUserClaim, TUserRole, TUserLogin, TRoleClaim, TUserToken>.OnModelCreating(Microsoft.EntityFrameworkCore.ModelBuilder! builder) -> void
 static Microsoft.AspNetCore.Identity.BearerServiceCollectionExtensions.AddBearerServerAuthentication(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.AspNetCore.Authentication.AuthenticationBuilder!

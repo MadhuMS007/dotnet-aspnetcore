@@ -9,7 +9,12 @@ namespace Microsoft.AspNetCore.Identity;
 
 internal class JwtTokenFormat : ITokenFormatProvider
 {
-    public Task<string> SerializeAsync(IDictionary<string, string> data)
+    public Task<string> CreateTokenAsync(TokenInfo token)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<TokenInfo?> ReadTokenAsync(string token)
     {
         throw new NotImplementedException();
     }
@@ -17,8 +22,11 @@ internal class JwtTokenFormat : ITokenFormatProvider
 
 internal class GuidTokenFormat : ITokenFormatProvider
 {
-    public Task<string> SerializeAsync(IDictionary<string, string> data)
-        => Task.FromResult(data["t"]);
+    public Task<string> CreateTokenAsync(TokenInfo token)
+        => Task.FromResult(token.Id);
+
+    public Task<TokenInfo?> ReadTokenAsync(string token)
+        => Task.FromResult<TokenInfo?>(new TokenInfo(token, "", "", "", ""));
 }
 
 internal class RefreshTokenPolicy
@@ -55,15 +63,5 @@ internal class JwtAccessTokenPolicy : IAccessTokenPolicy
             _bearerOptions.SigningCredentials!,
             audience);
         return reader.ValidateJwtAsync(accessToken);
-    }
-
-    Task<ClaimsPrincipal?> IAccessTokenPolicy.ValidateAsync(TokenInfo token, string issuer, string audience)
-    {
-        var reader = new JwtReader(
-            JWSAlg.HS256,
-            _bearerOptions.Issuer!,
-            _bearerOptions.SigningCredentials!,
-            _bearerOptions.Audiences.LastOrDefault()!);
-        return reader.ValidateJwtAsync(token.Payload);
     }
 }

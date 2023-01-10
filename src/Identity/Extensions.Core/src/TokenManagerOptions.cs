@@ -32,7 +32,15 @@ public interface ITokenFormatProvider
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="data">The token data to serialize.</param>
-    /// <returns>The serialized token.</returns>
-    Task<string> SerializeAsync(IDictionary<string, string> data);
+    /// <param name="token">The token info to create.</param>
+    /// <returns>The token.</returns>
+    Task<string> CreateTokenAsync(TokenInfo token);
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="token">The token to read.</param>
+    /// <returns>The token info.</returns>
+    Task<TokenInfo?> ReadTokenAsync(string token);
+
 }

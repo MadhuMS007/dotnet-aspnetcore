@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using Microsoft.AspNetCore.Identity.Test;
+using Newtonsoft.Json.Linq;
 
 namespace Microsoft.AspNetCore.Identity.InMemory;
 
@@ -39,6 +40,9 @@ public class InMemoryTokenStore<TUser, TRole> :
         _tokens.Remove(token.Id);
         return Task.FromResult(IdentityResult.Success);
     }
+
+    Task<IdentityToken> ITokenStore<IdentityToken>.FindByIdAsync(string tokenId, CancellationToken cancellationToken)
+        => Task.FromResult(_tokens.Values.Where(t => t.Id == tokenId).SingleOrDefault());
 
     public Task<IdentityToken> FindAsync(string purpose, string value, CancellationToken cancellationToken)
         => Task.FromResult(_tokens.Values.Where(t => t.Purpose == purpose && t.Payload == value).SingleOrDefault());

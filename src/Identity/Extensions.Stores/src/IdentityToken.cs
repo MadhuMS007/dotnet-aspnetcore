@@ -15,6 +15,7 @@ public class IdentityToken
     /// </summary>
     public IdentityToken()
     {
+        Id = Guid.NewGuid().ToString();
     }
 
     /// <summary>
@@ -30,10 +31,10 @@ public class IdentityToken
     /// <param name="info">The token info to import.</param>
     public void Import(TokenInfo info)
     {
+        Id = info.Id;
         Subject = info.Subject;
         Status = info.Status;
         Purpose = info.Purpose;
-        Payload = info.Payload;
         Expiration = info.Expiration.GetValueOrDefault();
         Created = info.Created ?? DateTimeOffset.UtcNow;
     }
@@ -41,7 +42,7 @@ public class IdentityToken
     /// <summary>
     /// The Id for the token.
     /// </summary>
-    public string Id { get; set; } = Guid.NewGuid().ToString();
+    public string Id { get; set; } = default!;
 
     /// <summary>
     /// The subject for the token.
@@ -56,12 +57,12 @@ public class IdentityToken
     /// <summary>
     /// The payload for the token.
     /// </summary>
-    public string Payload { get; set; } = default!;
+    public string? Payload { get; set; }
 
     /// <summary>
     /// Get or set when this token was created.
     /// </summary>
-    public DateTimeOffset Created { get; set; }
+    public DateTimeOffset? Created { get; set; }
 
     /// <summary>
     /// Get or set when this token expires.

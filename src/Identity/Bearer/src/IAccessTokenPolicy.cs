@@ -19,15 +19,6 @@ public interface IAccessTokenPolicy
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="token"></param>
-    /// <param name="issuer"></param>
-    /// <param name="audience"></param>
-    /// <returns></returns>
-    internal Task<ClaimsPrincipal?> ValidateAsync(TokenInfo token, string issuer, string audience);
-
-    /// <summary>
-    /// 
-    /// </summary>
     /// <param name="tokenId">The token ID, a unique identifier which can be used to prevent replay.</param>
     /// <param name="issuer">The issuer for the token..</param>
     /// <param name="audience">The audience for the token.</param>

@@ -199,20 +199,17 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
 
         // Build the raw token and payload
         var userId = await UserManager.GetUserIdAsync(user);
-        var refreshBuilder = new TokenBuilder(userId, DateTimeOffset.UtcNow.AddDays(1));
-        refreshBuilder.RawToken["t"] = Guid.NewGuid().ToString();
-        var payload = await provider.SerializeAsync(refreshBuilder.RawToken);
 
-        // Store the token payload and metadata
-        var info = new TokenInfo(format, userId, TokenPurpose.RefreshToken, payload)
+        // Store the token metadata, refresh tokens don't need additional data
+        // so no payload is specified for the token info.
+        var info = new TokenInfo(Guid.NewGuid().ToString(),
+            format, userId, TokenPurpose.RefreshToken, TokenStatus.Active)
         {
-            Expiration = DateTimeOffset.UtcNow.AddDays(1),
-            Status = TokenStatus.Active
+            Expiration = DateTimeOffset.UtcNow.AddDays(1)
         };
         var token = await Store.NewAsync(info, CancellationToken).ConfigureAwait(false);
         await Store.CreateAsync(token, CancellationToken);
-        // TODO: check for success
-        return info.Payload;
+        return await provider.CreateTokenAsync(info);
     }
 
     /// <summary>
@@ -233,7 +230,15 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
     {
         // TODO: tests to write:
         // with deleted user
-        var tok = await Store.FindAsync(TokenPurpose.RefreshToken, refreshToken, CancellationToken).ConfigureAwait(false);
+        (var _, var provider) = GetFormatProvider(TokenPurpose.RefreshToken);
+
+        var tokenInfo = await provider.ReadTokenAsync(refreshToken);
+        if (tokenInfo == null)
+        {
+            return (null, null);
+        }
+
+        var tok = await Store.FindByIdAsync(tokenInfo.Id, CancellationToken).ConfigureAwait(false);
         if (tok == null)
         {
             return (null, null);
@@ -301,12 +306,19 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
     /// <returns></returns>
     public virtual async Task<IdentityResult> RevokeRefreshAsync(TUser user, string token)
     {
-        // TODO: this needs to go through store
-        var refreshToken = await Store.FindAsync(TokenPurpose.RefreshToken, token, CancellationToken);
-        if (refreshToken != null)
+        (var _, var provider) = GetFormatProvider(TokenPurpose.RefreshToken);
+
+        var tokenInfo = await provider.ReadTokenAsync(token);
+        if (tokenInfo == null)
         {
-            await Store.SetStatusAsync(refreshToken, TokenStatus.Revoked, CancellationToken);
-            return await Store.UpdateAsync(refreshToken, CancellationToken).ConfigureAwait(false); ;
+            return IdentityResult.Success;
+        }
+
+        var tok = await Store.FindByIdAsync(tokenInfo.Id, CancellationToken).ConfigureAwait(false);
+        if (tok != null)
+        {
+            await Store.SetStatusAsync(tok, TokenStatus.Revoked, CancellationToken);
+            return await Store.UpdateAsync(tok, CancellationToken).ConfigureAwait(false); ;
         }
         return IdentityResult.Success;
     }

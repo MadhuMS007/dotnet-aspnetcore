@@ -42,22 +42,6 @@ public class TokenBuilder
     /// Gets or sets the subject of the token, i.e. user id.
     /// </summary>
     public string Subject { get; set; }
-
-    ///// <summary>
-    ///// 
-    ///// </summary>
-    ///// <returns></returns>
-    //public RawToken ToRawToken()
-    //{
-    //    var token = new RawToken(RawToken);
-    //    token[TokenClaims.Expires] = Expires.UtcTicks.ToString(CultureInfo.InvariantCulture);
-    //    token[TokenClaims.Subject] = Subject;
-    //    if (Created != null)
-    //    {
-    //        token[TokenClaims.IssuedAt] = Created.Value.UtcTicks.ToString(CultureInfo.InvariantCulture); ;
-    //    }
-    //    return token;
-    //}
 }
 
 /// <summary>
@@ -68,13 +52,19 @@ public class TokenInfo
     /// <summary>
     /// Creates a new instance of <see cref="TokenInfo"/>
     /// </summary>
-    public TokenInfo(string format, string subject, string purpose, string payload)
+    public TokenInfo(string id, string format, string subject, string purpose, string status)
     {
+        Id = id;
         Format = format;
         Subject = subject;
         Purpose = purpose;
-        Payload = payload;
+        Status = status;
     }
+
+    /// <summary>
+    /// Gets or sets a string representing the token identifier.
+    /// </summary>
+    public string Id { get; set; }
 
     /// <summary>
     /// Gets or sets the creation date for the token.
@@ -92,9 +82,9 @@ public class TokenInfo
     public string Format { get; set; }
 
     /// <summary>
-    /// Gets or sets the token payload.
+    /// Gets or sets a payload for the token.
     /// </summary>
-    public string Payload { get; set; }
+    public object? Payload { get; set; }
 
     /// <summary>
     /// Gets or sets a string representing the token purpose, i.e. Refresh or Access
@@ -109,5 +99,5 @@ public class TokenInfo
     /// <summary>
     /// Gets or sets the status of the token, i.e. active, revoked.
     /// </summary>
-    public string? Status { get; set; }
+    public string Status { get; set; }
 }

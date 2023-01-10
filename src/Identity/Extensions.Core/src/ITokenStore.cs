@@ -45,6 +45,14 @@ public interface ITokenStore<TToken> : IDisposable where TToken : class
     Task<IdentityResult> DeleteAsync(TToken token, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Find a token with the specified tokenId
+    /// </summary>
+    /// <param name="tokenId">The tokenId to find.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+    /// <returns>A <see cref="Task{TResult}"/> that result of the look up.</returns>
+    Task<TToken?> FindByIdAsync(string tokenId, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Find a token with the specified purpose and value
     /// </summary>
     /// <param name="purpose">The purpose of the token.</param>

@@ -1,6 +1,6 @@
 #nullable enable
 Microsoft.AspNetCore.Identity.IdentityToken
-Microsoft.AspNetCore.Identity.IdentityToken.Created.get -> System.DateTimeOffset
+Microsoft.AspNetCore.Identity.IdentityToken.Created.get -> System.DateTimeOffset?
 Microsoft.AspNetCore.Identity.IdentityToken.Created.set -> void
 Microsoft.AspNetCore.Identity.IdentityToken.Expiration.get -> System.DateTimeOffset
 Microsoft.AspNetCore.Identity.IdentityToken.Expiration.set -> void
@@ -9,7 +9,7 @@ Microsoft.AspNetCore.Identity.IdentityToken.Id.set -> void
 Microsoft.AspNetCore.Identity.IdentityToken.IdentityToken() -> void
 Microsoft.AspNetCore.Identity.IdentityToken.IdentityToken(Microsoft.AspNetCore.Identity.TokenInfo! info) -> void
 Microsoft.AspNetCore.Identity.IdentityToken.Import(Microsoft.AspNetCore.Identity.TokenInfo! info) -> void
-Microsoft.AspNetCore.Identity.IdentityToken.Payload.get -> string!
+Microsoft.AspNetCore.Identity.IdentityToken.Payload.get -> string?
 Microsoft.AspNetCore.Identity.IdentityToken.Payload.set -> void
 Microsoft.AspNetCore.Identity.IdentityToken.Purpose.get -> string!
 Microsoft.AspNetCore.Identity.IdentityToken.Purpose.set -> void

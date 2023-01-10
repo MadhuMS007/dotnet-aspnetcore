@@ -207,15 +207,18 @@ public class TokenStore<TToken, TContext> : ITokenStore<TToken>, IKeyStore
     where TContext : DbContext
 {
     private bool _disposed;
+    private readonly ITokenSerializer _serializer;
 
     /// <summary>
     /// Creates a new instance of the store.
     /// </summary>
     /// <param name="context">The context used to access the store.</param>
+    /// <param name="serializer">The <see cref="ITokenSerializer"/> used to serialize tokens.</param>
     /// <param name="describer">The <see cref="IdentityErrorDescriber"/> used to describe store errors.</param>
-    public TokenStore(TContext context, IdentityErrorDescriber? describer = null) 
+    public TokenStore(TContext context, ITokenSerializer serializer, IdentityErrorDescriber? describer = null) 
     {
         Context = context ?? throw new ArgumentNullException(nameof(context));
+        _serializer = serializer;
         ErrorDescriber = describer ?? new IdentityErrorDescriber();
     }
 
@@ -242,6 +245,12 @@ public class TokenStore<TToken, TContext> : ITokenStore<TToken>, IKeyStore
     {
         var token = (TToken)Activator.CreateInstance(typeof(TToken))!;
         token.Import(info);
+        // Serialize the token payload if it exists.
+        if (info.Payload != null)
+        {
+            token.Payload = _serializer.Serialize(info.Payload);
+        }
+
         return Task.FromResult(token);
     }
 
@@ -254,6 +263,7 @@ public class TokenStore<TToken, TContext> : ITokenStore<TToken>, IKeyStore
         {
             throw new ArgumentNullException(nameof(token));
         }
+
         Context.Add(token);
         await SaveChanges(cancellationToken);
         return IdentityResult.Success;
@@ -279,6 +289,14 @@ public class TokenStore<TToken, TContext> : ITokenStore<TToken>, IKeyStore
             return IdentityResult.Failed(ErrorDescriber.ConcurrencyFailure());
         }
         return IdentityResult.Success;
+    }
+
+    /// <inheritdoc/>
+    public async Task<TToken?> FindByIdAsync(string tokenId, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ThrowIfDisposed();
+        return await Tokens.FindAsync(new[] { tokenId }, cancellationToken);
     }
 
     /// <inheritdoc/>
