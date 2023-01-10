@@ -28,6 +28,7 @@ Microsoft.AspNetCore.Identity.ITokenStore<TToken>.GetStatusAsync(TToken! token, 
 Microsoft.AspNetCore.Identity.ITokenStore<TToken>.GetSubjectAsync(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<string!>!
 Microsoft.AspNetCore.Identity.ITokenStore<TToken>.GetTokenInfoAsync<TPayload>(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.TokenInfo!>!
 Microsoft.AspNetCore.Identity.ITokenStore<TToken>.NewAsync(Microsoft.AspNetCore.Identity.TokenInfo! tokenInfo, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<TToken!>!
+Microsoft.AspNetCore.Identity.ITokenStore<TToken>.PurgeExpiredAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<int>!
 Microsoft.AspNetCore.Identity.ITokenStore<TToken>.SetExpirationAsync(TToken! token, System.DateTimeOffset expiration, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
 Microsoft.AspNetCore.Identity.ITokenStore<TToken>.SetFormatAsync(TToken! token, string! format, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
 Microsoft.AspNetCore.Identity.ITokenStore<TToken>.SetStatusAsync(TToken! token, string! status, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!

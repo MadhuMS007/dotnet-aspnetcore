@@ -137,4 +137,10 @@ public interface ITokenStore<TToken> : IDisposable where TToken : class
     /// <returns>A <see cref="Task{TResult}"/> that represents the asynchronous query.</returns>
     Task SetExpirationAsync(TToken token, DateTimeOffset expiration, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Removes all expired tokens from the store.
+    /// </summary>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+    /// <returns>A <see cref="Task{TResult}"/> that represents how many tokens were purged.</returns>
+    Task<int> PurgeExpiredAsync(CancellationToken cancellationToken);
 }

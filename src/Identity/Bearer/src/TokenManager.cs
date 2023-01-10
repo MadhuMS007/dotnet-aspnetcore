@@ -1,6 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
@@ -138,7 +139,6 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
         await PayloadFactory.BuildPayloadAsync(user, payload);
         var userId = await UserManager.GetUserIdAsync(user).ConfigureAwait(false);
 
-        // Store access tokens for now just to verify extensibility
         (var format, var provider) = GetFormatProvider(TokenPurpose.AccessToken);
 
         // Store the token metadata, with jwt token as payload
@@ -148,8 +148,13 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
             Expiration = DateTimeOffset.UtcNow.AddDays(1),
             Payload = payload
         };
-        var tok = await Store.NewAsync(info, CancellationToken).ConfigureAwait(false);
-        await Store.CreateAsync(tok, CancellationToken);
+
+        // TODO: need flags to control storing access tokens
+        if (true)
+        {
+            await StoreAsync(info).ConfigureAwait(false);
+        }
+
         return await provider.CreateTokenAsync(info);
     }
 
@@ -201,13 +206,24 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
     }
 
     /// <summary>
-    /// Create a new token instance with the specified token info. This should not be stored
-    /// in the token store yet.
+    /// Removes all expired tokens from the store
+    /// </summary>
+    /// <returns></returns>
+    public virtual Task<int> PurgeExpiredTokensAsync()
+        // TODO: Should add a filter to specify token purpose, etc?
+        => Store.PurgeExpiredAsync(CancellationToken);
+
+    /// <summary>
+    /// Store a new token instance with the specified token info
     /// </summary>
     /// <param name="info">The <see cref="TokenInfo"/> for the token.</param>
     /// <returns></returns>
-    public virtual Task<TToken> NewAsync(TokenInfo info)
-        => Store.NewAsync(info, CancellationToken);
+    public virtual async Task<TToken> StoreAsync(TokenInfo info)
+    {
+        var tok = await Store.NewAsync(info, CancellationToken).ConfigureAwait(false);
+        await Store.CreateAsync(tok, CancellationToken);
+        return tok;
+    }
 
     private (string, ITokenFormatProvider) GetFormatProvider(string tokenPurpose)
     {

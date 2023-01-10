@@ -1,6 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Linq;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -448,6 +449,19 @@ public class TokenStore<TToken, TContext> : ITokenStore<TToken>, IKeyStore
         }
         token.Expiration = expiration;
         return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public virtual async Task<int> PurgeExpiredAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ThrowIfDisposed();
+
+        // AsEnumerable needed to force client side evaluation for sql lite
+        var expiredTokens = Tokens.AsEnumerable().Where(t => t.Expiration < DateTimeOffset.UtcNow);
+        Tokens.RemoveRange(expiredTokens);
+
+        return await Context.SaveChangesAsync(cancellationToken);
     }
 
     /// <summary>

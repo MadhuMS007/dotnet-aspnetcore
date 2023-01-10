@@ -313,6 +313,40 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
     /// </summary>
     /// <returns>Task</returns>
     [Fact]
+    public async Task CanPurgeExpiredTokens()
+    {
+        var clock = new TestClock();
+        var manager = CreateManager(configureServices: s => s.AddSingleton<ISystemClock>(clock));
+        var user = CreateTestUser();
+        IdentityResultAssert.IsSuccess(await manager.UserManager.CreateAsync(user));
+        var userId = await manager.UserManager.GetUserIdAsync(user);
+
+        // Create a bunch of tokens some expired
+        var expired1 = await manager.StoreAsync(new TokenInfo("id1", "f", userId, "p", "active") { Expiration = DateTimeOffset.UtcNow });
+        var expired2 = await manager.StoreAsync(new TokenInfo("id2", "f", userId, "p", "active") { Expiration = DateTimeOffset.UtcNow });
+        var token3 = await manager.StoreAsync(new TokenInfo("id3", "f", userId, "p", "active") { Expiration = DateTimeOffset.UtcNow.AddDays(1) });
+        var token4 = await manager.StoreAsync(new TokenInfo("id4", "f", userId, "p", "active") { Expiration = DateTimeOffset.UtcNow.AddDays(1) });
+
+        Assert.NotNull(await manager.FindByIdAsync<object>("id1"));
+        Assert.NotNull(await manager.FindByIdAsync<object>("id2"));
+        Assert.NotNull(await manager.FindByIdAsync<object>("id3"));
+        Assert.NotNull(await manager.FindByIdAsync<object>("id4"));
+
+        var purged = await manager.PurgeExpiredTokensAsync();
+
+        // Make sure expired tokens are gone
+        Assert.Equal(2, purged);
+        Assert.Null(await manager.FindByIdAsync<object>("id1"));
+        Assert.Null(await manager.FindByIdAsync<object>("id2"));
+        Assert.NotNull(await manager.FindByIdAsync<object>("id3"));
+        Assert.NotNull(await manager.FindByIdAsync<object>("id4"));
+    }
+
+    /// <summary>
+    /// Test.
+    /// </summary>
+    /// <returns>Task</returns>
+    [Fact]
     public async Task RevokedRefreshTokenFails()
     {
         var manager = CreateManager();

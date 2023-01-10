@@ -65,7 +65,6 @@ public class InMemoryTokenStore<TUser, TRole> :
         {
             Payload = _serializer.Serialize(tokenInfo.Payload)
         });
-        ;
     }
 
     public Task<IdentityResult> RemoveAsync(string keyId, CancellationToken cancellationToken)
@@ -118,5 +117,19 @@ public class InMemoryTokenStore<TUser, TRole> :
     {
         token.Format = format;
         return Task.CompletedTask;
+    }
+
+    public Task<int> PurgeExpiredAsync(CancellationToken cancellationToken)
+    {
+        var count = 0;
+        foreach (var t in _tokens)
+        {
+            if (t.Value.Expiration < DateTimeOffset.UtcNow)
+            {
+                count++;
+                _tokens.Remove(t);
+            }
+        }
+        return Task.FromResult(count);
     }
 }
