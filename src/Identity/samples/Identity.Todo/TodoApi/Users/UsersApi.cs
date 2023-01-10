@@ -28,7 +28,7 @@ public static class UsersApi
             return TypedResults.ValidationProblem(result.Errors.ToDictionary(e => e.Code, e => new[] { e.Description }));
         });
 
-        group.MapPost("/token", async Task<Results<BadRequest, Ok<AuthToken>>> (UserInfo userInfo, UserManager<TodoUser> userManager, TokenManager<TodoUser> tokenService) =>
+        group.MapPost("/token", async Task<Results<BadRequest, Ok<AuthToken>>> (UserInfo userInfo, UserManager<TodoUser> userManager, TokenManager<TodoUser, IdentityStoreToken> tokenService) =>
         {
             var user = await userManager.FindByNameAsync(userInfo.Username);
 
@@ -40,7 +40,7 @@ public static class UsersApi
             return TypedResults.Ok(new AuthToken(await tokenService.GetAccessTokenAsync(user), await tokenService.GetRefreshTokenAsync(user)));
         });
 
-        group.MapPost("/token/{provider}", async Task<Results<Ok<AuthToken>, ValidationProblem>> (string provider, ExternalUserInfo userInfo, UserManager<TodoUser> userManager, TokenManager<TodoUser> tokenService) =>
+        group.MapPost("/token/{provider}", async Task<Results<Ok<AuthToken>, ValidationProblem>> (string provider, ExternalUserInfo userInfo, UserManager<TodoUser> userManager, TokenManager<TodoUser, IdentityStoreToken> tokenService) =>
         {
             var user = await userManager.FindByLoginAsync(provider, userInfo.ProviderKey);
 
@@ -66,7 +66,7 @@ public static class UsersApi
             return TypedResults.ValidationProblem(result.Errors.ToDictionary(e => e.Code, e => new[] { e.Description }));
         });
 
-        group.MapPost("/refreshToken", async Task<Results<BadRequest, Ok<AuthToken>>> (RefreshToken tokenInfo, UserManager<TodoUser> userManager, TokenManager<TodoUser> tokenService) =>
+        group.MapPost("/refreshToken", async Task<Results<BadRequest, Ok<AuthToken>>> (RefreshToken tokenInfo, UserManager<TodoUser> userManager, TokenManager<TodoUser, IdentityStoreToken> tokenService) =>
         {
             if (tokenInfo.Token is null)
             {

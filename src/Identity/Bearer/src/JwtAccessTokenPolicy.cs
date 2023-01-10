@@ -46,7 +46,7 @@ internal class JwtTokenFormat : ITokenFormatProvider
             JWSAlg.HS256,
             _options.Issuer!,
             _options.SigningCredentials!,
-            _options.Audiences.FirstOrDefault() ?? string.Empty);
+            _options.Audiences);
 
         return reader.ReadToken(token);
     }
@@ -96,7 +96,7 @@ internal class JwtAccessTokenPolicy : IAccessTokenPolicy
             JWSAlg.HS256,
             issuer,
             _bearerOptions.SigningCredentials!,
-            audience);
+            _bearerOptions.Audiences);
         return reader.ValidateJwtAsync(accessToken);
     }
 }

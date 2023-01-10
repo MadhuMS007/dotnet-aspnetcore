@@ -15,13 +15,13 @@ internal sealed class JwtReader
     /// <param name="algorithm"></param>
     /// <param name="issuer"></param>
     /// <param name="signingKey"></param>
-    /// <param name="audience"></param>
-    public JwtReader(string algorithm, string issuer, JsonWebKey signingKey, string audience)
+    /// <param name="audiences"></param>
+    public JwtReader(string algorithm, string issuer, JsonWebKey signingKey, IList<string> audiences)
     {
         Algorithm = algorithm;
         Issuer = issuer;
         SigningKey = signingKey;
-        Audience = audience;
+        Audiences = audiences;
     }
 
     /// <summary>
@@ -40,9 +40,9 @@ internal sealed class JwtReader
     public JsonWebKey SigningKey { get; set; }
 
     /// <summary>
-    /// The intended audience for the JWT.
+    /// The intended audiences for the JWT.
     /// </summary>
-    public string Audience { get; set; }
+    public IList<string> Audiences { get; set; }
 
     private static string? SafeGet(IDictionary<string, string> payload, string key)
     {
@@ -92,7 +92,7 @@ internal sealed class JwtReader
 
         // REVIEW: more than one valid?
         var audience = SafeGet(payload, "aud");
-        if (audience != Audience)
+        if (audience != null && !Audiences.Contains(audience))
         {
             return false;
         }

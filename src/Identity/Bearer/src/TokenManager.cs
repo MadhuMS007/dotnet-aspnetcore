@@ -1,7 +1,6 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
@@ -9,8 +8,42 @@ using Microsoft.Extensions.Options;
 
 namespace Microsoft.AspNetCore.Identity;
 
+///// <summary>
+///// Provides the APIs for managing tokens in a persistence store.
+///// </summary>
+///// <typeparam name="TUser">The type encapsulating a user.</typeparam>
+//public class TokenManager<TUser> : TokenManager<TUser, IdentityStoreToken> where TUser: class
+//{
+//    /// <summary>
+//    /// Constructs a new instance of <see cref="TokenManager{TUser,TToken}"/>.
+//    /// </summary>
+//    /// <param name="identityOptions">The options which configure the identity system.</param>
+//    /// <param name="store"></param>
+//    /// <param name="userManager">An instance of <see cref="UserManager{TUser}"/> used to retrieve users from and persist users.</param>
+//    /// <param name="errors">The <see cref="IdentityErrorDescriber"/> used to provider error messages.</param>
+//    /// <param name="logger">The logger used to log messages, warnings and errors.</param>
+//    /// <param name="claimsFactory">The factory to use to create claims principals for a user.</param>
+//    /// <param name="bearerOptions">The options which configure the bearer token such as signing key, audience, and issuer.</param>
+//    /// <param name="accessTokenPolicy"></param>
+//    /// <param name="clock"></param>
+//    /// <exception cref="ArgumentNullException"></exception>
+//    /// <exception cref="InvalidOperationException"></exception>
+//    public TokenManager(
+//        IOptions<IdentityOptions> identityOptions,
+//        ITokenStore<IdentityStoreToken> store,
+//        UserManager<TUser> userManager,
+//        IdentityErrorDescriber errors,
+//        ILogger<TokenManager<TUser, IdentityStoreToken>> logger,
+//        IAccessTokenClaimsFactory<TUser> claimsFactory,
+//        IOptions<IdentityBearerOptions> bearerOptions,
+//        IAccessTokenPolicy accessTokenPolicy,
+//        ISystemClock clock)
+//        : base(identityOptions, store, userManager, errors, logger, claimsFactory, bearerOptions, accessTokenPolicy, clock)
+//    { }
+//}
+
 /// <summary>
-/// Provides the APIs for managing roles in a persistence store.
+/// Provides the APIs for managing tokens in a persistence store.
 /// </summary>
 /// <typeparam name="TUser">The type encapsulating a user.</typeparam>
 /// <typeparam name="TToken">The type encapsulating a token.</typeparam>
@@ -33,7 +66,7 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
     /// </summary>
     /// <param name="identityOptions">The options which configure the identity system.</param>
     /// <param name="store"></param>
-    /// <param name="userManager">An instance of <see cref="UserManager"/> used to retrieve users from and persist users.</param>
+    /// <param name="userManager">An instance of <see cref="UserManager{TUser}"/> used to retrieve users from and persist users.</param>
     /// <param name="errors">The <see cref="IdentityErrorDescriber"/> used to provider error messages.</param>
     /// <param name="logger">The logger used to log messages, warnings and errors.</param>
     /// <param name="claimsFactory">The factory to use to create claims principals for a user.</param>
@@ -245,6 +278,7 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
     /// <returns></returns>
     public virtual async Task<TToken> StoreAsync(TokenInfo info)
     {
+        // TODO: make internal?
         var tok = await Store.NewAsync(info, CancellationToken).ConfigureAwait(false);
         await Store.CreateAsync(tok, CancellationToken);
         return tok;
