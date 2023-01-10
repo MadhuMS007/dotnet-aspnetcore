@@ -12,10 +12,11 @@ Microsoft.AspNetCore.Identity.IKeyStore.FindByIdAsync(string! keyId, System.Thre
 Microsoft.AspNetCore.Identity.IKeyStore.RemoveAsync(string! keyId, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.IdentityResult!>!
 Microsoft.AspNetCore.Identity.ITokenFormatProvider
 Microsoft.AspNetCore.Identity.ITokenFormatProvider.CreateTokenAsync(Microsoft.AspNetCore.Identity.TokenInfo! token) -> System.Threading.Tasks.Task<string!>!
+Microsoft.AspNetCore.Identity.ITokenFormatProvider.PayloadSerializer.get -> Microsoft.AspNetCore.Identity.ITokenSerializer!
 Microsoft.AspNetCore.Identity.ITokenFormatProvider.ReadTokenAsync(string! token) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.TokenInfo?>!
 Microsoft.AspNetCore.Identity.ITokenSerializer
-Microsoft.AspNetCore.Identity.ITokenSerializer.Deserialize(string! serializedValue) -> object!
-Microsoft.AspNetCore.Identity.ITokenSerializer.Serialize(object! value) -> string!
+Microsoft.AspNetCore.Identity.ITokenSerializer.Deserialize<T>(string! serializedValue) -> T?
+Microsoft.AspNetCore.Identity.ITokenSerializer.Serialize<T>(T value) -> string!
 Microsoft.AspNetCore.Identity.ITokenStore<TToken>
 Microsoft.AspNetCore.Identity.ITokenStore<TToken>.CreateAsync(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.IdentityResult!>!
 Microsoft.AspNetCore.Identity.ITokenStore<TToken>.DeleteAsync(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.IdentityResult!>!

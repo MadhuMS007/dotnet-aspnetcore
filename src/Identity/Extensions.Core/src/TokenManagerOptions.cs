@@ -30,6 +30,11 @@ public class TokenManagerOptions
 public interface ITokenFormatProvider
 {
     /// <summary>
+    /// Responsible for serializing the token payload
+    /// </summary>
+    ITokenSerializer PayloadSerializer { get; }
+
+    /// <summary>
     /// 
     /// </summary>
     /// <param name="token">The token info to create.</param>

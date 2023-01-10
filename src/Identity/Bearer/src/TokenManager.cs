@@ -1,8 +1,6 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.Globalization;
-using System.Linq;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
@@ -68,7 +66,7 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
         _keyFormatProviders[JsonKeySerializer.ProviderId] = new JsonKeySerializer();
         _keyFormatProviders[Base64KeySerializer.ProviderId] = new Base64KeySerializer();
 
-        Options.FormatProviderMap[TokenFormat.JWT] = new JwtTokenFormat();
+        Options.FormatProviderMap[TokenFormat.JWT] = new JwtTokenFormat(_accessTokenPolicy, bearerOptions);
         Options.FormatProviderMap[TokenFormat.Single] = new GuidTokenFormat();
 
         Options.PurposeFormatMap[TokenPurpose.RefreshToken] = TokenFormat.Single;
@@ -138,18 +136,21 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
 
         var payload = new Dictionary<string, string>();
         await PayloadFactory.BuildPayloadAsync(user, payload);
-        var userName = await UserManager.GetUserNameAsync(user).ConfigureAwait(false);
+        var userId = await UserManager.GetUserIdAsync(user).ConfigureAwait(false);
 
-        // REVIEW: Check that this logic is OK for jti claims
-        var jti = Guid.NewGuid().ToString().GetHashCode().ToString("x", CultureInfo.InvariantCulture);
-        return await _accessTokenPolicy.CreateAsync(jti,
-            _bearerOptions.Issuer!,
-            _bearerOptions.Audiences.FirstOrDefault() ?? string.Empty,
-            payload,
-            DateTimeOffset.UtcNow,
-            DateTimeOffset.UtcNow.AddMinutes(30),
-            DateTimeOffset.UtcNow,
-            subject: userName!);
+        // Store access tokens for now just to verify extensibility
+        (var format, var provider) = GetFormatProvider(TokenPurpose.AccessToken);
+
+        // Store the token metadata, with jwt token as payload
+        var info = new TokenInfo(Guid.NewGuid().ToString(),
+            format, userId, TokenPurpose.RefreshToken, TokenStatus.Active)
+        {
+            Expiration = DateTimeOffset.UtcNow.AddDays(1),
+            Payload = payload
+        };
+        var tok = await Store.NewAsync(info, CancellationToken).ConfigureAwait(false);
+        await Store.CreateAsync(tok, CancellationToken);
+        return await provider.CreateTokenAsync(info);
     }
 
     /// <summary>
@@ -159,13 +160,28 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
     /// <returns>A claims principal for the token if its valid, null otherwise.</returns>
     public virtual async Task<ClaimsPrincipal?> ValidateAccessTokenAsync(string token)
     {
-        var principal = await _accessTokenPolicy.ValidateAsync(token, _bearerOptions.Issuer!, _bearerOptions.Audiences.FirstOrDefault() ?? string.Empty);
-        if (principal != null)
+        (var _, var provider) = GetFormatProvider(TokenPurpose.AccessToken);
+
+        var tokenInfo = await provider.ReadTokenAsync(token);
+        if (tokenInfo == null)
         {
-            // TODO: Check for revocation
-            return principal;
+            return null;
         }
-        return null;
+
+        // TODO: check for revocation
+
+        var payloadDict = tokenInfo.Payload as IDictionary<string, string>;
+        if (payloadDict == null)
+        {
+            throw new InvalidOperationException("Expected IDictionary<string, string> token payload.");
+        }
+
+        var claimsIdentity = new ClaimsIdentity(IdentityConstants.BearerScheme);
+        foreach (var key in payloadDict.Keys)
+        {
+            claimsIdentity.AddClaim(new Claim(key, payloadDict[key]));
+        }
+        return new ClaimsPrincipal(claimsIdentity);
     }
 
     /// <summary>

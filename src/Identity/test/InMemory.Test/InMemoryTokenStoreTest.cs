@@ -4,6 +4,7 @@
 using System.Globalization;
 using System.Linq.Expressions;
 using System.Security.Claims;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity.InMemory.Test;
@@ -14,7 +15,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Microsoft.AspNetCore.Identity.InMemory;
 
-public class InMemoryTokenStoreTest : IClassFixture<InMemoryUserStoreTest.Fixture>
+public class InMemoryTokenStoreTest : TokenManagerSpecificationTestBase<PocoUser>, IClassFixture<InMemoryUserStoreTest.Fixture>
 {
     private readonly string Issuer = "dotnet-user-jwts";
     private readonly string Audience = "<audience>";
@@ -24,15 +25,7 @@ public class InMemoryTokenStoreTest : IClassFixture<InMemoryUserStoreTest.Fixtur
     /// </summary>
     /// <param name="services"></param>
     /// <param name="context"></param>
-    protected virtual void SetupIdentityServices(IServiceCollection services, object context)
-        => SetupBuilder(services, context);
-
-    /// <summary>
-    /// Configure the service collection used for tests.
-    /// </summary>
-    /// <param name="services"></param>
-    /// <param name="context"></param>
-    protected virtual IdentityBuilder SetupBuilder(IServiceCollection services, object context)
+    protected override IdentityBuilder SetupBuilder(IServiceCollection services, object context)
     {
         services.AddHttpContextAccessor();
         // An example of what the expected schema looks like
@@ -81,13 +74,13 @@ public class InMemoryTokenStoreTest : IClassFixture<InMemoryUserStoreTest.Fixtur
         return builder;
     }
 
-    protected void AddUserStore(IServiceCollection services, object context = null)
+    protected override void AddUserStore(IServiceCollection services, object context = null)
         => services.AddSingleton<IUserStore<PocoUser>>((InMemoryUserStore<PocoUser>)context);
 
-    protected void SetUserPasswordHash(PocoUser user, string hashedPassword)
+    protected override void SetUserPasswordHash(PocoUser user, string hashedPassword)
         => user.PasswordHash = hashedPassword;
 
-    protected PocoUser CreateTestUser(string namePrefix = "", string email = "", string phoneNumber = "",
+    protected override PocoUser CreateTestUser(string namePrefix = "", string email = "", string phoneNumber = "",
         bool lockoutEnabled = false, DateTimeOffset? lockoutEnd = default, bool useNamePrefixAsUserName = false)
     {
         return new PocoUser
@@ -100,14 +93,12 @@ public class InMemoryTokenStoreTest : IClassFixture<InMemoryUserStoreTest.Fixtur
         };
     }
 
-    protected Expression<Func<PocoUser, bool>> UserNameEqualsPredicate(string userName) => u => u.UserName == userName;
+    protected override Expression<Func<PocoUser, bool>> UserNameEqualsPredicate(string userName) => u => u.UserName == userName;
 
-    protected Expression<Func<PocoUser, bool>> UserNameStartsWithPredicate(string userName) => u => u.UserName.StartsWith(userName, StringComparison.Ordinal);
+    protected override Expression<Func<PocoUser, bool>> UserNameStartsWithPredicate(string userName) => u => u.UserName.StartsWith(userName, StringComparison.Ordinal);
 
-    protected object CreateTestContext()
-    {
-        return new InMemoryTokenStore<PocoUser, PocoRole>();
-    }
+    protected override object CreateTestContext()
+        => new InMemoryTokenStore<PocoUser, PocoRole>();
 
     /// <summary>
     /// Creates the user manager used for tests.
@@ -116,7 +107,7 @@ public class InMemoryTokenStoreTest : IClassFixture<InMemoryUserStoreTest.Fixtur
     /// <param name="services">The service collection to use, optional.</param>
     /// <param name="configureServices">Delegate used to configure the services, optional.</param>
     /// <returns>The user manager to use for tests.</returns>
-    protected virtual TokenManager<PocoUser, IdentityToken> CreateManager(object context = null, IServiceCollection services = null, Action<IServiceCollection> configureServices = null)
+    protected override TokenManager<PocoUser, IdentityToken> CreateManager(object context = null, IServiceCollection services = null, Action<IServiceCollection> configureServices = null)
     {
         if (services == null)
         {
@@ -136,7 +127,7 @@ public class InMemoryTokenStoreTest : IClassFixture<InMemoryUserStoreTest.Fixtur
     /// </summary>
     /// <returns>Task</returns>
     [Fact]
-    public async Task AccessTokenFormat()
+    public async Task CanStoreAccessTokensInMemory()
     {
         var manager = CreateManager();
         var user = CreateTestUser();
@@ -161,181 +152,20 @@ public class InMemoryTokenStoreTest : IClassFixture<InMemoryUserStoreTest.Fixtur
         }
         EnsureClaim(principal, "iss", Issuer);
         EnsureClaim(principal, "aud", Audience);
-        EnsureClaim(principal, "sub", user.UserName);
+        EnsureClaim(principal, "sub", user.Id);
+
+        var jti = principal.Claims.FirstOrDefault(c => c.Type == TokenClaims.Jti)?.Value;
+        Assert.NotNull(jti);
+
+        // Verify the token got serialized into the database
+        var store = (InMemoryTokenStore<PocoUser, PocoRole>)manager.Store;
+
+        var tok = store._tokens[jti];
+        Assert.NotNull(tok);
+
+        // Make sure we can json deserialize the payload too
+        var payload = JsonSerializer.Deserialize<IDictionary<string, string>>(tok.Payload);
+        Assert.NotNull(payload);
+        Assert.NotNull(payload["AspNet.Identity.SecurityStamp"]);
     }
-
-    /// <summary>
-    /// Test.
-    /// </summary>
-    /// <returns>Task</returns>
-    [Fact]
-    public async Task AccessTokenDupcliateClaimsFormat()
-    {
-        var manager = CreateManager();
-        var user = CreateTestUser();
-        IdentityResultAssert.IsSuccess(await manager.UserManager.CreateAsync(user));
-
-        var claims = new[] {
-            new Claim("custom", "value"),
-            new Claim("custom", "value2"),
-            new Claim("custom2", "value"),
-            new Claim("custom2", "value2"),
-        };
-
-        await manager.UserManager.AddClaimsAsync(user, claims);
-
-        var token = await manager.GetAccessTokenAsync(user);
-        Assert.NotNull(token);
-
-        var principal = await manager.ValidateAccessTokenAsync(token);
-
-        Assert.NotNull(principal);
-        EnsureClaim(principal, "custom", "value2");
-        EnsureClaim(principal, "custom2", "value2");
-        EnsureClaim(principal, "iss", Issuer);
-        EnsureClaim(principal, "aud", Audience);
-        EnsureClaim(principal, "sub", user.UserName);
-    }
-
-    private void EnsureClaim(ClaimsPrincipal principal, string name, string value)
-        => Assert.Contains(principal.Claims, c => c.Type == name && c.Value == value);
-
-    /// <summary>
-    /// Test.
-    /// </summary>
-    /// <returns>Task</returns>
-    [Fact]
-    public async Task CanRefreshTokens()
-    {
-        var manager = CreateManager();
-        var user = CreateTestUser();
-        IdentityResultAssert.IsSuccess(await manager.UserManager.CreateAsync(user));
-
-        var token = await manager.GetRefreshTokenAsync(user);
-        Assert.NotNull(token);
-
-        (var access, var refresh) = await manager.RefreshTokensAsync(token);
-
-        Assert.NotNull(access);
-        Assert.NotNull(refresh);
-    }
-
-    /// <summary>
-    /// Test.
-    /// </summary>
-    /// <returns>Task</returns>
-    [Fact]
-    public async Task ExpiredRefreshTokensFails()
-    {
-        var clock = new TestClock();
-        var manager = CreateManager(configureServices: s => s.AddSingleton<ISystemClock>(clock));
-        var user = CreateTestUser();
-        IdentityResultAssert.IsSuccess(await manager.UserManager.CreateAsync(user));
-
-        var token = await manager.GetRefreshTokenAsync(user);
-        Assert.NotNull(token);
-
-        // Advance clock past expiration
-        clock.UtcNow = DateTime.UtcNow.AddDays(2);
-
-        (var access, var refresh) = await manager.RefreshTokensAsync(token);
-
-        Assert.Null(access);
-        Assert.Null(refresh);
-    }
-
-    /// <summary>
-    /// Test.
-    /// </summary>
-    /// <returns>Task</returns>
-    [Fact]
-    public async Task RevokedRefreshTokenFails()
-    {
-        var manager = CreateManager();
-        var user = CreateTestUser();
-        IdentityResultAssert.IsSuccess(await manager.UserManager.CreateAsync(user));
-
-        var token = await manager.GetRefreshTokenAsync(user);
-        Assert.NotNull(token);
-
-        await manager.RevokeRefreshAsync(user, token);
-
-        (var access, var refresh) = await manager.RefreshTokensAsync(token);
-
-        Assert.Null(access);
-        Assert.Null(refresh);
-    }
-
-    /// <summary>
-    /// Test.
-    /// </summary>
-    /// <returns>Task</returns>
-    [Fact]
-    public async Task DeleteUserRemovesRefreshToken()
-    {
-        var manager = CreateManager();
-        var user = CreateTestUser();
-        IdentityResultAssert.IsSuccess(await manager.UserManager.CreateAsync(user));
-
-        var token = await manager.GetRefreshTokenAsync(user);
-        Assert.NotNull(token);
-
-        IdentityResultAssert.IsSuccess(await manager.UserManager.DeleteAsync(user));
-        var userId = await manager.UserManager.GetUserIdAsync(user);
-        Assert.Null(await manager.UserManager.FindByIdAsync(userId));
-        Assert.Null(await manager.Store.FindAsync("", token, CancellationToken.None));
-    }
-
-    /// <summary>
-    /// Test.
-    /// </summary>
-    /// <returns>Task</returns>
-    [Fact]
-    public async Task CanStoreJWK()
-    {
-        var manager = CreateManager();
-
-        var keyId = Guid.NewGuid().ToString();
-        var data = new Dictionary<string, string>();
-        data["kty"] = "oct";
-        data["alg"] = "HS256";
-        data["kid"] = keyId;
-        data["k"] = "(G+KbPeShVmYq3t6w9z$C&F)J@McQfTj";
-        var jwk = new JsonSigningKey(keyId, data);
-
-        await manager.AddSigningKeyAsync(JsonKeySerializer.ProviderId, jwk);
-
-        var key = await manager.GetSigningKeyAsync(keyId);
-
-        Assert.NotNull(key);
-        foreach (var k in data.Keys)
-        {
-            Assert.Equal(data[k], key[k]);
-        }
-    }
-
-    /// <summary>
-    /// Test.
-    /// </summary>
-    /// <returns>Task</returns>
-    [Fact]
-    public async Task CanStoreBase64Key()
-    {
-        var manager = CreateManager();
-
-        var keyId = Guid.NewGuid().ToString();
-        var base64Key = "(G+KbPeShVmYq3t6w9z$C&F)J@McQfTj";
-        var baseKey = new Base64Key(keyId, base64Key);
-
-        await manager.AddSigningKeyAsync(Base64KeySerializer.ProviderId, baseKey);
-
-        var key = await manager.GetSigningKeyAsync(keyId);
-
-        Assert.NotNull(key);
-        foreach (var k in baseKey.Data.Keys)
-        {
-            Assert.Equal(baseKey.Data[k], key.Data[k]);
-        }
-    }
-
 }

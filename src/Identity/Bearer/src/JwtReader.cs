@@ -140,7 +140,41 @@ internal sealed class JwtReader
             return new ClaimsPrincipal(claimsIdentity);
         }
         return null;
+    }
 
+    private static TokenInfo? FromTokenInfo(IDictionary<string, string> payload)
+    {
+        var sub = SafeGet(payload, TokenClaims.Subject);
+        if (sub == null)
+        {
+            return null;
+        }
+
+        var jti = SafeGet(payload, TokenClaims.Jti);
+        if (jti == null)
+        {
+            return null;
+        }
+        return new TokenInfo(jti, TokenFormat.JWT, sub, TokenPurpose.AccessToken, TokenStatus.Active)
+        {
+            Payload = payload
+        };
+    }
+
+    public async Task<TokenInfo?> ReadToken(string jwtToken)
+    {
+        var payload = await ReadJwtAsync(jwtToken, Algorithm, SigningKey);
+        if (payload != null)
+        {
+            // Ensure that the payload is valid.
+            if (!ValidatePayload(payload))
+            {
+                return null;
+            }
+
+            return FromTokenInfo(payload);
+        }
+        return null;
     }
 
     /// <summary>

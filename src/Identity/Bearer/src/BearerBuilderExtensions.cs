@@ -1,11 +1,25 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Text.Json;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Microsoft.Extensions.DependencyInjection;
+
+internal class JsonTokenSerizlier : ITokenSerializer
+{
+    public static JsonTokenSerizlier Instance { get; private set; } = new JsonTokenSerizlier();
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
+    public T? Deserialize<T>(string serializedValue)
+        => JsonSerializer.Deserialize<T>(serializedValue);
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
+    public string Serialize<T>(T value)
+        => JsonSerializer.Serialize(value);
+}
 
 /// <summary>
 /// Contains extension methods to <see cref="IdentityBuilder"/> for adding entity framework stores.

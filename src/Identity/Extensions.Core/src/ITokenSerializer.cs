@@ -15,14 +15,16 @@ public interface ITokenSerializer
     /// <summary>
     /// Serialize the value.
     /// </summary>
+    /// <typeparam name="T"></typeparam>
     /// <param name="value"></param>
     /// <returns>The string representing the value.</returns>
-    string Serialize(object value);
+    string Serialize<T>(T value);
 
     /// <summary>
     /// Deserialize an object from the specified serializedValue.
     /// </summary>
+    /// <typeparam name="T"></typeparam>
     /// <param name="serializedValue"></param>
     /// <returns>The deserialiezd object.</returns>
-    object Deserialize(string serializedValue);
+    T? Deserialize<T>(string serializedValue);
 }

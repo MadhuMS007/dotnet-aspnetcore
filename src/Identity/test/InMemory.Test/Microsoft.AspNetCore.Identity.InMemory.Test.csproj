@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>$(DefaultNetCoreTargetFramework)</TargetFramework>
@@ -6,6 +6,10 @@
 
   <ItemGroup>
     <Compile Include="$(IdentityTestSharedSourceRoot)**\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="C:\Github\aspnetcore\src\Identity\test\Shared\TestClock.cs" />
   </ItemGroup>
 
   <ItemGroup>

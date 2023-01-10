@@ -2,7 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using Microsoft.AspNetCore.Identity.Test;
-using Newtonsoft.Json.Linq;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Microsoft.AspNetCore.Identity.InMemory;
 
@@ -13,8 +13,9 @@ public class InMemoryTokenStore<TUser, TRole> :
     where TRole : PocoRole
     where TUser : PocoUser
 {
-    private readonly IDictionary<string, IdentityToken> _tokens = new Dictionary<string, IdentityToken>();
-    private readonly IDictionary<string, KeyInfo> _keys = new Dictionary<string, KeyInfo>();
+    public readonly IDictionary<string, IdentityToken> _tokens = new Dictionary<string, IdentityToken>();
+    public readonly IDictionary<string, KeyInfo> _keys = new Dictionary<string, KeyInfo>();
+    public readonly ITokenSerializer _serializer = new JsonTokenSerizlier();
 
     public Task<IdentityResult> AddAsync(string keyId, string providerId, string format, string data, CancellationToken cancellationToken)
     {
@@ -42,7 +43,9 @@ public class InMemoryTokenStore<TUser, TRole> :
     }
 
     Task<IdentityToken> ITokenStore<IdentityToken>.FindByIdAsync(string tokenId, CancellationToken cancellationToken)
-        => Task.FromResult(_tokens.Values.Where(t => t.Id == tokenId).SingleOrDefault());
+    {
+        return Task.FromResult(_tokens.Values.Where(t => t.Id == tokenId).SingleOrDefault());
+    }
 
     public Task<IdentityToken> FindAsync(string purpose, string value, CancellationToken cancellationToken)
         => Task.FromResult(_tokens.Values.Where(t => t.Purpose == purpose && t.Payload == value).SingleOrDefault());
@@ -57,7 +60,13 @@ public class InMemoryTokenStore<TUser, TRole> :
         => Task.FromResult(token.Subject);
 
     public Task<IdentityToken> NewAsync(TokenInfo tokenInfo, CancellationToken cancellationToken)
-        => Task.FromResult(new IdentityToken(tokenInfo));
+    {
+        return Task.FromResult(new IdentityToken(tokenInfo)
+        {
+            Payload = _serializer.Serialize(tokenInfo.Payload)
+        });
+        ;
+    }
 
     public Task<IdentityResult> RemoveAsync(string keyId, CancellationToken cancellationToken)
     {

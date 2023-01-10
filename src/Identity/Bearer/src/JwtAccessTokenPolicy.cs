@@ -3,25 +3,59 @@
 
 using System.Linq;
 using System.Security.Claims;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace Microsoft.AspNetCore.Identity;
 
 internal class JwtTokenFormat : ITokenFormatProvider
 {
-    public Task<string> CreateTokenAsync(TokenInfo token)
+    private readonly IAccessTokenPolicy _accessTokenPolicy;
+    private readonly IdentityBearerOptions _options;
+
+    public JwtTokenFormat(IAccessTokenPolicy tokenPolicy, IOptions<IdentityBearerOptions> options)
     {
-        throw new NotImplementedException();
+        _accessTokenPolicy = tokenPolicy;
+        _options = options.Value;
+    }
+
+    public ITokenSerializer PayloadSerializer => JsonTokenSerizlier.Instance;
+
+    public async Task<string> CreateTokenAsync(TokenInfo token)
+    {
+        var payloadDict = token.Payload as IDictionary<string, string>;
+        if (payloadDict == null)
+        {
+            throw new InvalidOperationException("Expected IDictionary<string, string> token payload.");
+        }
+
+        // REVIEW: Check that using token.Id is okay for jti
+        return await _accessTokenPolicy.CreateAsync(token.Id,
+            _options.Issuer!,
+            _options.Audiences.FirstOrDefault() ?? string.Empty,
+            payloadDict,
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow.AddMinutes(30),
+            DateTimeOffset.UtcNow,
+            subject: token.Subject);
     }
 
     public Task<TokenInfo?> ReadTokenAsync(string token)
     {
-        throw new NotImplementedException();
+        var reader = new JwtReader(
+            JWSAlg.HS256,
+            _options.Issuer!,
+            _options.SigningCredentials!,
+            _options.Audiences.FirstOrDefault() ?? string.Empty);
+
+        return reader.ReadToken(token);
     }
 }
 
 internal class GuidTokenFormat : ITokenFormatProvider
 {
+    public ITokenSerializer PayloadSerializer => JsonTokenSerizlier.Instance;
+
     public Task<string> CreateTokenAsync(TokenInfo token)
         => Task.FromResult(token.Id);
 
@@ -52,6 +86,7 @@ internal class JwtAccessTokenPolicy : IAccessTokenPolicy
             notBefore,
             expires);
         jwtBuilder.IssuedAt = issuedAt;
+        jwtBuilder.Jti = tokenId;
         return await jwtBuilder.CreateJwtAsync();
     }
 

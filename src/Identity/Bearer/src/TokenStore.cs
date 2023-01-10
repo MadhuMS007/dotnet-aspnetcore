@@ -3,6 +3,7 @@
 
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Microsoft.AspNetCore.Identity;
 
@@ -77,6 +78,11 @@ public static class TokenClaims
     /// When the token was issued.
     /// </summary>
     public const string IssuedAt = "iat";
+
+    /// <summary>
+    /// The identifier for the token.
+    /// </summary>
+    public const string Jti = "jti";
 }
 
 /// <summary>
@@ -176,8 +182,7 @@ public abstract class IdentityDbContext<TUser, TRole, TToken, TKey, TUserClaim, 
 
         builder.Entity<TToken>(b =>
         {
-            // REVIEW: is this correct for index?
-            b.HasIndex(t => t.Purpose + t.Payload).HasDatabaseName("TokenPurposeValueIndex");
+            b.HasIndex(t => new { t.Purpose, t.Payload }).HasDatabaseName("TokenPurposeValueIndex");
             b.ToTable("AspNetTokens");
             b.Property(r => r.ConcurrencyStamp).IsConcurrencyToken();
 
@@ -215,10 +220,10 @@ public class TokenStore<TToken, TContext> : ITokenStore<TToken>, IKeyStore
     /// <param name="context">The context used to access the store.</param>
     /// <param name="serializer">The <see cref="ITokenSerializer"/> used to serialize tokens.</param>
     /// <param name="describer">The <see cref="IdentityErrorDescriber"/> used to describe store errors.</param>
-    public TokenStore(TContext context, ITokenSerializer serializer, IdentityErrorDescriber? describer = null) 
+    public TokenStore(TContext context, ITokenSerializer? serializer = null, IdentityErrorDescriber? describer = null) 
     {
         Context = context ?? throw new ArgumentNullException(nameof(context));
-        _serializer = serializer;
+        _serializer = serializer ?? JsonTokenSerizlier.Instance;
         ErrorDescriber = describer ?? new IdentityErrorDescriber();
     }
 
