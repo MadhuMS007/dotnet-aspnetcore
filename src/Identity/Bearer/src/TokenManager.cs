@@ -173,7 +173,14 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
             return null;
         }
 
-        // TODO: check for revocation
+        // check for revocation is done by looking for a token record that has invalid status
+        // TODO: add revocation strategies/logic
+        var storageToken = await FindByIdAsync<object>(tokenInfo.Id);
+        if (storageToken != null && storageToken.Status != TokenStatus.Active)
+        {
+            // It's okay if the token isn't found, but it must have active status if exists.
+            return null;
+        }
 
         var payloadDict = tokenInfo.Payload as IDictionary<string, string>;
         if (payloadDict == null)
@@ -203,6 +210,24 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
         }
 
         return await Store.GetTokenInfoAsync<TPayload>(tok, CancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Revokes a token.
+    /// </summary>
+    /// <param name="tokenId">The token id to revoke.</param>
+    /// <returns>The true if a token was revoked.</returns>
+    public virtual async Task<bool> RevokeAsync(string tokenId)
+    {
+        var tok = await Store.FindByIdAsync(tokenId, CancellationToken).ConfigureAwait(false);
+        if (tok == null)
+        {
+            return false;
+        }
+
+        await Store.SetStatusAsync(tok, TokenStatus.Revoked, CancellationToken).ConfigureAwait(false);
+        var result = await Store.UpdateAsync(tok, CancellationToken).ConfigureAwait(false);
+        return result.Succeeded;
     }
 
     /// <summary>

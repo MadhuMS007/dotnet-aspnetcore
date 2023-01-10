@@ -133,7 +133,9 @@ virtual Microsoft.AspNetCore.Identity.TokenManager<TUser, TToken>.GetAccessToken
 virtual Microsoft.AspNetCore.Identity.TokenManager<TUser, TToken>.GetRefreshTokenAsync(TUser! user) -> System.Threading.Tasks.Task<string!>!
 virtual Microsoft.AspNetCore.Identity.TokenManager<TUser, TToken>.Logger.get -> Microsoft.Extensions.Logging.ILogger!
 virtual Microsoft.AspNetCore.Identity.TokenManager<TUser, TToken>.Logger.set -> void
+virtual Microsoft.AspNetCore.Identity.TokenManager<TUser, TToken>.PurgeExpiredTokensAsync() -> System.Threading.Tasks.Task<int>!
 virtual Microsoft.AspNetCore.Identity.TokenManager<TUser, TToken>.RefreshTokensAsync(string! refreshToken) -> System.Threading.Tasks.Task<(string?, string?)>!
+virtual Microsoft.AspNetCore.Identity.TokenManager<TUser, TToken>.RevokeAsync(string! tokenId) -> System.Threading.Tasks.Task<bool>!
 virtual Microsoft.AspNetCore.Identity.TokenManager<TUser, TToken>.RevokeRefreshAsync(TUser! user, string! token) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.IdentityResult!>!
 virtual Microsoft.AspNetCore.Identity.TokenManager<TUser, TToken>.StoreAsync(Microsoft.AspNetCore.Identity.TokenInfo! info) -> System.Threading.Tasks.Task<TToken!>!
 virtual Microsoft.AspNetCore.Identity.TokenManager<TUser, TToken>.ValidateAccessTokenAsync(string! token) -> System.Threading.Tasks.Task<System.Security.Claims.ClaimsPrincipal?>!

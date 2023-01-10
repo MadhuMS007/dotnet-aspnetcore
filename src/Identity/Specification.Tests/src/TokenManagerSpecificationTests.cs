@@ -289,6 +289,36 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
     /// </summary>
     /// <returns>Task</returns>
     [Fact]
+    public async Task CanRevokeAccessTokens()
+    {
+        var manager = CreateManager();
+        var user = CreateTestUser();
+        var userId = await manager.UserManager.GetUserIdAsync(user);
+        IdentityResultAssert.IsSuccess(await manager.UserManager.CreateAsync(user));
+
+        var token = await manager.GetAccessTokenAsync(user);
+        Assert.NotNull(token);
+
+        var principal = await manager.ValidateAccessTokenAsync(token);
+
+        Assert.NotNull(principal);
+        EnsureClaim(principal, "iss", Issuer);
+        EnsureClaim(principal, "aud", Audience);
+        EnsureClaim(principal, "sub", userId);
+
+        var jti = principal.Claims.FirstOrDefault(c => c.Type == TokenClaims.Jti)?.Value;
+        Assert.NotNull(jti);
+
+        // Revoke the access token and make sure it doesn't work
+        Assert.True(await manager.RevokeAsync(jti));
+        Assert.Null(await manager.ValidateAccessTokenAsync(token));
+    }
+
+    /// <summary>
+    /// Test.
+    /// </summary>
+    /// <returns>Task</returns>
+    [Fact]
     public async Task ExpiredRefreshTokensFails()
     {
         var clock = new TestClock();
