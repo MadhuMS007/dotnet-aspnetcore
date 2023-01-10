@@ -62,8 +62,8 @@ public static class BearerBuilderExtensions
         if (identityContext == null)
         {
             // If its a custom DbContext, we can only add the default POCOs
-            tokenType = typeof(IdentityToken);
-            tokenStoreType = typeof(TokenStore<IdentityToken, TContext>);
+            tokenType = typeof(IdentityStoreToken);
+            tokenStoreType = typeof(TokenStore<IdentityStoreToken, TContext>);
         }
         else
         {

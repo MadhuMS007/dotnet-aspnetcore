@@ -52,7 +52,7 @@ public static class BearerServiceCollectionExtensions
     /// <returns></returns>
     public static IdentityBuilder AddDefaultIdentityBearer<TUser>(this IServiceCollection services)
         where TUser : class
-    => services.AddDefaultIdentityBearer<TUser, IdentityToken>(_ => { });
+    => services.AddDefaultIdentityBearer<TUser, IdentityStoreToken>(_ => { });
 
     /// <summary>
     /// 

@@ -134,10 +134,10 @@ public abstract class IdentityDbContext<TUser, TRole, TKey, TUserClaim, TUserRol
 
         builder.Entity<TUser>(b =>
         {
-            b.HasMany<IdentityToken>().WithOne().HasForeignKey(ur => ur.Subject).IsRequired();
+            b.HasMany<IdentityStoreToken>().WithOne().HasForeignKey(ur => ur.Subject).IsRequired();
         });
 
-        builder.Entity<IdentityToken>(b =>
+        builder.Entity<IdentityStoreToken>(b =>
         {
             b.HasKey(t => t.Id);
             // REVIEW: is this correct for index?

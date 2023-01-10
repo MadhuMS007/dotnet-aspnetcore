@@ -6,14 +6,14 @@ using System;
 namespace Microsoft.AspNetCore.Identity;
 
 /// <summary>
-/// 
+/// Represents a token stored in the identity system
 /// </summary>
-public class IdentityToken
+public class IdentityStoreToken
 {
     /// <summary>
     /// Default constructor.
     /// </summary>
-    public IdentityToken()
+    public IdentityStoreToken()
     {
         Id = Guid.NewGuid().ToString();
     }
@@ -22,7 +22,7 @@ public class IdentityToken
     /// Import the token info into this instance.
     /// </summary>
     /// <param name="info">The token info to import.</param>
-    public IdentityToken(TokenInfo info)
+    public IdentityStoreToken(TokenInfo info)
         => Import(info);
 
     /// <summary>

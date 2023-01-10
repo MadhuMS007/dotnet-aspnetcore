@@ -8,12 +8,12 @@ namespace Microsoft.AspNetCore.Identity.InMemory;
 
 public class InMemoryTokenStore<TUser, TRole> :
     InMemoryStore<TUser, TRole>,
-    ITokenStore<IdentityToken>,
+    ITokenStore<IdentityStoreToken>,
     IKeyStore
     where TRole : PocoRole
     where TUser : PocoUser
 {
-    public readonly IDictionary<string, IdentityToken> _tokens = new Dictionary<string, IdentityToken>();
+    public readonly IDictionary<string, IdentityStoreToken> _tokens = new Dictionary<string, IdentityStoreToken>();
     public readonly IDictionary<string, KeyInfo> _keys = new Dictionary<string, KeyInfo>();
     public readonly ITokenSerializer _serializer = new JsonTokenSerizlier();
 
@@ -30,38 +30,38 @@ public class InMemoryTokenStore<TUser, TRole> :
         return Task.FromResult(IdentityResult.Success);
     }
 
-    public Task<IdentityResult> CreateAsync(IdentityToken token, CancellationToken cancellationToken)
+    public Task<IdentityResult> CreateAsync(IdentityStoreToken token, CancellationToken cancellationToken)
     {
         _tokens[token.Id] = token;
         return Task.FromResult(IdentityResult.Success);
     }
 
-    public Task<IdentityResult> DeleteAsync(IdentityToken token, CancellationToken cancellationToken)
+    public Task<IdentityResult> DeleteAsync(IdentityStoreToken token, CancellationToken cancellationToken)
     {
         _tokens.Remove(token.Id);
         return Task.FromResult(IdentityResult.Success);
     }
 
-    Task<IdentityToken> ITokenStore<IdentityToken>.FindByIdAsync(string tokenId, CancellationToken cancellationToken)
+    Task<IdentityStoreToken> ITokenStore<IdentityStoreToken>.FindByIdAsync(string tokenId, CancellationToken cancellationToken)
     {
         return Task.FromResult(_tokens.Values.Where(t => t.Id == tokenId).SingleOrDefault());
     }
 
-    public Task<IdentityToken> FindAsync(string purpose, string value, CancellationToken cancellationToken)
+    public Task<IdentityStoreToken> FindAsync(string purpose, string value, CancellationToken cancellationToken)
         => Task.FromResult(_tokens.Values.Where(t => t.Purpose == purpose && t.Payload == value).SingleOrDefault());
 
-    public Task<DateTimeOffset> GetExpirationAsync(IdentityToken token, CancellationToken cancellationToken)
+    public Task<DateTimeOffset> GetExpirationAsync(IdentityStoreToken token, CancellationToken cancellationToken)
         => Task.FromResult(token.Expiration);
 
-    public Task<string> GetStatusAsync(IdentityToken token, CancellationToken cancellationToken)
+    public Task<string> GetStatusAsync(IdentityStoreToken token, CancellationToken cancellationToken)
         => Task.FromResult(token.Status);
 
-    public Task<string> GetSubjectAsync(IdentityToken token, CancellationToken cancellationToken)
+    public Task<string> GetSubjectAsync(IdentityStoreToken token, CancellationToken cancellationToken)
         => Task.FromResult(token.Subject);
 
-    public Task<IdentityToken> NewAsync(TokenInfo tokenInfo, CancellationToken cancellationToken)
+    public Task<IdentityStoreToken> NewAsync(TokenInfo tokenInfo, CancellationToken cancellationToken)
     {
-        return Task.FromResult(new IdentityToken(tokenInfo)
+        return Task.FromResult(new IdentityStoreToken(tokenInfo)
         {
             Payload = _serializer.Serialize(tokenInfo.Payload)
         });
@@ -74,25 +74,25 @@ public class InMemoryTokenStore<TUser, TRole> :
         return Task.FromResult(IdentityResult.Success);
     }
 
-    public Task SetExpirationAsync(IdentityToken token, DateTimeOffset expiration, CancellationToken cancellationToken)
+    public Task SetExpirationAsync(IdentityStoreToken token, DateTimeOffset expiration, CancellationToken cancellationToken)
     {
         token.Expiration = expiration;
         return Task.CompletedTask;
     }
 
-    public Task SetStatusAsync(IdentityToken token, string status, CancellationToken cancellationToken)
+    public Task SetStatusAsync(IdentityStoreToken token, string status, CancellationToken cancellationToken)
     {
         token.Status = status;
         return Task.CompletedTask;
     }
 
-    public Task SetSubjectAsync(IdentityToken token, string subject, CancellationToken cancellationToken)
+    public Task SetSubjectAsync(IdentityStoreToken token, string subject, CancellationToken cancellationToken)
     {
         token.Subject = subject;
         return Task.CompletedTask;
     }
 
-    public Task<IdentityResult> UpdateAsync(IdentityToken token, CancellationToken cancellationToken)
+    public Task<IdentityResult> UpdateAsync(IdentityStoreToken token, CancellationToken cancellationToken)
     {
         _tokens[token.Id] = token;
         return Task.FromResult(IdentityResult.Success);
@@ -104,17 +104,17 @@ public class InMemoryTokenStore<TUser, TRole> :
         return Task.FromResult(result);
     }
 
-    public Task<TokenInfo> GetTokenInfoAsync<TPayload>(IdentityToken token, CancellationToken cancellationToken)
+    public Task<TokenInfo> GetTokenInfoAsync<TPayload>(IdentityStoreToken token, CancellationToken cancellationToken)
     {
         var info = new TokenInfo(token.Id, token.Format, token.Subject, token.Purpose, token.Status);
         info.Payload = _serializer.Deserialize<TPayload>(token.Payload);
         return Task.FromResult(info);
     }
 
-    public Task<string> GetFormatAsync(IdentityToken token, CancellationToken cancellationToken)
+    public Task<string> GetFormatAsync(IdentityStoreToken token, CancellationToken cancellationToken)
         => Task.FromResult(token.Format);
 
-    public Task SetFormatAsync(IdentityToken token, string format, CancellationToken cancellationToken)
+    public Task SetFormatAsync(IdentityStoreToken token, string format, CancellationToken cancellationToken)
     {
         token.Format = format;
         return Task.CompletedTask;

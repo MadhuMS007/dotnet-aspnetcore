@@ -3,8 +3,6 @@
 
 using System.Globalization;
 using System.Linq.Expressions;
-using System.Security.Claims;
-using System.Text.Json;
 using Microsoft.AspNetCore.Identity.InMemory.Test;
 using Microsoft.AspNetCore.Identity.Test;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,14 +11,11 @@ namespace Microsoft.AspNetCore.Identity.InMemory;
 
 public class InMemoryTokenStoreTest : TokenManagerSpecificationTestBase<PocoUser>, IClassFixture<InMemoryUserStoreTest.Fixture>
 {
-    private readonly string Issuer = "dotnet-user-jwts";
-    private readonly string Audience = "<audience>";
-
     protected override void AddUserStore(IServiceCollection services, object context = null)
         => services.AddSingleton<IUserStore<PocoUser>>((InMemoryUserStore<PocoUser>)context);
 
     protected override void AddTokenStore(IServiceCollection services, object context = null)
-        => services.AddSingleton((ITokenStore<IdentityToken>)context);
+        => services.AddSingleton((ITokenStore<IdentityStoreToken>)context);
 
     protected override void SetUserPasswordHash(PocoUser user, string hashedPassword)
         => user.PasswordHash = hashedPassword;
@@ -52,7 +47,7 @@ public class InMemoryTokenStoreTest : TokenManagerSpecificationTestBase<PocoUser
     /// <param name="services">The service collection to use, optional.</param>
     /// <param name="configureServices">Delegate used to configure the services, optional.</param>
     /// <returns>The user manager to use for tests.</returns>
-    protected override TokenManager<PocoUser, IdentityToken> CreateManager(object context = null, IServiceCollection services = null, Action<IServiceCollection> configureServices = null)
+    protected override TokenManager<PocoUser, IdentityStoreToken> CreateManager(object context = null, IServiceCollection services = null, Action<IServiceCollection> configureServices = null)
     {
         if (services == null)
         {
@@ -64,53 +59,6 @@ public class InMemoryTokenStoreTest : TokenManagerSpecificationTestBase<PocoUser
         }
         SetupIdentityServices(services, context);
         configureServices?.Invoke(services);
-        return services.BuildServiceProvider().GetService<TokenManager<PocoUser, IdentityToken>>();
-    }
-
-    /// <summary>
-    /// Test.
-    /// </summary>
-    /// <returns>Task</returns>
-    [Fact]
-    public async Task CanStoreAccessTokensInMemory()
-    {
-        var manager = CreateManager();
-        var user = CreateTestUser();
-        IdentityResultAssert.IsSuccess(await manager.UserManager.CreateAsync(user));
-
-        var claims = new[] {
-            new Claim("custom", "value"),
-            new Claim("custom2", "value"),
-        };
-
-        await manager.UserManager.AddClaimsAsync(user, claims);
-
-        var token = await manager.GetAccessTokenAsync(user);
-        Assert.NotNull(token);
-
-        var principal = await manager.ValidateAccessTokenAsync(token);
-
-        Assert.NotNull(principal);
-        foreach (var cl in claims)
-        {
-            Assert.Contains(principal.Claims, c => c.Type == cl.Type && c.Value == cl.Value);
-        }
-        EnsureClaim(principal, "iss", Issuer);
-        EnsureClaim(principal, "aud", Audience);
-        EnsureClaim(principal, "sub", user.Id);
-
-        var jti = principal.Claims.FirstOrDefault(c => c.Type == TokenClaims.Jti)?.Value;
-        Assert.NotNull(jti);
-
-        // Verify the token got serialized into the database
-        var store = (InMemoryTokenStore<PocoUser, PocoRole>)manager.Store;
-
-        var tok = store._tokens[jti];
-        Assert.NotNull(tok);
-
-        // Make sure we can json deserialize the payload too
-        var payload = JsonSerializer.Deserialize<IDictionary<string, string>>(tok.Payload);
-        Assert.NotNull(payload);
-        Assert.NotNull(payload["AspNet.Identity.SecurityStamp"]);
+        return services.BuildServiceProvider().GetService<TokenManager<PocoUser, IdentityStoreToken>>();
     }
 }

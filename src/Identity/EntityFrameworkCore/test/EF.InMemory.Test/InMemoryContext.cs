@@ -41,7 +41,7 @@ public class InMemoryContext<TUser> :
         => optionsBuilder.UseSqlite(_connection);
 }
 
-public class InMemoryContext<TUser, TRole, TKey> : IdentityDbContext<TUser, TRole, IdentityToken, TKey, IdentityUserClaim<TKey>, IdentityUserRole<TKey>, IdentityUserLogin<TKey>, IdentityRoleClaim<TKey>, IdentityUserToken<TKey>>
+public class InMemoryContext<TUser, TRole, TKey> : IdentityDbContext<TUser, TRole, IdentityStoreToken, TKey, IdentityUserClaim<TKey>, IdentityUserRole<TKey>, IdentityUserLogin<TKey>, IdentityRoleClaim<TKey>, IdentityUserToken<TKey>>
     where TUser : IdentityUser<TKey>
     where TRole : IdentityRole<TKey>
     where TKey : IEquatable<TKey>
@@ -61,7 +61,7 @@ public class InMemoryContext<TUser, TRole, TKey> : IdentityDbContext<TUser, TRol
 }
 
 public abstract class InMemoryContext<TUser, TRole, TKey, TUserClaim, TUserRole, TUserLogin, TRoleClaim, TUserToken> :
-        IdentityDbContext<TUser, TRole, IdentityToken, TKey, TUserClaim, TUserRole, TUserLogin, TRoleClaim, TUserToken>
+        IdentityDbContext<TUser, TRole, IdentityStoreToken, TKey, TUserClaim, TUserRole, TUserLogin, TRoleClaim, TUserToken>
     where TUser : IdentityUser<TKey>
     where TRole : IdentityRole<TKey>
     where TKey : IEquatable<TKey>

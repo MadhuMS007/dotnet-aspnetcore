@@ -24,7 +24,7 @@ public class InMemoryEFTokenStoreTest : TokenManagerSpecificationTestBase<Identi
         => services.AddSingleton<IUserStore<IdentityUser>>(new UserStore<IdentityUser>((InMemoryContext)context));
 
     protected override void AddTokenStore(IServiceCollection services, object context = null)
-        => services.AddSingleton<ITokenStore<IdentityToken>>(new TokenStore<IdentityToken, InMemoryContext>((InMemoryContext)context));
+        => services.AddSingleton<ITokenStore<IdentityStoreToken>>(new TokenStore<IdentityStoreToken, InMemoryContext>((InMemoryContext)context));
 
     protected override IdentityUser CreateTestUser(string namePrefix = "", string email = "", string phoneNumber = "",
         bool lockoutEnabled = false, DateTimeOffset? lockoutEnd = default(DateTimeOffset?), bool useNamePrefixAsUserName = false)

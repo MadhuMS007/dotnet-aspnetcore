@@ -85,7 +85,7 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
         services.AddAuthentication();
         services.AddDataProtection();
         services.AddSingleton<IDataProtectionProvider, EphemeralDataProtectionProvider>();
-        var builder = services.AddDefaultIdentityBearer<TUser, IdentityToken>(options =>
+        var builder = services.AddDefaultIdentityBearer<TUser, IdentityStoreToken>(options =>
         {
             options.Password.RequireDigit = false;
             options.Password.RequireLowercase = false;
@@ -122,7 +122,7 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
     /// <param name="services">The service collection to use, optional.</param>
     /// <param name="configureServices">Delegate used to configure the services, optional.</param>
     /// <returns>The user manager to use for tests.</returns>
-    protected virtual TokenManager<TUser, IdentityToken> CreateManager(object context = null, IServiceCollection services = null, Action<IServiceCollection> configureServices = null)
+    protected virtual TokenManager<TUser, IdentityStoreToken> CreateManager(object context = null, IServiceCollection services = null, Action<IServiceCollection> configureServices = null)
     {
         if (services == null)
         {
@@ -134,7 +134,7 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
         }
         SetupIdentityServices(services, context);
         configureServices?.Invoke(services);
-        return services.BuildServiceProvider().GetService<TokenManager<TUser, IdentityToken>>();
+        return services.BuildServiceProvider().GetService<TokenManager<TUser, IdentityStoreToken>>();
     }
 
     /// <summary>
@@ -274,16 +274,14 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
         var jti = principal.Claims.FirstOrDefault(c => c.Type == TokenClaims.Jti)?.Value;
         Assert.NotNull(jti);
 
-        //// Verify the token got serialized into the database
-        //var store = (InMemoryTokenStore<PocoUser, PocoRole>)manager.Store;
+        // Verify the token got serialized into the database
+        var tok = await manager.FindByIdAsync<IDictionary<string, string>>(jti);
+        Assert.NotNull(tok);
 
-        //var tok = store._tokens[jti];
-        //Assert.NotNull(tok);
-
-        //// Make sure we can json deserialize the payload too
-        //var payload = JsonSerializer.Deserialize<IDictionary<string, string>>(tok.Payload);
-        //Assert.NotNull(payload);
-        //Assert.NotNull(payload["AspNet.Identity.SecurityStamp"]);
+        // Make sure the payload is what we expect for the access token, with the security stamp
+        var payload = tok.Payload as IDictionary<string, string>;
+        Assert.NotNull(payload);
+        Assert.NotNull(payload["AspNet.Identity.SecurityStamp"]);
     }
 
     /// <summary>

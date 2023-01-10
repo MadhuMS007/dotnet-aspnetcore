@@ -137,7 +137,7 @@ internal sealed class IdentityDevice
 public abstract class IdentityDbContext<TUser, TRole, TToken, TKey, TUserClaim, TUserRole, TUserLogin, TRoleClaim, TUserToken> : IdentityDbContext<TUser, TRole, TKey, TUserClaim, TUserRole, TUserLogin, TRoleClaim, TUserToken>
     where TUser : IdentityUser<TKey>
     where TRole : IdentityRole<TKey>
-    where TToken : IdentityToken
+    where TToken : IdentityStoreToken
     where TKey : IEquatable<TKey>
     where TUserClaim : IdentityUserClaim<TKey>
     where TUserRole : IdentityUserRole<TKey>
@@ -208,7 +208,7 @@ public abstract class IdentityDbContext<TUser, TRole, TToken, TKey, TUserClaim, 
 /// <typeparam name="TToken">The type representing a token.</typeparam>
 /// <typeparam name="TContext">The type of the data context class used to access the store.</typeparam>
 public class TokenStore<TToken, TContext> : ITokenStore<TToken>, IKeyStore
-    where TToken : IdentityToken
+    where TToken : IdentityStoreToken
     where TContext : DbContext
 {
     private bool _disposed;
