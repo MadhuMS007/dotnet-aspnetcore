@@ -13,8 +13,8 @@ internal class JsonTokenSerizlier : ITokenSerializer
     public static JsonTokenSerizlier Instance { get; private set; } = new JsonTokenSerizlier();
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
-    public T? Deserialize<T>(string serializedValue)
-        => JsonSerializer.Deserialize<T>(serializedValue);
+    public T? Deserialize<T>(string? serializedValue)
+        => serializedValue != null ? JsonSerializer.Deserialize<T>(serializedValue) : default;
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
     public string Serialize<T>(T value)

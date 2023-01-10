@@ -4,6 +4,8 @@ Microsoft.AspNetCore.Identity.IdentityToken.Created.get -> System.DateTimeOffset
 Microsoft.AspNetCore.Identity.IdentityToken.Created.set -> void
 Microsoft.AspNetCore.Identity.IdentityToken.Expiration.get -> System.DateTimeOffset
 Microsoft.AspNetCore.Identity.IdentityToken.Expiration.set -> void
+Microsoft.AspNetCore.Identity.IdentityToken.Format.get -> string!
+Microsoft.AspNetCore.Identity.IdentityToken.Format.set -> void
 Microsoft.AspNetCore.Identity.IdentityToken.Id.get -> string!
 Microsoft.AspNetCore.Identity.IdentityToken.Id.set -> void
 Microsoft.AspNetCore.Identity.IdentityToken.IdentityToken() -> void

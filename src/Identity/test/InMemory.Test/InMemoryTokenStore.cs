@@ -103,4 +103,20 @@ public class InMemoryTokenStore<TUser, TRole> :
         _keys.TryGetValue(keyId, out var result);
         return Task.FromResult(result);
     }
+
+    public Task<TokenInfo> GetTokenInfoAsync<TPayload>(IdentityToken token, CancellationToken cancellationToken)
+    {
+        var info = new TokenInfo(token.Id, token.Format, token.Subject, token.Purpose, token.Status);
+        info.Payload = _serializer.Deserialize<TPayload>(token.Payload);
+        return Task.FromResult(info);
+    }
+
+    public Task<string> GetFormatAsync(IdentityToken token, CancellationToken cancellationToken)
+        => Task.FromResult(token.Format);
+
+    public Task SetFormatAsync(IdentityToken token, string format, CancellationToken cancellationToken)
+    {
+        token.Format = format;
+        return Task.CompletedTask;
+    }
 }

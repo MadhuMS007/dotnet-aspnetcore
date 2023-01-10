@@ -185,6 +185,22 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
     }
 
     /// <summary>
+    /// Find a token by its id.
+    /// </summary>
+    /// <param name="tokenId">The token id.</param>
+    /// <returns>The <see cref="TokenInfo"/> representing the token</returns>
+    public virtual async Task<TokenInfo?> FindByIdAsync<TPayload>(string tokenId)
+    {
+        var tok = await Store.FindByIdAsync(tokenId, CancellationToken).ConfigureAwait(false);
+        if (tok == null)
+        {
+            return null;
+        }
+
+        return await Store.GetTokenInfoAsync<TPayload>(tok, CancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Create a new token instance with the specified token info. This should not be stored
     /// in the token store yet.
     /// </summary>

@@ -45,6 +45,14 @@ public interface ITokenStore<TToken> : IDisposable where TToken : class
     Task<IdentityResult> DeleteAsync(TToken token, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Return a <see cref="TokenInfo"/> from the token instance.
+    /// </summary>
+    /// <param name="token">The token.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+    /// <returns>A <see cref="Task{TResult}"/> that represents the <see cref="TokenInfo"/> of the asynchronous query.</returns>
+    Task<TokenInfo> GetTokenInfoAsync<TPayload>(TToken token, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Find a token with the specified tokenId
     /// </summary>
     /// <param name="tokenId">The tokenId to find.</param>
@@ -60,6 +68,23 @@ public interface ITokenStore<TToken> : IDisposable where TToken : class
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
     /// <returns>A <see cref="Task{TResult}"/> that result of the look up.</returns>
     Task<TToken?> FindAsync(string purpose, string value, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Return the token format.
+    /// </summary>
+    /// <param name="token">The token.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+    /// <returns>A <see cref="Task{TResult}"/> that represents the format of the asynchronous query.</returns>
+    Task<string> GetFormatAsync(TToken token, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Set the format of a token.
+    /// </summary>
+    /// <param name="token">The token.</param>
+    /// <param name="format">The format to set.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+    /// <returns>A <see cref="Task{TResult}"/> that represents the asynchronous query.</returns>
+    Task SetFormatAsync(TToken token, string format, CancellationToken cancellationToken);
 
     /// <summary>
     /// Return the subject of a token.

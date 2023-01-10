@@ -107,7 +107,10 @@ Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.Dispose() -> void
 Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.ErrorDescriber.get -> Microsoft.AspNetCore.Identity.IdentityErrorDescriber!
 Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.ErrorDescriber.set -> void
 Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.FindByIdAsync(string! tokenId, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<TToken?>!
+Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.GetFormatAsync(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<string!>!
+Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.GetTokenInfoAsync<TPayload>(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.TokenInfo!>!
 Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.SaveChanges(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.SetFormatAsync(TToken! token, string! format, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
 Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.ThrowIfDisposed() -> void
 Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.TokenStore(TContext! context, Microsoft.AspNetCore.Identity.ITokenSerializer? serializer = null, Microsoft.AspNetCore.Identity.IdentityErrorDescriber? describer = null) -> void
 Microsoft.Extensions.DependencyInjection.BearerBuilderExtensions
@@ -125,6 +128,7 @@ virtual Microsoft.AspNetCore.Identity.IdentityDbContext<TUser, TRole, TToken, TK
 virtual Microsoft.AspNetCore.Identity.TokenManager<TUser, TToken>.CancellationToken.get -> System.Threading.CancellationToken
 virtual Microsoft.AspNetCore.Identity.TokenManager<TUser, TToken>.CheckTokenStatus(string! status) -> bool
 virtual Microsoft.AspNetCore.Identity.TokenManager<TUser, TToken>.Dispose(bool disposing) -> void
+virtual Microsoft.AspNetCore.Identity.TokenManager<TUser, TToken>.FindByIdAsync<TPayload>(string! tokenId) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.TokenInfo?>!
 virtual Microsoft.AspNetCore.Identity.TokenManager<TUser, TToken>.GetAccessTokenAsync(TUser! user) -> System.Threading.Tasks.Task<string!>!
 virtual Microsoft.AspNetCore.Identity.TokenManager<TUser, TToken>.GetRefreshTokenAsync(TUser! user) -> System.Threading.Tasks.Task<string!>!
 virtual Microsoft.AspNetCore.Identity.TokenManager<TUser, TToken>.Logger.get -> Microsoft.Extensions.Logging.ILogger!

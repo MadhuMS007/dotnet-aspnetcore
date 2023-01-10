@@ -5,13 +5,9 @@ using System.Globalization;
 using System.Linq.Expressions;
 using System.Security.Claims;
 using System.Text.Json;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity.InMemory.Test;
 using Microsoft.AspNetCore.Identity.Test;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace Microsoft.AspNetCore.Identity.InMemory;
 
@@ -20,62 +16,11 @@ public class InMemoryTokenStoreTest : TokenManagerSpecificationTestBase<PocoUser
     private readonly string Issuer = "dotnet-user-jwts";
     private readonly string Audience = "<audience>";
 
-    /// <summary>
-    /// Configure the service collection used for tests.
-    /// </summary>
-    /// <param name="services"></param>
-    /// <param name="context"></param>
-    protected override IdentityBuilder SetupBuilder(IServiceCollection services, object context)
-    {
-        services.AddHttpContextAccessor();
-        // An example of what the expected schema looks like
-        // "Authentication": {
-        //     "Schemes": {
-        //       "Identity.Bearer": {
-        //         "Audiences": [ "", ""]
-        //         "Issuer": "",
-        // An example of what the expected signing keys (JWKs) looks like
-        //"SigningCredentials": {
-        //  "kty": "oct",
-        //  "alg": "HS256",
-        //  "kid": "randomguid",
-        //  "k": "(G+KbPeShVmYq3t6w9z$C&F)J@McQfTj"
-        //}
-        //       }
-        //     }
-        //   }
-
-        services.AddSingleton<IConfiguration>(new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string>
-            {
-                ["Authentication:Schemes:Identity.Bearer:Issuer"] = Issuer,
-                ["Authentication:Schemes:Identity.Bearer:Audiences:0"] = Audience,
-                ["Authentication:Schemes:Identity.Bearer:SigningCredentials:kty"] = "oct",
-                ["Authentication:Schemes:Identity.Bearer:SigningCredentials:alg"] = "HS256",
-                ["Authentication:Schemes:Identity.Bearer:SigningCredentials:kid"] = "someguid",
-            })
-            .Build());
-
-        services.AddAuthentication();
-        services.AddDataProtection();
-        services.AddSingleton<IDataProtectionProvider, EphemeralDataProtectionProvider>();
-        var builder = services.AddDefaultIdentityBearer<PocoUser, IdentityToken>(options =>
-        {
-            options.Password.RequireDigit = false;
-            options.Password.RequireLowercase = false;
-            options.Password.RequireNonAlphanumeric = false;
-            options.Password.RequireUppercase = false;
-            options.User.AllowedUserNameCharacters = null;
-        }).AddDefaultTokenProviders();
-        services.AddSingleton(_ => (ITokenStore<IdentityToken>)context);
-        AddUserStore(services, context);
-        services.AddLogging();
-        services.AddSingleton<ILogger<UserManager<PocoUser>>>(new TestLogger<UserManager<PocoUser>>());
-        return builder;
-    }
-
     protected override void AddUserStore(IServiceCollection services, object context = null)
         => services.AddSingleton<IUserStore<PocoUser>>((InMemoryUserStore<PocoUser>)context);
+
+    protected override void AddTokenStore(IServiceCollection services, object context = null)
+        => services.AddSingleton((ITokenStore<IdentityToken>)context);
 
     protected override void SetUserPasswordHash(PocoUser user, string hashedPassword)
         => user.PasswordHash = hashedPassword;

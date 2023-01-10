@@ -26,5 +26,5 @@ public interface ITokenSerializer
     /// <typeparam name="T"></typeparam>
     /// <param name="serializedValue"></param>
     /// <returns>The deserialiezd object.</returns>
-    T? Deserialize<T>(string serializedValue);
+    T? Deserialize<T>(string? serializedValue);
 }

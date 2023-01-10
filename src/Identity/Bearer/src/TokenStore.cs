@@ -387,6 +387,45 @@ public class TokenStore<TToken, TContext> : ITokenStore<TToken>, IKeyStore
     }
 
     /// <inheritdoc/>
+    public Task<TokenInfo> GetTokenInfoAsync<TPayload>(TToken token, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ThrowIfDisposed();
+        if (token == null)
+        {
+            throw new ArgumentNullException(nameof(token));
+        }
+        var info = new TokenInfo(token.Id, token.Format, token.Subject, token.Purpose, token.Status);
+        info.Payload = _serializer.Deserialize<TPayload>(token.Payload);
+        return Task.FromResult(info);
+    }
+
+    /// <inheritdoc/>
+    public Task<string> GetFormatAsync(TToken token, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ThrowIfDisposed();
+        if (token == null)
+        {
+            throw new ArgumentNullException(nameof(token));
+        }
+        return Task.FromResult(token.Format);
+    }
+
+    /// <inheritdoc/>
+    public Task SetFormatAsync(TToken token, string format, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ThrowIfDisposed();
+        if (token == null)
+        {
+            throw new ArgumentNullException(nameof(token));
+        }
+        token.Format = format;
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
     public virtual Task<DateTimeOffset> GetExpirationAsync(TToken token, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();

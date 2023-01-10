@@ -32,6 +32,7 @@ public class IdentityToken
     public void Import(TokenInfo info)
     {
         Id = info.Id;
+        Format = info.Format;
         Subject = info.Subject;
         Status = info.Status;
         Purpose = info.Purpose;
@@ -53,6 +54,11 @@ public class IdentityToken
     /// The purpose for the token.
     /// </summary>
     public string Purpose { get; set; } = default!;
+
+    /// <summary>
+    /// The format for the token payload, used for versioning.
+    /// </summary>
+    public string Format { get; set; } = default!;
 
     /// <summary>
     /// The payload for the token.
