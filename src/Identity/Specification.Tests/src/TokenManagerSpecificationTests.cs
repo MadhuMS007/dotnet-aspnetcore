@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace Microsoft.AspNetCore.Identity.Test;
@@ -291,7 +292,9 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
     [Fact]
     public async Task CanRevokeAccessTokens()
     {
-        var manager = CreateManager();
+        var blockerOptions = new JtiBlockerOptions();
+        var blocker = new JtiBlocker(Options.Create(blockerOptions));
+        var manager = CreateManager(configureServices: o => o.AddSingleton<IAccessTokenDenyPolicy>(blocker));
         var user = CreateTestUser();
         var userId = await manager.UserManager.GetUserIdAsync(user);
         IdentityResultAssert.IsSuccess(await manager.UserManager.CreateAsync(user));
@@ -310,7 +313,7 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
         Assert.NotNull(jti);
 
         // Revoke the access token and make sure it doesn't work
-        Assert.True(await manager.RevokeAsync(jti));
+        blockerOptions.BlockedJti.Add(jti);
         Assert.Null(await manager.ValidateAccessTokenAsync(token));
     }
 

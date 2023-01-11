@@ -53,6 +53,7 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
 {
     private readonly IdentityBearerOptions _bearerOptions;
     private readonly IAccessTokenPolicy _accessTokenPolicy;
+    private readonly IAccessTokenDenyPolicy? _accessTokenDenyPolicy;
     private readonly ISystemClock _clock;
     private bool _disposed;
 
@@ -72,6 +73,7 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
     /// <param name="claimsFactory">The factory to use to create claims principals for a user.</param>
     /// <param name="bearerOptions">The options which configure the bearer token such as signing key, audience, and issuer.</param>
     /// <param name="accessTokenPolicy"></param>
+    /// <param name="accessTokenDenyPolicy"></param>
     /// <param name="clock"></param>
     /// <exception cref="ArgumentNullException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
@@ -84,6 +86,7 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
         IAccessTokenClaimsFactory<TUser> claimsFactory,
         IOptions<IdentityBearerOptions> bearerOptions,
         IAccessTokenPolicy accessTokenPolicy,
+        IAccessTokenDenyPolicy accessTokenDenyPolicy,
         ISystemClock clock)
     {
         Options = identityOptions.Value.TokenManager;
@@ -94,6 +97,7 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
         Logger = logger;
         _bearerOptions = bearerOptions.Value;
         _accessTokenPolicy = accessTokenPolicy;
+        _accessTokenDenyPolicy = accessTokenDenyPolicy;
         _clock = clock;
 
         // TODO: Move these to registered named options?
@@ -206,14 +210,20 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
             return null;
         }
 
-        // check for revocation is done by looking for a token record that has invalid status
-        // TODO: add revocation strategies/logic
-        var storageToken = await FindByIdAsync<object>(tokenInfo.Id);
-        if (storageToken != null && storageToken.Status != TokenStatus.Active)
+        // Check for revocation
+        if (_accessTokenDenyPolicy != null && await _accessTokenDenyPolicy.IsDeniedAsync(tokenInfo.Id))
         {
-            // It's okay if the token isn't found, but it must have active status if exists.
             return null;
         }
+
+        //// check for revocation is done by looking for a token record that has invalid status
+        //// TODO: add revocation strategies/logic
+        //var storageToken = await FindByIdAsync<object>(tokenInfo.Id);
+        //if (storageToken != null && storageToken.Status != TokenStatus.Active)
+        //{
+        //    // It's okay if the token isn't found, but it must have active status if exists.
+        //    return null;
+        //}
 
         var payloadDict = tokenInfo.Payload as IDictionary<string, string>;
         if (payloadDict == null)

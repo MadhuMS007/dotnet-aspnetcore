@@ -1,8 +1,10 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Security.Claims;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 
 namespace TodoApi;
 
@@ -66,7 +68,7 @@ public static class UsersApi
             return TypedResults.ValidationProblem(result.Errors.ToDictionary(e => e.Code, e => new[] { e.Description }));
         });
 
-        group.MapPost("/refreshToken", async Task<Results<BadRequest, Ok<AuthToken>>> (RefreshToken tokenInfo, UserManager<TodoUser> userManager, TokenManager<TodoUser, IdentityStoreToken> tokenService) =>
+        group.MapPost("/refreshToken", async Task<Results<BadRequest, Ok<AuthToken>>> (RefreshToken tokenInfo, TokenManager<TodoUser, IdentityStoreToken> tokenService) =>
         {
             if (tokenInfo.Token is null)
             {
@@ -81,30 +83,6 @@ public static class UsersApi
             }
 
             return TypedResults.Ok(new AuthToken(accessToken, refreshToken));
-            //var isValid = await tokenService.ValidateRefreshToken(refreshTokenDTO.RefreshToken);
-
-            //if (isValid)
-            //{
-            //    var user = await userManager.FindByIdAsync(refreshTokenDTO.Subject);
-
-            //    if (user == null)
-            //    {
-            //        return Results.NotFound(new AuthResultDTO
-            //        {
-            //            Succeeded = false,
-            //            StatusCode = 404,
-            //            Message = "Could find the principal of the provided refresh token",
-            //            TimeStamp = DateTime.Now,
-            //        });
-            //    }
-
-            //    var tokens = await tokenService.GetTokensAsync(user);
-            //    //Revoke the current refresh token by changing the expiry time and setting the isRevoked flag to true. 
-            //    await tokenService.RevokeRefreshTokenAsync(user, refreshTokenDTO.RefreshToken);
-            //    return Results.Ok(tokens);
-            //}
-
-            //return Results.UnprocessableEntity(new { Message = "Could not refresh the tokens" });
         });
 
         return group;

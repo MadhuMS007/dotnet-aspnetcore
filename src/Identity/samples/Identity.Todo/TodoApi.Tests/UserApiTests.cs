@@ -121,6 +121,39 @@ public class UserApiTests
     }
 
     [Fact]
+    public async Task CanRevokeAccessToken()
+    {
+        await using var application = new TodoApplication();
+        await using var db = application.CreateTodoDbContext();
+        await application.CreateUserAsync("todouser", "p@assw0rd1");
+
+        var client = application.CreateClient();
+        var response = await client.PostAsJsonAsync("/users/token", new UserInfo { Username = "todouser", Password = "p@assw0rd1" });
+
+        Assert.True(response.IsSuccessStatusCode);
+
+        var token = await response.Content.ReadFromJsonAsync<AuthToken>();
+
+        Assert.NotNull(token);
+        Assert.NotNull(token.AccessToken);
+        Assert.NotNull(token.RefreshToken);
+
+        // Check that the token is indeed valid and revoke ourselves
+
+        var req = new HttpRequestMessage(HttpMethod.Get, "/todos/revokeMe");
+        req.Headers.Authorization = new("Bearer", token.AccessToken);
+        response = await client.SendAsync(req);
+
+        Assert.True(response.IsSuccessStatusCode);
+
+        req = new HttpRequestMessage(HttpMethod.Get, "/todos");
+        req.Headers.Authorization = new("Bearer", token.AccessToken);
+        response = await client.SendAsync(req);
+
+        Assert.False(response.IsSuccessStatusCode);
+    }
+
+    [Fact]
     public async Task CanRefreshTokensForValidUser()
     {
         await using var application = new TodoApplication();

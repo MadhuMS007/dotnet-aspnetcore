@@ -1,8 +1,11 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Security.Claims;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace TodoApi;
 
@@ -28,6 +31,19 @@ internal static class TodoApi
         group.MapGet("/", async (TodoDbContext db, CurrentUser owner) =>
         {
             return await db.Todos.Where(todo => todo.OwnerId == owner.Id).Select(t => t.AsTodoItem()).AsNoTracking().ToListAsync();
+        });
+
+        group.MapGet("/revokeMe", Results<BadRequest, Ok> (CurrentUser owner, TokenManager < TodoUser, IdentityStoreToken> tokenService, IOptions<JtiBlockerOptions> blockerOptions) =>
+        {
+            var jti = owner.Principal.FindFirstValue(TokenClaims.Jti);
+            if (jti == null)
+            {
+                return TypedResults.BadRequest();
+            }
+
+            blockerOptions.Value.BlockedJti.Add(jti);
+
+            return TypedResults.Ok();
         });
 
         group.MapGet("/{id}", async Task<Results<Ok<TodoItem>, NotFound>> (TodoDbContext db, int id, CurrentUser owner) =>

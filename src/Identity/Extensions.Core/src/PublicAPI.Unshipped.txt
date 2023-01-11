@@ -77,6 +77,8 @@ Microsoft.AspNetCore.Identity.TokenInfo.Subject.get -> string!
 Microsoft.AspNetCore.Identity.TokenInfo.Subject.set -> void
 Microsoft.AspNetCore.Identity.TokenInfo.TokenInfo(string! id, string! format, string! subject, string! purpose, string! status) -> void
 Microsoft.AspNetCore.Identity.TokenManagerOptions
+Microsoft.AspNetCore.Identity.TokenManagerOptions.AccessTokenDenyPolicy.get -> object?
+Microsoft.AspNetCore.Identity.TokenManagerOptions.AccessTokenDenyPolicy.set -> void
 Microsoft.AspNetCore.Identity.TokenManagerOptions.FormatProviderMap.get -> System.Collections.Generic.IDictionary<string!, Microsoft.AspNetCore.Identity.ITokenFormatProvider!>!
 Microsoft.AspNetCore.Identity.TokenManagerOptions.FormatProviderMap.set -> void
 Microsoft.AspNetCore.Identity.TokenManagerOptions.PurposeFormatMap.get -> System.Collections.Generic.IDictionary<string!, string!>!

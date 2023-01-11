@@ -22,6 +22,11 @@ public class TokenManagerOptions
     /// Maps token purposes to a token format (i.e. AccessToken -> JWT, RefreshToken -> Refresh)
     /// </summary>
     public IDictionary<string, string> PurposeFormatMap { get; set; } = new Dictionary<string, string>();
+
+    /// <summary>
+    /// Gets or sets the IAccessTokenDenyPolicy.
+    /// </summary>
+    public object? AccessTokenDenyPolicy { get; set; } // TODO: fix type once layering
 }
 
 /// <summary>

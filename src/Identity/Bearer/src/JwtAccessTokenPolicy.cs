@@ -63,10 +63,6 @@ internal class GuidTokenFormat : ITokenFormatProvider
         => Task.FromResult<TokenInfo?>(new TokenInfo(token, "", "", "", ""));
 }
 
-internal class RefreshTokenPolicy
-{
-}
-
 internal class JwtAccessTokenPolicy : IAccessTokenPolicy
 {
     private readonly IdentityBearerOptions _bearerOptions;
