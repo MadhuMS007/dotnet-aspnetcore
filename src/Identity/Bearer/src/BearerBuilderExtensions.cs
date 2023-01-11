@@ -39,12 +39,14 @@ public static class BearerBuilderExtensions
         builder.Services.AddSingleton<IAccessTokenDenyPolicy, JtiBlocker>();
         var tokenManagerType = typeof(TokenManager<,>).MakeGenericType(builder.UserType, typeof(TToken));
         builder.Services.TryAddScoped(tokenManagerType);
+
+        builder.Services.TryAddScoped(typeof(IUserTokenService<>).MakeGenericType(builder.UserType), typeof(UserTokenService<>).MakeGenericType(builder.UserType));
+
         builder.Services.TryAddTransient<IAccessTokenPolicy, JwtAccessTokenPolicy>();
         var ifactory = typeof(IAccessTokenClaimsFactory<>).MakeGenericType(builder.UserType);
         var factory = typeof(AccessTokenClaimsFactory<>).MakeGenericType(builder.UserType);
         builder.Services.TryAddScoped(ifactory, factory);
-        // Important to not return a different token manager instance, we only want one scoped token manager
-        builder.Services.TryAddScoped(typeof(IAccessTokenValidator), services => services.GetRequiredService(tokenManagerType));
+        builder.Services.TryAddScoped(typeof(IAccessTokenValidator), typeof(DefaultAccessTokenValidator<,>).MakeGenericType(builder.UserType, typeof(TToken)));
         return new IdentityBearerTokenBuilder(builder, typeof(TToken));
     }
 

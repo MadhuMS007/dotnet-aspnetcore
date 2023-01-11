@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Linq;
-using System.Security.Claims;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -86,13 +85,13 @@ internal class JwtAccessTokenPolicy : IAccessTokenPolicy
         return await jwtBuilder.CreateJwtAsync();
     }
 
-    Task<ClaimsPrincipal?> IAccessTokenPolicy.ValidateAsync(string accessToken, string issuer, string audience)
-    {
-        var reader = new JwtReader(
-            JWSAlg.HS256,
-            issuer,
-            _bearerOptions.SigningCredentials!,
-            _bearerOptions.Audiences);
-        return reader.ValidateJwtAsync(accessToken);
-    }
+    //Task<ClaimsPrincipal?> IAccessTokenPolicy.ValidateAsync(string accessToken, string issuer, string audience)
+    //{
+    //    var reader = new JwtReader(
+    //        JWSAlg.HS256,
+    //        issuer,
+    //        _bearerOptions.SigningCredentials!,
+    //        _bearerOptions.Audiences);
+    //    return reader.ValidateJwtAsync(accessToken);
+    //}
 }

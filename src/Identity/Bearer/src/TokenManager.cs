@@ -1,66 +1,29 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Microsoft.AspNetCore.Identity;
 
-///// <summary>
-///// Provides the APIs for managing tokens in a persistence store.
-///// </summary>
-///// <typeparam name="TUser">The type encapsulating a user.</typeparam>
-//public class TokenManager<TUser> : TokenManager<TUser, IdentityStoreToken> where TUser: class
-//{
-//    /// <summary>
-//    /// Constructs a new instance of <see cref="TokenManager{TUser,TToken}"/>.
-//    /// </summary>
-//    /// <param name="identityOptions">The options which configure the identity system.</param>
-//    /// <param name="store"></param>
-//    /// <param name="userManager">An instance of <see cref="UserManager{TUser}"/> used to retrieve users from and persist users.</param>
-//    /// <param name="errors">The <see cref="IdentityErrorDescriber"/> used to provider error messages.</param>
-//    /// <param name="logger">The logger used to log messages, warnings and errors.</param>
-//    /// <param name="claimsFactory">The factory to use to create claims principals for a user.</param>
-//    /// <param name="bearerOptions">The options which configure the bearer token such as signing key, audience, and issuer.</param>
-//    /// <param name="accessTokenPolicy"></param>
-//    /// <param name="clock"></param>
-//    /// <exception cref="ArgumentNullException"></exception>
-//    /// <exception cref="InvalidOperationException"></exception>
-//    public TokenManager(
-//        IOptions<IdentityOptions> identityOptions,
-//        ITokenStore<IdentityStoreToken> store,
-//        UserManager<TUser> userManager,
-//        IdentityErrorDescriber errors,
-//        ILogger<TokenManager<TUser, IdentityStoreToken>> logger,
-//        IAccessTokenClaimsFactory<TUser> claimsFactory,
-//        IOptions<IdentityBearerOptions> bearerOptions,
-//        IAccessTokenPolicy accessTokenPolicy,
-//        ISystemClock clock)
-//        : base(identityOptions, store, userManager, errors, logger, claimsFactory, bearerOptions, accessTokenPolicy, clock)
-//    { }
-//}
-
 /// <summary>
 /// Provides the APIs for managing tokens in a persistence store.
 /// </summary>
 /// <typeparam name="TUser">The type encapsulating a user.</typeparam>
 /// <typeparam name="TToken">The type encapsulating a token.</typeparam>
-public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
+public class TokenManager<TUser, TToken> : IDisposable
     where TUser : class
     where TToken : class
 {
-    private readonly IdentityBearerOptions _bearerOptions;
     private readonly IAccessTokenPolicy _accessTokenPolicy;
-    private readonly IAccessTokenDenyPolicy? _accessTokenDenyPolicy;
     private readonly ISystemClock _clock;
     private bool _disposed;
 
     /// <summary>
     /// The cancellation token used to cancel operations.
     /// </summary>
-    protected virtual CancellationToken CancellationToken => CancellationToken.None;
+    protected internal virtual CancellationToken CancellationToken => CancellationToken.None;
 
     /// <summary>
     /// Constructs a new instance of <see cref="TokenManager{TUser,TToken}"/>.
@@ -73,7 +36,6 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
     /// <param name="claimsFactory">The factory to use to create claims principals for a user.</param>
     /// <param name="bearerOptions">The options which configure the bearer token such as signing key, audience, and issuer.</param>
     /// <param name="accessTokenPolicy"></param>
-    /// <param name="accessTokenDenyPolicy"></param>
     /// <param name="clock"></param>
     /// <exception cref="ArgumentNullException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
@@ -86,7 +48,6 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
         IAccessTokenClaimsFactory<TUser> claimsFactory,
         IOptions<IdentityBearerOptions> bearerOptions,
         IAccessTokenPolicy accessTokenPolicy,
-        IAccessTokenDenyPolicy accessTokenDenyPolicy,
         ISystemClock clock)
     {
         Options = identityOptions.Value.TokenManager;
@@ -95,9 +56,7 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
         ErrorDescriber = errors;
         PayloadFactory = claimsFactory;
         Logger = logger;
-        _bearerOptions = bearerOptions.Value;
         _accessTokenPolicy = accessTokenPolicy;
-        _accessTokenDenyPolicy = accessTokenDenyPolicy;
         _clock = clock;
 
         // TODO: Move these to registered named options?
@@ -158,88 +117,6 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
     }
 
     /// <summary>
-    /// Get a bearer token for the user.
-    /// </summary>
-    /// <param name="user">The user.</param>
-    /// <returns></returns>
-    public virtual async Task<string> GetAccessTokenAsync(TUser user)
-    {
-        // TODO: Device/SessionId needs should be passed in or set on TokenManager?
-
-        // REVIEW: we could throw instead?
-        if (user == null)
-        {
-            return string.Empty;
-        }
-
-        var payload = new Dictionary<string, string>();
-        await PayloadFactory.BuildPayloadAsync(user, payload);
-        var userId = await UserManager.GetUserIdAsync(user).ConfigureAwait(false);
-
-        (var format, var provider) = GetFormatProvider(TokenPurpose.AccessToken);
-
-        // Store the token metadata, with jwt token as payload
-        var info = new TokenInfo(Guid.NewGuid().ToString(),
-            format, userId, TokenPurpose.RefreshToken, TokenStatus.Active)
-        {
-            Expiration = DateTimeOffset.UtcNow.AddDays(1),
-            Payload = payload
-        };
-
-        // TODO: need flags to control storing access tokens
-        if (true)
-        {
-            await StoreAsync(info).ConfigureAwait(false);
-        }
-
-        return await provider.CreateTokenAsync(info);
-    }
-
-    /// <summary>
-    /// Given an access token, ensure its valid
-    /// </summary>
-    /// <param name="token">The access token to validate.</param>
-    /// <returns>A claims principal for the token if its valid, null otherwise.</returns>
-    public virtual async Task<ClaimsPrincipal?> ValidateAccessTokenAsync(string token)
-    {
-        (var _, var provider) = GetFormatProvider(TokenPurpose.AccessToken);
-
-        var tokenInfo = await provider.ReadTokenAsync(token);
-        if (tokenInfo == null)
-        {
-            return null;
-        }
-
-        // Check for revocation
-        if (_accessTokenDenyPolicy != null && await _accessTokenDenyPolicy.IsDeniedAsync(tokenInfo.Id))
-        {
-            return null;
-        }
-
-        //// check for revocation is done by looking for a token record that has invalid status
-        //// TODO: add revocation strategies/logic
-        //var storageToken = await FindByIdAsync<object>(tokenInfo.Id);
-        //if (storageToken != null && storageToken.Status != TokenStatus.Active)
-        //{
-        //    // It's okay if the token isn't found, but it must have active status if exists.
-        //    return null;
-        //}
-
-        var payloadDict = tokenInfo.Payload as IDictionary<string, string>;
-        if (payloadDict == null)
-        {
-            throw new InvalidOperationException("Expected IDictionary<string, string> token payload.");
-        }
-
-        var claimsIdentity = new ClaimsIdentity(IdentityConstants.BearerScheme);
-        foreach (var key in payloadDict.Keys)
-        {
-            claimsIdentity.AddClaim(new Claim(key, payloadDict[key]));
-        }
-        return new ClaimsPrincipal(claimsIdentity);
-    }
-
-    /// <summary>
     /// Find a token by its id.
     /// </summary>
     /// <param name="tokenId">The token id.</param>
@@ -294,7 +171,7 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
         return tok;
     }
 
-    private (string, ITokenFormatProvider) GetFormatProvider(string tokenPurpose)
+    internal (string, ITokenFormatProvider) GetFormatProvider(string tokenPurpose)
     {
         // TODO: someone should be validating these
         var format = Options.PurposeFormatMap[tokenPurpose];
@@ -306,84 +183,12 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
     }
 
     /// <summary>
-    /// Get a refresh token for the user.
-    /// </summary>
-    /// <param name="user">The user.</param>
-    /// <returns></returns>
-    public virtual async Task<string> GetRefreshTokenAsync(TUser user)
-    {
-        (var format, var provider) = GetFormatProvider(TokenPurpose.RefreshToken);
-
-        // Build the raw token and payload
-        var userId = await UserManager.GetUserIdAsync(user);
-
-        // Store the token metadata, refresh tokens don't need additional data
-        // so no payload is specified for the token info.
-        var info = new TokenInfo(Guid.NewGuid().ToString(),
-            format, userId, TokenPurpose.RefreshToken, TokenStatus.Active)
-        {
-            Expiration = DateTimeOffset.UtcNow.AddDays(1)
-        };
-        var token = await Store.NewAsync(info, CancellationToken).ConfigureAwait(false);
-        await Store.CreateAsync(token, CancellationToken);
-        return await provider.CreateTokenAsync(info);
-    }
-
-    /// <summary>
     /// Check if the token status is valid. Defaults to only active token status.
     /// </summary>
     /// <param name="status">The token status.</param>
     /// <returns>true if the token is should be allowed.</returns>
     protected virtual bool CheckTokenStatus(string status)
         => status == TokenStatus.Active;
-
-    /// <summary>
-    /// Returns a new access and refresh token if refreshToken is valid, will also
-    /// consume the refreshToken via calling Revoke on it.
-    /// </summary>
-    /// <param name="refreshToken"></param>
-    /// <returns>(access token, refresh token) if successful, (null, null) otherwise.</returns>
-    public virtual async Task<(string?, string?)> RefreshTokensAsync(string refreshToken)
-    {
-        // TODO: tests to write:
-        // with deleted user
-        (var _, var provider) = GetFormatProvider(TokenPurpose.RefreshToken);
-
-        var tokenInfo = await provider.ReadTokenAsync(refreshToken);
-        if (tokenInfo == null)
-        {
-            return (null, null);
-        }
-
-        var tok = await Store.FindByIdAsync(tokenInfo.Id, CancellationToken).ConfigureAwait(false);
-        if (tok == null)
-        {
-            return (null, null);
-        }
-
-        var status = await Store.GetStatusAsync(tok, CancellationToken).ConfigureAwait(false);
-        if (!CheckTokenStatus(status))
-        {
-            return (null, null);
-        }
-
-        var expires = await Store.GetExpirationAsync(tok, CancellationToken).ConfigureAwait(false);
-        if (expires < _clock.UtcNow)
-        {
-            return (null, null);
-        }
-
-        var userId = await Store.GetSubjectAsync(tok, CancellationToken).ConfigureAwait(false);
-        var user = await UserManager.FindByIdAsync(userId).ConfigureAwait(false);
-        if (user != null)
-        {
-            // Mark the refresh token as used
-            await Store.SetStatusAsync(tok, TokenStatus.Inactive, CancellationToken).ConfigureAwait(false);
-            await Store.UpdateAsync(tok, CancellationToken).ConfigureAwait(false);
-            return (await GetAccessTokenAsync(user), await GetRefreshTokenAsync(user));
-        }
-        return (null, null);
-    }
 
     private readonly IDictionary<string, IIdentityKeyDataSerializer> _keyFormatProviders = new Dictionary<string, IIdentityKeyDataSerializer>();
 
@@ -416,31 +221,6 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
     }
 
     /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="user">The user.</param>
-    /// <param name="token">The refresh token.</param>
-    /// <returns></returns>
-    public virtual async Task<IdentityResult> RevokeRefreshAsync(TUser user, string token)
-    {
-        (var _, var provider) = GetFormatProvider(TokenPurpose.RefreshToken);
-
-        var tokenInfo = await provider.ReadTokenAsync(token);
-        if (tokenInfo == null)
-        {
-            return IdentityResult.Success;
-        }
-
-        var tok = await Store.FindByIdAsync(tokenInfo.Id, CancellationToken).ConfigureAwait(false);
-        if (tok != null)
-        {
-            await Store.SetStatusAsync(tok, TokenStatus.Revoked, CancellationToken);
-            return await Store.UpdateAsync(tok, CancellationToken).ConfigureAwait(false); ;
-        }
-        return IdentityResult.Success;
-    }
-
-    /// <summary>
     /// Releases the unmanaged resources used by the role manager and optionally releases the managed resources.
     /// </summary>
     /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
@@ -463,8 +243,4 @@ public class TokenManager<TUser, TToken> : IAccessTokenValidator, IDisposable
             throw new ObjectDisposedException(GetType().Name);
         }
     }
-
-    /// <inheritdoc/>
-    Task<ClaimsPrincipal?> IAccessTokenValidator.ValidateAsync(string token)
-        => ValidateAccessTokenAsync(token);
 }

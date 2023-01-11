@@ -33,7 +33,7 @@ internal static class TodoApi
             return await db.Todos.Where(todo => todo.OwnerId == owner.Id).Select(t => t.AsTodoItem()).AsNoTracking().ToListAsync();
         });
 
-        group.MapGet("/revokeMe", Results<BadRequest, Ok> (CurrentUser owner, TokenManager < TodoUser, IdentityStoreToken> tokenService, IOptions<JtiBlockerOptions> blockerOptions) =>
+        group.MapGet("/revokeMe", Results<BadRequest, Ok> (CurrentUser owner, IOptions<JtiBlockerOptions> blockerOptions) =>
         {
             var jti = owner.Principal.FindFirstValue(TokenClaims.Jti);
             if (jti == null)
