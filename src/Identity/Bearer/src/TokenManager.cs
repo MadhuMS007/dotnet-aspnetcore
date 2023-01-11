@@ -1,7 +1,6 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -14,8 +13,6 @@ namespace Microsoft.AspNetCore.Identity;
 public class TokenManager<TToken> : IDisposable
     where TToken : class
 {
-    private readonly IAccessTokenPolicy _accessTokenPolicy;
-    private readonly ISystemClock _clock;
     private bool _disposed;
 
     /// <summary>
@@ -31,8 +28,6 @@ public class TokenManager<TToken> : IDisposable
     /// <param name="errors">The <see cref="IdentityErrorDescriber"/> used to provider error messages.</param>
     /// <param name="logger">The logger used to log messages, warnings and errors.</param>
     /// <param name="bearerOptions">The options which configure the bearer token such as signing key, audience, and issuer.</param>
-    /// <param name="accessTokenPolicy"></param>
-    /// <param name="clock"></param>
     /// <exception cref="ArgumentNullException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
     public TokenManager(
@@ -40,22 +35,18 @@ public class TokenManager<TToken> : IDisposable
         ITokenStore<TToken> store,
         IdentityErrorDescriber errors,
         ILogger<TokenManager<TToken>> logger,
-        IOptions<IdentityBearerOptions> bearerOptions,
-        IAccessTokenPolicy accessTokenPolicy,
-        ISystemClock clock)
+        IOptions<IdentityBearerOptions> bearerOptions)
     {
         Options = identityOptions.Value.TokenManager;
         Store = store ?? throw new ArgumentNullException(nameof(store));
         ErrorDescriber = errors;
         Logger = logger;
-        _accessTokenPolicy = accessTokenPolicy;
-        _clock = clock;
 
         // TODO: Move these to registered named options?
         _keyFormatProviders[JsonKeySerializer.ProviderId] = new JsonKeySerializer();
         _keyFormatProviders[Base64KeySerializer.ProviderId] = new Base64KeySerializer();
 
-        Options.FormatProviderMap[TokenFormat.JWT] = new JwtTokenFormat(_accessTokenPolicy, bearerOptions);
+        Options.FormatProviderMap[TokenFormat.JWT] = new JwtTokenFormat(bearerOptions);
         Options.FormatProviderMap[TokenFormat.Single] = new GuidTokenFormat();
 
         Options.PurposeFormatMap[TokenPurpose.RefreshToken] = TokenFormat.Single;
@@ -210,7 +201,7 @@ public class TokenManager<TToken> : IDisposable
     {
         if (disposing && !_disposed)
         {
-            //Store.Dispose();
+            Store.Dispose();
         }
         _disposed = true;
     }

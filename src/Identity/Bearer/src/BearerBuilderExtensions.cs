@@ -41,7 +41,6 @@ public static class BearerBuilderExtensions
         var tokenManagerType = typeof(TokenManager<>).MakeGenericType(typeof(TToken));
         builder.Services.TryAddScoped(tokenManagerType);
         builder.Services.TryAddScoped(typeof(IUserTokenService<>).MakeGenericType(builder.UserType), typeof(UserTokenService<>).MakeGenericType(builder.UserType));
-        builder.Services.TryAddTransient<IAccessTokenPolicy, JwtAccessTokenPolicy>();
         builder.Services.TryAddScoped(typeof(IAccessTokenValidator), typeof(DefaultAccessTokenValidator<,>).MakeGenericType(builder.UserType, typeof(TToken)));
         return new IdentityBearerTokenBuilder(builder, typeof(TToken));
     }
