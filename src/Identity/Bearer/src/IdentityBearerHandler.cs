@@ -18,10 +18,10 @@ internal class DefaultAccessTokenValidator<TUser, TToken> : IAccessTokenValidato
     where TUser : class
     where TToken : class
 {
-    private readonly TokenManager<TUser, TToken> _tokenManager;
+    private readonly TokenManager<TToken> _tokenManager;
     private readonly IAccessTokenDenyPolicy _accessTokenDenyPolicy;
 
-    public DefaultAccessTokenValidator(TokenManager<TUser, TToken> tokenManager, IAccessTokenDenyPolicy accessTokenDenyPolicy)
+    public DefaultAccessTokenValidator(TokenManager<TToken> tokenManager, IAccessTokenDenyPolicy accessTokenDenyPolicy)
     {
         _tokenManager = tokenManager;
         _accessTokenDenyPolicy = accessTokenDenyPolicy;

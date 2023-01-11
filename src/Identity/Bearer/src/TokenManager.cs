@@ -10,10 +10,8 @@ namespace Microsoft.AspNetCore.Identity;
 /// <summary>
 /// Provides the APIs for managing tokens in a persistence store.
 /// </summary>
-/// <typeparam name="TUser">The type encapsulating a user.</typeparam>
 /// <typeparam name="TToken">The type encapsulating a token.</typeparam>
-public class TokenManager<TUser, TToken> : IDisposable
-    where TUser : class
+public class TokenManager<TToken> : IDisposable
     where TToken : class
 {
     private readonly IAccessTokenPolicy _accessTokenPolicy;
@@ -26,14 +24,12 @@ public class TokenManager<TUser, TToken> : IDisposable
     protected internal virtual CancellationToken CancellationToken => CancellationToken.None;
 
     /// <summary>
-    /// Constructs a new instance of <see cref="TokenManager{TUser,TToken}"/>.
+    /// Constructs a new instance of <see cref="TokenManager{TToken}"/>.
     /// </summary>
     /// <param name="identityOptions">The options which configure the identity system.</param>
     /// <param name="store"></param>
-    /// <param name="userManager">An instance of <see cref="UserManager{TUser}"/> used to retrieve users from and persist users.</param>
     /// <param name="errors">The <see cref="IdentityErrorDescriber"/> used to provider error messages.</param>
     /// <param name="logger">The logger used to log messages, warnings and errors.</param>
-    /// <param name="claimsFactory">The factory to use to create claims principals for a user.</param>
     /// <param name="bearerOptions">The options which configure the bearer token such as signing key, audience, and issuer.</param>
     /// <param name="accessTokenPolicy"></param>
     /// <param name="clock"></param>
@@ -42,19 +38,15 @@ public class TokenManager<TUser, TToken> : IDisposable
     public TokenManager(
         IOptions<IdentityOptions> identityOptions,
         ITokenStore<TToken> store,
-        UserManager<TUser> userManager,
         IdentityErrorDescriber errors,
-        ILogger<TokenManager<TUser,TToken>> logger,
-        IAccessTokenClaimsFactory<TUser> claimsFactory,
+        ILogger<TokenManager<TToken>> logger,
         IOptions<IdentityBearerOptions> bearerOptions,
         IAccessTokenPolicy accessTokenPolicy,
         ISystemClock clock)
     {
         Options = identityOptions.Value.TokenManager;
         Store = store ?? throw new ArgumentNullException(nameof(store));
-        UserManager = userManager;
         ErrorDescriber = errors;
-        PayloadFactory = claimsFactory;
         Logger = logger;
         _accessTokenPolicy = accessTokenPolicy;
         _clock = clock;
@@ -88,16 +80,6 @@ public class TokenManager<TUser, TToken> : IDisposable
     /// The <see cref="TokenManagerOptions"/>.
     /// </summary>
     public TokenManagerOptions Options { get; set; }
-
-    /// <summary>
-    /// The <see cref="UserManager{TUser}"/> used.
-    /// </summary>
-    public UserManager<TUser> UserManager { get; set; }
-
-    /// <summary>
-    /// The <see cref="IUserClaimsPrincipalFactory{TUser}"/> used.
-    /// </summary>
-    public IAccessTokenClaimsFactory<TUser> PayloadFactory { get; set; }
 
     /// <summary>
     /// Gets the <see cref="IdentityErrorDescriber"/> used to provider error messages.

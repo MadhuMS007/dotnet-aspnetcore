@@ -44,14 +44,26 @@ public interface IUserTokenService<TUser> where TUser : class
 
 internal class UserTokenService<TUser> : IUserTokenService<TUser> where TUser : class
 {
-    private readonly TokenManager<TUser, IdentityStoreToken> _tokenManager;
+    private readonly TokenManager<IdentityStoreToken> _tokenManager;
     private readonly ISystemClock _clock;
 
-    public UserTokenService(TokenManager<TUser, IdentityStoreToken> tokenManager, ISystemClock clock)
+    public UserTokenService(TokenManager<IdentityStoreToken> tokenManager, ISystemClock clock, IAccessTokenClaimsFactory<TUser> payloadFactory, UserManager<TUser> userManager)
     {
         _tokenManager = tokenManager;
         _clock = clock;
+        PayloadFactory = payloadFactory;
+        UserManager = userManager;
     }
+
+    /// <summary>
+    /// The <see cref="IUserClaimsPrincipalFactory{TUser}"/> used.
+    /// </summary>
+    public IAccessTokenClaimsFactory<TUser> PayloadFactory { get; set; }
+
+    /// <summary>
+    /// The <see cref="UserManager{TUser}"/> used.
+    /// </summary>
+    public UserManager<TUser> UserManager { get; set; }
 
     internal (string, ITokenFormatProvider) GetFormatProvider(string tokenPurpose)
         => _tokenManager.GetFormatProvider(tokenPurpose);
@@ -68,8 +80,8 @@ internal class UserTokenService<TUser> : IUserTokenService<TUser> where TUser : 
         }
 
         var payload = new Dictionary<string, string>();
-        await _tokenManager.PayloadFactory.BuildPayloadAsync(user, payload);
-        var userId = await _tokenManager.UserManager.GetUserIdAsync(user).ConfigureAwait(false);
+        await PayloadFactory.BuildPayloadAsync(user, payload);
+        var userId = await UserManager.GetUserIdAsync(user).ConfigureAwait(false);
 
         (var format, var provider) = GetFormatProvider(TokenPurpose.AccessToken);
 
@@ -96,7 +108,7 @@ internal class UserTokenService<TUser> : IUserTokenService<TUser> where TUser : 
         (var format, var provider) = GetFormatProvider(TokenPurpose.RefreshToken);
 
         // Build the raw token and payload
-        var userId = await _tokenManager.UserManager.GetUserIdAsync(user);
+        var userId = await UserManager.GetUserIdAsync(user);
 
         // Store the token metadata, refresh tokens don't need additional data
         // so no payload is specified for the token info.
@@ -150,7 +162,7 @@ internal class UserTokenService<TUser> : IUserTokenService<TUser> where TUser : 
         }
 
         var userId = await _tokenManager.Store.GetSubjectAsync(tok, _tokenManager.CancellationToken).ConfigureAwait(false);
-        var user = await _tokenManager.UserManager.FindByIdAsync(userId).ConfigureAwait(false);
+        var user = await UserManager.FindByIdAsync(userId).ConfigureAwait(false);
         if (user != null)
         {
             // Mark the refresh token as used

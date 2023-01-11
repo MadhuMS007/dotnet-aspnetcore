@@ -37,7 +37,7 @@ public static class BearerBuilderExtensions
 
     {
         builder.Services.AddSingleton<IAccessTokenDenyPolicy, JtiBlocker>();
-        var tokenManagerType = typeof(TokenManager<,>).MakeGenericType(builder.UserType, typeof(TToken));
+        var tokenManagerType = typeof(TokenManager<>).MakeGenericType(typeof(TToken));
         builder.Services.TryAddScoped(tokenManagerType);
 
         builder.Services.TryAddScoped(typeof(IUserTokenService<>).MakeGenericType(builder.UserType), typeof(UserTokenService<>).MakeGenericType(builder.UserType));

@@ -1,12 +1,9 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.ComponentModel.DataAnnotations;
-using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Security.Claims;
-using System.Text.Json;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Configuration;
@@ -124,8 +121,8 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
     /// <param name="services">The service collection to use, optional.</param>
     /// <param name="configureServices">Delegate used to configure the services, optional.</param>
     /// <returns>The user manager to use for tests.</returns>
-    protected virtual TokenManager<TUser, IdentityStoreToken> CreateManager(object context = null, IServiceCollection services = null, Action<IServiceCollection> configureServices = null)
-        => CreateTestServices(context, services, configureServices).GetService<TokenManager<TUser, IdentityStoreToken>>();
+    protected virtual TokenManager<IdentityStoreToken> CreateManager(object context = null, IServiceCollection services = null, Action<IServiceCollection> configureServices = null)
+        => CreateTestServices(context, services, configureServices).GetService<TokenManager<IdentityStoreToken>>();
 
     protected virtual IServiceProvider CreateTestServices(object context = null, IServiceCollection services = null, Action<IServiceCollection> configureServices = null)
     {
@@ -144,19 +141,20 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
     public async Task AccessTokenFormat()
     {
         var sp = CreateTestServices();
-        var manager = sp.GetService<TokenManager<TUser, IdentityStoreToken>>();
+        var manager = sp.GetService<TokenManager<IdentityStoreToken>>();
+        var userManager = sp.GetService<UserManager<TUser>>();
         var tokenService = sp.GetService<IUserTokenService<TUser>>();
         var validator = sp.GetService<IAccessTokenValidator>();
         var user = CreateTestUser();
-        var userId = await manager.UserManager.GetUserIdAsync(user);
-        IdentityResultAssert.IsSuccess(await manager.UserManager.CreateAsync(user));
+        var userId = await userManager.GetUserIdAsync(user);
+        IdentityResultAssert.IsSuccess(await userManager.CreateAsync(user));
 
         var claims = new[] {
             new Claim("custom", "value"),
             new Claim("custom2", "value"),
         };
 
-        await manager.UserManager.AddClaimsAsync(user, claims);
+        await userManager.AddClaimsAsync(user, claims);
 
         var token = await tokenService.GetAccessTokenAsync(user);
         Assert.NotNull(token);
@@ -183,12 +181,13 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
     public async Task AccessTokenDuplicateClaimsFormat()
     {
         var sp = CreateTestServices();
-        var manager = sp.GetService<TokenManager<TUser, IdentityStoreToken>>();
+        var manager = sp.GetService<TokenManager<IdentityStoreToken>>();
+        var userManager = sp.GetService<UserManager<TUser>>();
         var tokenService = sp.GetService<IUserTokenService<TUser>>();
         var validator = sp.GetService<IAccessTokenValidator>();
         var user = CreateTestUser();
-        var userId = await manager.UserManager.GetUserIdAsync(user);
-        IdentityResultAssert.IsSuccess(await manager.UserManager.CreateAsync(user));
+        var userId = await userManager.GetUserIdAsync(user);
+        IdentityResultAssert.IsSuccess(await userManager.CreateAsync(user));
 
         var claims = new[] {
             new Claim("custom", "value"),
@@ -197,7 +196,7 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
             new Claim("custom2", "value2"),
         };
 
-        await manager.UserManager.AddClaimsAsync(user, claims);
+        await userManager.AddClaimsAsync(user, claims);
 
         var token = await tokenService.GetAccessTokenAsync(user);
         Assert.NotNull(token);
@@ -231,10 +230,11 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
     public async Task CanRefreshTokens()
     {
         var sp = CreateTestServices();
-        var manager = sp.GetService<TokenManager<TUser, IdentityStoreToken>>();
+        var manager = sp.GetService<TokenManager<IdentityStoreToken>>();
+        var userManager = sp.GetService<UserManager<TUser>>();
         var tokenService = sp.GetService<IUserTokenService<TUser>>();
         var user = CreateTestUser();
-        IdentityResultAssert.IsSuccess(await manager.UserManager.CreateAsync(user));
+        IdentityResultAssert.IsSuccess(await userManager.CreateAsync(user));
 
         var token = await tokenService.GetRefreshTokenAsync(user);
         Assert.NotNull(token);
@@ -253,19 +253,20 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
     public async Task CanStoreAccessTokens()
     {
         var sp = CreateTestServices();
-        var manager = sp.GetService<TokenManager<TUser, IdentityStoreToken>>();
+        var manager = sp.GetService<TokenManager<IdentityStoreToken>>();
+        var userManager = sp.GetService<UserManager<TUser>>();
         var validator = sp.GetService<IAccessTokenValidator>();
         var tokenService = sp.GetService<IUserTokenService<TUser>>();
         var user = CreateTestUser();
-        var userId = await manager.UserManager.GetUserIdAsync(user);
-        IdentityResultAssert.IsSuccess(await manager.UserManager.CreateAsync(user));
+        var userId = await userManager.GetUserIdAsync(user);
+        IdentityResultAssert.IsSuccess(await userManager.CreateAsync(user));
 
         var claims = new[] {
             new Claim("custom", "value"),
             new Claim("custom2", "value"),
         };
 
-        await manager.UserManager.AddClaimsAsync(user, claims);
+        await userManager.AddClaimsAsync(user, claims);
 
         var token = await tokenService.GetAccessTokenAsync(user);
         Assert.NotNull(token);
@@ -304,12 +305,13 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
         var blockerOptions = new JtiBlockerOptions();
         var blocker = new JtiBlocker(Options.Create(blockerOptions));
         var sp = CreateTestServices(configureServices: o => o.AddSingleton<IAccessTokenDenyPolicy>(blocker));
-        var manager = sp.GetService<TokenManager<TUser, IdentityStoreToken>>();
+        var manager = sp.GetService<TokenManager< IdentityStoreToken>>();
+        var userManager = sp.GetService<UserManager<TUser>>();
         var tokenService = sp.GetService<IUserTokenService<TUser>>();
         var validator = sp.GetService<IAccessTokenValidator>();
         var user = CreateTestUser();
-        var userId = await manager.UserManager.GetUserIdAsync(user);
-        IdentityResultAssert.IsSuccess(await manager.UserManager.CreateAsync(user));
+        var userId = await userManager.GetUserIdAsync(user);
+        IdentityResultAssert.IsSuccess(await userManager.CreateAsync(user));
 
         var token = await tokenService.GetAccessTokenAsync(user);
         Assert.NotNull(token);
@@ -338,10 +340,11 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
     {
         var clock = new TestClock();
         var sp = CreateTestServices(configureServices: s => s.AddSingleton<ISystemClock>(clock));
-        var manager = sp.GetService<TokenManager<TUser, IdentityStoreToken>>();
+        var manager = sp.GetService<TokenManager<IdentityStoreToken>>();
+        var userManager = sp.GetService<UserManager<TUser>>();
         var tokenService = sp.GetService<IUserTokenService<TUser>>();
         var user = CreateTestUser();
-        IdentityResultAssert.IsSuccess(await manager.UserManager.CreateAsync(user));
+        IdentityResultAssert.IsSuccess(await userManager.CreateAsync(user));
 
         var token = await tokenService.GetRefreshTokenAsync(user);
         Assert.NotNull(token);
@@ -363,10 +366,12 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
     public async Task CanPurgeExpiredTokens()
     {
         var clock = new TestClock();
-        var manager = CreateManager(configureServices: s => s.AddSingleton<ISystemClock>(clock));
+        var sp = CreateTestServices(configureServices: s => s.AddSingleton<ISystemClock>(clock));
+        var manager = sp.GetService<TokenManager<IdentityStoreToken>>();
+        var userManager = sp.GetService<UserManager<TUser>>();
         var user = CreateTestUser();
-        IdentityResultAssert.IsSuccess(await manager.UserManager.CreateAsync(user));
-        var userId = await manager.UserManager.GetUserIdAsync(user);
+        IdentityResultAssert.IsSuccess(await userManager.CreateAsync(user));
+        var userId = await userManager.GetUserIdAsync(user);
 
         // Create a bunch of tokens some expired
         var expired1 = await manager.StoreAsync(new TokenInfo("id1", "f", userId, "p", "active") { Expiration = DateTimeOffset.UtcNow });
@@ -398,9 +403,10 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
     {
         var sp = CreateTestServices();
         var tokenService = sp.GetService<IUserTokenService<TUser>>();
-        var manager = sp.GetService<TokenManager<TUser, IdentityStoreToken>>();
+        var manager = sp.GetService<TokenManager<IdentityStoreToken>>();
+        var userManager = sp.GetService<UserManager<TUser>>();
         var user = CreateTestUser();
-        IdentityResultAssert.IsSuccess(await manager.UserManager.CreateAsync(user));
+        IdentityResultAssert.IsSuccess(await userManager.CreateAsync(user));
 
         var token = await tokenService.GetRefreshTokenAsync(user);
         Assert.NotNull(token);
@@ -422,16 +428,17 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
     {
         var sp = CreateTestServices();
         var tokenService = sp.GetService<IUserTokenService<TUser>>();
-        var manager = sp.GetService<TokenManager<TUser, IdentityStoreToken>>();
+        var manager = sp.GetService<TokenManager<IdentityStoreToken>>();
+        var userManager = sp.GetService<UserManager<TUser>>();
         var user = CreateTestUser();
-        IdentityResultAssert.IsSuccess(await manager.UserManager.CreateAsync(user));
+        IdentityResultAssert.IsSuccess(await userManager.CreateAsync(user));
 
         var token = await tokenService.GetRefreshTokenAsync(user);
         Assert.NotNull(token);
 
-        IdentityResultAssert.IsSuccess(await manager.UserManager.DeleteAsync(user));
-        var userId = await manager.UserManager.GetUserIdAsync(user);
-        Assert.Null(await manager.UserManager.FindByIdAsync(userId));
+        IdentityResultAssert.IsSuccess(await userManager.DeleteAsync(user));
+        var userId = await userManager.GetUserIdAsync(user);
+        Assert.Null(await userManager.FindByIdAsync(userId));
         Assert.Null(await manager.Store.FindAsync("", token, CancellationToken.None));
     }
 
