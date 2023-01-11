@@ -1,6 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 
 namespace Microsoft.AspNetCore.Identity;
@@ -47,18 +48,12 @@ internal class UserTokenService<TUser> : IUserTokenService<TUser> where TUser : 
     private readonly TokenManager<IdentityStoreToken> _tokenManager;
     private readonly ISystemClock _clock;
 
-    public UserTokenService(TokenManager<IdentityStoreToken> tokenManager, ISystemClock clock, IAccessTokenClaimsFactory<TUser> payloadFactory, UserManager<TUser> userManager)
+    public UserTokenService(TokenManager<IdentityStoreToken> tokenManager, ISystemClock clock, UserManager<TUser> userManager)
     {
         _tokenManager = tokenManager;
         _clock = clock;
-        PayloadFactory = payloadFactory;
         UserManager = userManager;
     }
-
-    /// <summary>
-    /// The <see cref="IUserClaimsPrincipalFactory{TUser}"/> used.
-    /// </summary>
-    public IAccessTokenClaimsFactory<TUser> PayloadFactory { get; set; }
 
     /// <summary>
     /// The <see cref="UserManager{TUser}"/> used.
@@ -67,6 +62,39 @@ internal class UserTokenService<TUser> : IUserTokenService<TUser> where TUser : 
 
     internal (string, ITokenFormatProvider) GetFormatProvider(string tokenPurpose)
         => _tokenManager.GetFormatProvider(tokenPurpose);
+
+    private async Task BuildPayloadAsync(TUser user, IDictionary<string, string> payload)
+    {
+        // Based on UserClaimsPrincipalFactory
+        //var userId = await UserManager.GetUserIdAsync(user).ConfigureAwait(false);
+        var userName = await UserManager.GetUserNameAsync(user).ConfigureAwait(false);
+        payload[ClaimTypes.NameIdentifier] = userName!;
+
+        if (UserManager.SupportsUserEmail)
+        {
+            var email = await UserManager.GetEmailAsync(user).ConfigureAwait(false);
+            if (!string.IsNullOrEmpty(email))
+            {
+                payload["email"] = email;
+            }
+        }
+        if (UserManager.SupportsUserSecurityStamp)
+        {
+            payload[UserManager.Options.ClaimsIdentity.SecurityStampClaimType] =
+                await UserManager.GetSecurityStampAsync(user).ConfigureAwait(false);
+        }
+        if (UserManager.SupportsUserClaim)
+        {
+            var claims = await UserManager.GetClaimsAsync(user).ConfigureAwait(false);
+            foreach (var claim in claims)
+            {
+                payload[claim.Type] = claim.Value;
+            }
+        }
+
+        // REVIEW: why more than one aud?
+        //payload["aud"] = _bearerOptions.Audiences.LastOrDefault()!;
+    }
 
     /// <inheritdoc/>
     public virtual async Task<string> GetAccessTokenAsync(TUser user)
@@ -80,7 +108,7 @@ internal class UserTokenService<TUser> : IUserTokenService<TUser> where TUser : 
         }
 
         var payload = new Dictionary<string, string>();
-        await PayloadFactory.BuildPayloadAsync(user, payload);
+        await BuildPayloadAsync(user, payload);
         var userId = await UserManager.GetUserIdAsync(user).ConfigureAwait(false);
 
         (var format, var provider) = GetFormatProvider(TokenPurpose.AccessToken);

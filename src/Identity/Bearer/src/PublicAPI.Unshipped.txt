@@ -2,8 +2,6 @@
 Microsoft.AspNetCore.Identity.BearerSchemeOptions
 Microsoft.AspNetCore.Identity.BearerSchemeOptions.BearerSchemeOptions() -> void
 Microsoft.AspNetCore.Identity.BearerServiceCollectionExtensions
-Microsoft.AspNetCore.Identity.IAccessTokenClaimsFactory<TUser>
-Microsoft.AspNetCore.Identity.IAccessTokenClaimsFactory<TUser>.BuildPayloadAsync(TUser! user, System.Collections.Generic.IDictionary<string!, string!>! payload) -> System.Threading.Tasks.Task!
 Microsoft.AspNetCore.Identity.IAccessTokenDenyPolicy
 Microsoft.AspNetCore.Identity.IAccessTokenDenyPolicy.IsDeniedAsync(string! tokenId) -> System.Threading.Tasks.Task<bool>!
 Microsoft.AspNetCore.Identity.IAccessTokenPolicy

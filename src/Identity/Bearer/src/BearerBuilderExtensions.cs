@@ -35,19 +35,13 @@ public static class BearerBuilderExtensions
     /// <returns>A <see cref="IdentityBearerTokenBuilder"/> instance.</returns>
     public static IdentityBearerTokenBuilder AddBearerTokens<TToken>(this IdentityBuilder builder)
         where TToken : class
-
     {
         builder.Services.AddSingleton<IAccessTokenDenyPolicy, JtiBlocker>();
         builder.Services.AddSingleton<ITokenSerializer, JsonTokenSerializer>();
         var tokenManagerType = typeof(TokenManager<>).MakeGenericType(typeof(TToken));
         builder.Services.TryAddScoped(tokenManagerType);
-
         builder.Services.TryAddScoped(typeof(IUserTokenService<>).MakeGenericType(builder.UserType), typeof(UserTokenService<>).MakeGenericType(builder.UserType));
-
         builder.Services.TryAddTransient<IAccessTokenPolicy, JwtAccessTokenPolicy>();
-        var ifactory = typeof(IAccessTokenClaimsFactory<>).MakeGenericType(builder.UserType);
-        var factory = typeof(AccessTokenClaimsFactory<>).MakeGenericType(builder.UserType);
-        builder.Services.TryAddScoped(ifactory, factory);
         builder.Services.TryAddScoped(typeof(IAccessTokenValidator), typeof(DefaultAccessTokenValidator<,>).MakeGenericType(builder.UserType, typeof(TToken)));
         return new IdentityBearerTokenBuilder(builder, typeof(TToken));
     }
