@@ -2,206 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Linq;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 
-namespace Microsoft.AspNetCore.Identity;
-
-/// <summary>
-/// Constants for use for token status.
-/// </summary>
-public static class TokenStatus
-{
-    /// <summary>
-    /// Represents an active valid token status.
-    /// </summary>
-    public const string Active = "active";
-
-    /// <summary>
-    /// Represents an inactive token status.
-    /// </summary>
-    public const string Inactive = "inactive";
-
-    /// <summary>
-    /// Represents a revoked token status.
-    /// </summary>
-    public const string Revoked = "revoked";
-}
-
-/// <summary>
-/// Constants used to represent token purposes.
-/// </summary>
-public static class TokenPurpose
-{
-    /// <summary>
-    /// Purpose for access tokens.
-    /// </summary>
-    public const string AccessToken = "access_token";
-
-    /// <summary>
-    /// Purpose for refresh tokens.
-    /// </summary>
-    public const string RefreshToken = "refresh_token";
-}
-
-/// <summary>
-/// Constants used to represent token claims.
-/// </summary>
-public static class TokenClaims
-{
-    /// <summary>
-    /// The Issuer for the token.
-    /// </summary>
-    public const string Issuer = "iss";
-
-    /// <summary>
-    /// The Subject for the token.
-    /// </summary>
-    public const string Subject = "sub";
-
-    /// <summary>
-    /// The intended audience for the token.
-    /// </summary>
-    public const string Audience = "aud";
-
-    /// <summary>
-    /// When the token expires.
-    /// </summary>
-    public const string Expires = "exp";
-
-    /// <summary>
-    /// Specifies when the token must not be accepted before.
-    /// </summary>
-    public const string NotBefore = "nbf";
-
-    /// <summary>
-    /// When the token was issued.
-    /// </summary>
-    public const string IssuedAt = "iat";
-
-    /// <summary>
-    /// The identifier for the token.
-    /// </summary>
-    public const string Jti = "jti";
-}
-
-/// <summary>
-/// Constants used to represent token formats.
-/// </summary>
-public static class TokenFormat
-{
-    /// <summary>
-    /// JWT format
-    /// </summary>
-    public const string JWT = "jwt";
-
-    /// <summary>
-    /// Single use redemption
-    /// </summary>
-    public const string Single = "single";
-}
-
-/// <summary>
-/// Represents a user's device, i.e. browser, phone, TV
-/// </summary>
-internal sealed class IdentityDevice
-{
-    /// <summary>
-    /// The Id for the device.
-    /// </summary>
-    public string Id { get; set; } = Guid.NewGuid().ToString();
-
-    /// <summary>
-    /// The userId for the user who owns this device.
-    /// </summary>
-    public string UserId { get; set; } = string.Empty;
-
-    /// <summary>
-    /// The name of the device.
-    /// </summary>
-    public string Name { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Base class for the Entity Framework database context used for identity.
-/// </summary>
-/// <typeparam name="TUser">The type of user objects.</typeparam>
-/// <typeparam name="TRole">The type of role objects.</typeparam>
-/// <typeparam name="TToken">The type of token objects.</typeparam>
-/// <typeparam name="TKey">The type of the primary key for users and roles.</typeparam>
-/// <typeparam name="TUserClaim">The type of the user claim object.</typeparam>
-/// <typeparam name="TUserRole">The type of the user role object.</typeparam>
-/// <typeparam name="TUserLogin">The type of the user login object.</typeparam>
-/// <typeparam name="TRoleClaim">The type of the role claim object.</typeparam>
-/// <typeparam name="TUserToken">The type of the user token object.</typeparam>
-public abstract class IdentityDbContext<TUser, TRole, TToken, TKey, TUserClaim, TUserRole, TUserLogin, TRoleClaim, TUserToken> : IdentityDbContext<TUser, TRole, TKey, TUserClaim, TUserRole, TUserLogin, TRoleClaim, TUserToken>
-    where TUser : IdentityUser<TKey>
-    where TRole : IdentityRole<TKey>
-    where TToken : IdentityStoreToken
-    where TKey : IEquatable<TKey>
-    where TUserClaim : IdentityUserClaim<TKey>
-    where TUserRole : IdentityUserRole<TKey>
-    where TUserLogin : IdentityUserLogin<TKey>
-    where TRoleClaim : IdentityRoleClaim<TKey>
-    where TUserToken : IdentityUserToken<TKey>
-{
-    /// <summary>
-    /// Initializes a new instance of the class.
-    /// </summary>
-    /// <param name="options">The options to be used by a <see cref="DbContext"/>.</param>
-    public IdentityDbContext(DbContextOptions options) : base(options) { }
-
-    /// <summary>
-    /// Initializes a new instance of the class.
-    /// </summary>
-    protected IdentityDbContext() { }
-
-    /// <summary>
-    /// Gets or sets the <see cref="DbSet{TEntity}"/> of tokens.
-    /// </summary>
-    // REVIEW!!
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Trimming", "IL2091:Target generic argument does not satisfy 'DynamicallyAccessedMembersAttribute' in target method or type. The generic parameter of the source method or type does not have matching annotations.", Justification = "<Pending>")]
-    public virtual DbSet<TToken> Tokens { get; set; } = default!;
-
-    /// <summary>
-    /// Configures the schema needed for the identity framework.
-    /// </summary>
-    /// <param name="builder">
-    /// The builder being used to construct the model for this context.
-    /// </param>
-    // REVIEW!!
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Trimming", "IL2091:Target generic argument does not satisfy 'DynamicallyAccessedMembersAttribute' in target method or type. The generic parameter of the source method or type does not have matching annotations.", Justification = "<Pending>")]
-    protected override void OnModelCreating(ModelBuilder builder)
-    {
-        base.OnModelCreating(builder);
-
-        builder.Entity<TUser>(b =>
-        {
-            b.HasMany<TToken>().WithOne().HasForeignKey(ur => ur.Subject).IsRequired();
-        });
-
-        builder.Entity<TToken>(b =>
-        {
-            b.HasIndex(t => new { t.Purpose, t.Payload }).HasDatabaseName("TokenPurposeValueIndex");
-            b.ToTable("AspNetTokens");
-            b.Property(r => r.ConcurrencyStamp).IsConcurrencyToken();
-
-            // REVIEW should we cap the purpose/value lengths?
-            b.Property(u => u.Purpose).HasMaxLength(256);
-            b.Property(u => u.Payload).HasMaxLength(256);
-        });
-
-        builder.Entity<KeyInfo>(b =>
-        {
-            b.ToTable("AspNetKeys");
-
-            // REVIEW should we cap the purpose/value lengths?
-            b.Property(u => u.ProviderId).HasMaxLength(256);
-            b.Property(u => u.Format).HasMaxLength(256);
-        });
-    }
-}
+namespace Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 /// <summary>
 /// Represents a new instance of a persistence store for the specified token types.
@@ -221,10 +24,10 @@ public class TokenStore<TToken, TContext> : ITokenStore<TToken>, IKeyStore
     /// <param name="context">The context used to access the store.</param>
     /// <param name="serializer">The <see cref="ITokenSerializer"/> used to serialize tokens.</param>
     /// <param name="describer">The <see cref="IdentityErrorDescriber"/> used to describe store errors.</param>
-    public TokenStore(TContext context, ITokenSerializer? serializer = null, IdentityErrorDescriber? describer = null) 
+    public TokenStore(TContext context, ITokenSerializer serializer, IdentityErrorDescriber? describer = null) 
     {
         Context = context ?? throw new ArgumentNullException(nameof(context));
-        _serializer = serializer ?? JsonTokenSerizlier.Instance;
+        _serializer = serializer;
         ErrorDescriber = describer ?? new IdentityErrorDescriber();
     }
 
@@ -246,7 +49,6 @@ public class TokenStore<TToken, TContext> : ITokenStore<TToken>, IKeyStore
     public IdentityErrorDescriber ErrorDescriber { get; set; }
 
     /// <inheritdoc/>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Trimming", "IL2087:Target parameter argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The generic parameter of the source method or type does not have matching annotations.", Justification = "<Pending>")]
     public virtual Task<TToken> NewAsync(TokenInfo info, CancellationToken cancellationToken)
     {
         var token = (TToken)Activator.CreateInstance(typeof(TToken))!;

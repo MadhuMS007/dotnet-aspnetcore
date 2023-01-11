@@ -1,18 +1,4 @@
 #nullable enable
-const Microsoft.AspNetCore.Identity.TokenClaims.Audience = "aud" -> string!
-const Microsoft.AspNetCore.Identity.TokenClaims.Expires = "exp" -> string!
-const Microsoft.AspNetCore.Identity.TokenClaims.IssuedAt = "iat" -> string!
-const Microsoft.AspNetCore.Identity.TokenClaims.Issuer = "iss" -> string!
-const Microsoft.AspNetCore.Identity.TokenClaims.Jti = "jti" -> string!
-const Microsoft.AspNetCore.Identity.TokenClaims.NotBefore = "nbf" -> string!
-const Microsoft.AspNetCore.Identity.TokenClaims.Subject = "sub" -> string!
-const Microsoft.AspNetCore.Identity.TokenFormat.JWT = "jwt" -> string!
-const Microsoft.AspNetCore.Identity.TokenFormat.Single = "single" -> string!
-const Microsoft.AspNetCore.Identity.TokenPurpose.AccessToken = "access_token" -> string!
-const Microsoft.AspNetCore.Identity.TokenPurpose.RefreshToken = "refresh_token" -> string!
-const Microsoft.AspNetCore.Identity.TokenStatus.Active = "active" -> string!
-const Microsoft.AspNetCore.Identity.TokenStatus.Inactive = "inactive" -> string!
-const Microsoft.AspNetCore.Identity.TokenStatus.Revoked = "revoked" -> string!
 Microsoft.AspNetCore.Identity.BearerSchemeOptions
 Microsoft.AspNetCore.Identity.BearerSchemeOptions.BearerSchemeOptions() -> void
 Microsoft.AspNetCore.Identity.BearerServiceCollectionExtensions
@@ -30,9 +16,6 @@ Microsoft.AspNetCore.Identity.IdentityBearerOptions.Issuer.get -> string?
 Microsoft.AspNetCore.Identity.IdentityBearerOptions.Issuer.set -> void
 Microsoft.AspNetCore.Identity.IdentityBearerOptions.SigningCredentials.get -> Microsoft.AspNetCore.Identity.JsonWebKey?
 Microsoft.AspNetCore.Identity.IdentityBearerOptions.SigningCredentials.set -> void
-Microsoft.AspNetCore.Identity.IdentityDbContext<TUser, TRole, TToken, TKey, TUserClaim, TUserRole, TUserLogin, TRoleClaim, TUserToken>
-Microsoft.AspNetCore.Identity.IdentityDbContext<TUser, TRole, TToken, TKey, TUserClaim, TUserRole, TUserLogin, TRoleClaim, TUserToken>.IdentityDbContext() -> void
-Microsoft.AspNetCore.Identity.IdentityDbContext<TUser, TRole, TToken, TKey, TUserClaim, TUserRole, TUserLogin, TRoleClaim, TUserToken>.IdentityDbContext(Microsoft.EntityFrameworkCore.DbContextOptions! options) -> void
 Microsoft.AspNetCore.Identity.ITokenKeyRing
 Microsoft.AspNetCore.Identity.ITokenKeyRing.GetAllKeysAsync() -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<Microsoft.AspNetCore.Identity.TokenKey!>!>!
 Microsoft.AspNetCore.Identity.ITokenKeyRing.GetCurrentKeyAsync() -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.TokenKey!>!
@@ -87,8 +70,6 @@ Microsoft.AspNetCore.Identity.JwtBuilder.NotBefore.get -> System.DateTimeOffset
 Microsoft.AspNetCore.Identity.JwtBuilder.NotBefore.set -> void
 Microsoft.AspNetCore.Identity.JwtBuilder.SigningKey.get -> Microsoft.AspNetCore.Identity.JsonWebKey!
 Microsoft.AspNetCore.Identity.JwtBuilder.SigningKey.set -> void
-Microsoft.AspNetCore.Identity.TokenClaims
-Microsoft.AspNetCore.Identity.TokenFormat
 Microsoft.AspNetCore.Identity.TokenKey
 Microsoft.AspNetCore.Identity.TokenKey.Created.get -> System.DateTimeOffset
 Microsoft.AspNetCore.Identity.TokenKey.Created.set -> void
@@ -106,23 +87,7 @@ Microsoft.AspNetCore.Identity.TokenManager<TToken>.Options.set -> void
 Microsoft.AspNetCore.Identity.TokenManager<TToken>.Store.get -> Microsoft.AspNetCore.Identity.ITokenStore<TToken!>!
 Microsoft.AspNetCore.Identity.TokenManager<TToken>.ThrowIfDisposed() -> void
 Microsoft.AspNetCore.Identity.TokenManager<TToken>.TokenManager(Microsoft.Extensions.Options.IOptions<Microsoft.AspNetCore.Identity.IdentityOptions!>! identityOptions, Microsoft.AspNetCore.Identity.ITokenStore<TToken!>! store, Microsoft.AspNetCore.Identity.IdentityErrorDescriber! errors, Microsoft.Extensions.Logging.ILogger<Microsoft.AspNetCore.Identity.TokenManager<TToken!>!>! logger, Microsoft.Extensions.Options.IOptions<Microsoft.AspNetCore.Identity.IdentityBearerOptions!>! bearerOptions, Microsoft.AspNetCore.Identity.IAccessTokenPolicy! accessTokenPolicy, Microsoft.AspNetCore.Authentication.ISystemClock! clock) -> void
-Microsoft.AspNetCore.Identity.TokenPurpose
-Microsoft.AspNetCore.Identity.TokenStatus
-Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>
-Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.AutoSaveChanges.get -> bool
-Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.AutoSaveChanges.set -> void
-Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.Dispose() -> void
-Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.ErrorDescriber.get -> Microsoft.AspNetCore.Identity.IdentityErrorDescriber!
-Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.ErrorDescriber.set -> void
-Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.FindByIdAsync(string! tokenId, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<TToken?>!
-Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.GetFormatAsync(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<string!>!
-Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.GetTokenInfoAsync<TPayload>(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.TokenInfo!>!
-Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.SaveChanges(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
-Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.SetFormatAsync(TToken! token, string! format, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
-Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.ThrowIfDisposed() -> void
-Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.TokenStore(TContext! context, Microsoft.AspNetCore.Identity.ITokenSerializer? serializer = null, Microsoft.AspNetCore.Identity.IdentityErrorDescriber? describer = null) -> void
 Microsoft.Extensions.DependencyInjection.BearerBuilderExtensions
-override Microsoft.AspNetCore.Identity.IdentityDbContext<TUser, TRole, TToken, TKey, TUserClaim, TUserRole, TUserLogin, TRoleClaim, TUserToken>.OnModelCreating(Microsoft.EntityFrameworkCore.ModelBuilder! builder) -> void
 static Microsoft.AspNetCore.Identity.BearerServiceCollectionExtensions.AddBearerServerAuthentication(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.AspNetCore.Authentication.AuthenticationBuilder!
 static Microsoft.AspNetCore.Identity.BearerServiceCollectionExtensions.AddDefaultIdentityBearer<TUser, TToken>(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<Microsoft.AspNetCore.Identity.IdentityOptions!>! setupAction) -> Microsoft.AspNetCore.Identity.IdentityBuilder!
 static Microsoft.AspNetCore.Identity.BearerServiceCollectionExtensions.AddDefaultIdentityBearer<TUser>(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.AspNetCore.Identity.IdentityBuilder!
@@ -131,8 +96,6 @@ static Microsoft.Extensions.DependencyInjection.BearerBuilderExtensions.AddBeare
 static Microsoft.Extensions.DependencyInjection.BearerBuilderExtensions.AddTokenStore<TContext>(this Microsoft.AspNetCore.Identity.IdentityBuilder! builder) -> Microsoft.AspNetCore.Identity.IdentityBuilder!
 static readonly Microsoft.AspNetCore.Identity.JWSAlg.HS256 -> string!
 static readonly Microsoft.AspNetCore.Identity.JWSAlg.None -> string!
-virtual Microsoft.AspNetCore.Identity.IdentityDbContext<TUser, TRole, TToken, TKey, TUserClaim, TUserRole, TUserLogin, TRoleClaim, TUserToken>.Tokens.get -> Microsoft.EntityFrameworkCore.DbSet<TToken!>!
-virtual Microsoft.AspNetCore.Identity.IdentityDbContext<TUser, TRole, TToken, TKey, TUserClaim, TUserRole, TUserLogin, TRoleClaim, TUserToken>.Tokens.set -> void
 virtual Microsoft.AspNetCore.Identity.TokenManager<TToken>.CancellationToken.get -> System.Threading.CancellationToken
 virtual Microsoft.AspNetCore.Identity.TokenManager<TToken>.CheckTokenStatus(string! status) -> bool
 virtual Microsoft.AspNetCore.Identity.TokenManager<TToken>.Dispose(bool disposing) -> void
@@ -142,16 +105,3 @@ virtual Microsoft.AspNetCore.Identity.TokenManager<TToken>.Logger.set -> void
 virtual Microsoft.AspNetCore.Identity.TokenManager<TToken>.PurgeExpiredTokensAsync() -> System.Threading.Tasks.Task<int>!
 virtual Microsoft.AspNetCore.Identity.TokenManager<TToken>.RevokeAsync(string! tokenId) -> System.Threading.Tasks.Task<bool>!
 virtual Microsoft.AspNetCore.Identity.TokenManager<TToken>.StoreAsync(Microsoft.AspNetCore.Identity.TokenInfo! info) -> System.Threading.Tasks.Task<TToken!>!
-virtual Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.Context.get -> TContext!
-virtual Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.CreateAsync(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.IdentityResult!>!
-virtual Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.DeleteAsync(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.IdentityResult!>!
-virtual Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.FindAsync(string! purpose, string! value, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<TToken?>!
-virtual Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.GetExpirationAsync(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<System.DateTimeOffset>!
-virtual Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.GetStatusAsync(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<string!>!
-virtual Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.GetSubjectAsync(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<string!>!
-virtual Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.NewAsync(Microsoft.AspNetCore.Identity.TokenInfo! info, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<TToken!>!
-virtual Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.PurgeExpiredAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<int>!
-virtual Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.SetExpirationAsync(TToken! token, System.DateTimeOffset expiration, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
-virtual Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.SetStatusAsync(TToken! token, string! status, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
-virtual Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.SetSubjectAsync(TToken! token, string! subject, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
-virtual Microsoft.AspNetCore.Identity.TokenStore<TToken, TContext>.UpdateAsync(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.IdentityResult!>!

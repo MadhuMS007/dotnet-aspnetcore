@@ -18,7 +18,7 @@ internal class JwtTokenFormat : ITokenFormatProvider
         _options = options.Value;
     }
 
-    public ITokenSerializer PayloadSerializer => JsonTokenSerizlier.Instance;
+    public ITokenSerializer PayloadSerializer => JsonTokenSerializer.Instance;
 
     public async Task<string> CreateTokenAsync(TokenInfo token)
     {
@@ -53,7 +53,7 @@ internal class JwtTokenFormat : ITokenFormatProvider
 
 internal class GuidTokenFormat : ITokenFormatProvider
 {
-    public ITokenSerializer PayloadSerializer => JsonTokenSerizlier.Instance;
+    public ITokenSerializer PayloadSerializer => JsonTokenSerializer.Instance;
 
     public Task<string> CreateTokenAsync(TokenInfo token)
         => Task.FromResult(token.Id);

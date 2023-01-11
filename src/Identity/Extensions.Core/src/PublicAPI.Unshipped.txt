@@ -1,4 +1,18 @@
 #nullable enable
+const Microsoft.AspNetCore.Identity.TokenClaims.Audience = "aud" -> string!
+const Microsoft.AspNetCore.Identity.TokenClaims.Expires = "exp" -> string!
+const Microsoft.AspNetCore.Identity.TokenClaims.IssuedAt = "iat" -> string!
+const Microsoft.AspNetCore.Identity.TokenClaims.Issuer = "iss" -> string!
+const Microsoft.AspNetCore.Identity.TokenClaims.Jti = "jti" -> string!
+const Microsoft.AspNetCore.Identity.TokenClaims.NotBefore = "nbf" -> string!
+const Microsoft.AspNetCore.Identity.TokenClaims.Subject = "sub" -> string!
+const Microsoft.AspNetCore.Identity.TokenFormat.JWT = "jwt" -> string!
+const Microsoft.AspNetCore.Identity.TokenFormat.Single = "single" -> string!
+const Microsoft.AspNetCore.Identity.TokenPurpose.AccessToken = "access_token" -> string!
+const Microsoft.AspNetCore.Identity.TokenPurpose.RefreshToken = "refresh_token" -> string!
+const Microsoft.AspNetCore.Identity.TokenStatus.Active = "active" -> string!
+const Microsoft.AspNetCore.Identity.TokenStatus.Inactive = "inactive" -> string!
+const Microsoft.AspNetCore.Identity.TokenStatus.Revoked = "revoked" -> string!
 Microsoft.AspNetCore.Identity.IdentityBearerTokenBuilder
 Microsoft.AspNetCore.Identity.IdentityBearerTokenBuilder.IdentityBearerTokenBuilder(Microsoft.AspNetCore.Identity.IdentityBuilder! builder, System.Type! tokenType) -> void
 Microsoft.AspNetCore.Identity.IdentityBearerTokenBuilder.IdentityBuilder.get -> Microsoft.AspNetCore.Identity.IdentityBuilder!
@@ -58,6 +72,8 @@ Microsoft.AspNetCore.Identity.TokenBuilder.RawToken.set -> void
 Microsoft.AspNetCore.Identity.TokenBuilder.Subject.get -> string!
 Microsoft.AspNetCore.Identity.TokenBuilder.Subject.set -> void
 Microsoft.AspNetCore.Identity.TokenBuilder.TokenBuilder(string! subject, System.DateTimeOffset expires, System.Collections.Generic.IDictionary<string!, string!>? data = null) -> void
+Microsoft.AspNetCore.Identity.TokenClaims
+Microsoft.AspNetCore.Identity.TokenFormat
 Microsoft.AspNetCore.Identity.TokenInfo
 Microsoft.AspNetCore.Identity.TokenInfo.Created.get -> System.DateTimeOffset?
 Microsoft.AspNetCore.Identity.TokenInfo.Created.set -> void
@@ -84,6 +100,8 @@ Microsoft.AspNetCore.Identity.TokenManagerOptions.FormatProviderMap.set -> void
 Microsoft.AspNetCore.Identity.TokenManagerOptions.PurposeFormatMap.get -> System.Collections.Generic.IDictionary<string!, string!>!
 Microsoft.AspNetCore.Identity.TokenManagerOptions.PurposeFormatMap.set -> void
 Microsoft.AspNetCore.Identity.TokenManagerOptions.TokenManagerOptions() -> void
+Microsoft.AspNetCore.Identity.TokenPurpose
+Microsoft.AspNetCore.Identity.TokenStatus
 static readonly Microsoft.AspNetCore.Identity.IdentityVersions.Version1 -> System.Version!
 static readonly Microsoft.AspNetCore.Identity.IdentityVersions.Version2 -> System.Version!
 virtual Microsoft.AspNetCore.Identity.IdentityBearerTokenBuilder.TokenType.get -> System.Type!

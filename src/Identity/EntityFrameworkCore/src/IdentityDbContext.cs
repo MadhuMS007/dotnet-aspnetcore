@@ -8,6 +8,84 @@ namespace Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 /// <summary>
 /// Base class for the Entity Framework database context used for identity.
 /// </summary>
+/// <typeparam name="TUser">The type of user objects.</typeparam>
+/// <typeparam name="TRole">The type of role objects.</typeparam>
+/// <typeparam name="TToken">The type of token objects.</typeparam>
+/// <typeparam name="TKey">The type of the primary key for users and roles.</typeparam>
+/// <typeparam name="TUserClaim">The type of the user claim object.</typeparam>
+/// <typeparam name="TUserRole">The type of the user role object.</typeparam>
+/// <typeparam name="TUserLogin">The type of the user login object.</typeparam>
+/// <typeparam name="TRoleClaim">The type of the role claim object.</typeparam>
+/// <typeparam name="TUserToken">The type of the user token object.</typeparam>
+public abstract class IdentityDbContext<TUser, TRole, TToken, TKey, TUserClaim, TUserRole, TUserLogin, TRoleClaim, TUserToken> : IdentityDbContext<TUser, TRole, TKey, TUserClaim, TUserRole, TUserLogin, TRoleClaim, TUserToken>
+    where TUser : IdentityUser<TKey>
+    where TRole : IdentityRole<TKey>
+    where TToken : IdentityStoreToken
+    where TKey : IEquatable<TKey>
+    where TUserClaim : IdentityUserClaim<TKey>
+    where TUserRole : IdentityUserRole<TKey>
+    where TUserLogin : IdentityUserLogin<TKey>
+    where TRoleClaim : IdentityRoleClaim<TKey>
+    where TUserToken : IdentityUserToken<TKey>
+{
+    /// <summary>
+    /// Initializes a new instance of the class.
+    /// </summary>
+    /// <param name="options">The options to be used by a <see cref="DbContext"/>.</param>
+    public IdentityDbContext(DbContextOptions options) : base(options) { }
+
+    /// <summary>
+    /// Initializes a new instance of the class.
+    /// </summary>
+    protected IdentityDbContext() { }
+
+    /// <summary>
+    /// Gets or sets the <see cref="DbSet{TEntity}"/> of tokens.
+    /// </summary>
+    public virtual DbSet<TToken> Tokens { get; set; } = default!;
+
+    /// <summary>
+    /// Configures the schema needed for the identity framework.
+    /// </summary>
+    /// <param name="builder">
+    /// The builder being used to construct the model for this context.
+    /// </param>
+    // REVIEW!!
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Trimming", "IL2091:Target generic argument does not satisfy 'DynamicallyAccessedMembersAttribute' in target method or type. The generic parameter of the source method or type does not have matching annotations.", Justification = "<Pending>")]
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        base.OnModelCreating(builder);
+
+        builder.Entity<TUser>(b =>
+        {
+            b.HasMany<TToken>().WithOne().HasForeignKey(ur => ur.Subject).IsRequired();
+        });
+
+        builder.Entity<TToken>(b =>
+        {
+            b.HasIndex(t => new { t.Purpose, t.Payload }).HasDatabaseName("TokenPurposeValueIndex");
+            b.ToTable("AspNetTokens");
+            b.Property(r => r.ConcurrencyStamp).IsConcurrencyToken();
+
+            // REVIEW should we cap the purpose/value lengths?
+            b.Property(u => u.Purpose).HasMaxLength(256);
+            b.Property(u => u.Payload).HasMaxLength(256);
+        });
+
+        builder.Entity<KeyInfo>(b =>
+        {
+            b.ToTable("AspNetKeys");
+
+            // REVIEW should we cap the purpose/value lengths?
+            b.Property(u => u.ProviderId).HasMaxLength(256);
+            b.Property(u => u.Format).HasMaxLength(256);
+        });
+    }
+}
+
+/// <summary>
+/// Base class for the Entity Framework database context used for identity.
+/// </summary>
 public class IdentityDbContext : IdentityDbContext<IdentityUser, IdentityRole, string>
 {
     /// <summary>

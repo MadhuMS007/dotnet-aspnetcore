@@ -3,14 +3,15 @@
 
 using System.Text.Json;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
-internal class JsonTokenSerizlier : ITokenSerializer
+internal class JsonTokenSerializer : ITokenSerializer
 {
-    public static JsonTokenSerizlier Instance { get; private set; } = new JsonTokenSerizlier();
+    public static JsonTokenSerializer Instance { get; private set; } = new JsonTokenSerializer();
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
     public T? Deserialize<T>(string? serializedValue)
@@ -37,6 +38,7 @@ public static class BearerBuilderExtensions
 
     {
         builder.Services.AddSingleton<IAccessTokenDenyPolicy, JtiBlocker>();
+        builder.Services.AddSingleton<ITokenSerializer, JsonTokenSerializer>();
         var tokenManagerType = typeof(TokenManager<>).MakeGenericType(typeof(TToken));
         builder.Services.TryAddScoped(tokenManagerType);
 

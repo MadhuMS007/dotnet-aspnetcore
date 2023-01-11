@@ -15,7 +15,7 @@ public class InMemoryTokenStore<TUser, TRole> :
 {
     public readonly IDictionary<string, IdentityStoreToken> _tokens = new Dictionary<string, IdentityStoreToken>();
     public readonly IDictionary<string, KeyInfo> _keys = new Dictionary<string, KeyInfo>();
-    public readonly ITokenSerializer _serializer = new JsonTokenSerizlier();
+    public readonly ITokenSerializer _serializer = new JsonTokenSerializer();
 
     public Task<IdentityResult> AddAsync(string keyId, string providerId, string format, string data, CancellationToken cancellationToken)
     {

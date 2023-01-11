@@ -98,7 +98,7 @@ internal class TodoApplication : WebApplicationFactory<Program>
         // JWT tokens.
         using var scope = Services.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<TodoUser>>();
-        var tokenService = scope.ServiceProvider.GetRequiredService<TokenManager<TodoUser, IdentityStoreToken>>();
+        var tokenService = scope.ServiceProvider.GetRequiredService<IUserTokenService<TodoUser>>();
         var user = await userManager.FindByNameAsync(userName);
         return await tokenService.GetAccessTokenAsync(user!);
     }
