@@ -95,6 +95,7 @@ static readonly Microsoft.AspNetCore.Identity.JWSAlg.None -> string!
 virtual Microsoft.AspNetCore.Identity.TokenManager<TToken>.CancellationToken.get -> System.Threading.CancellationToken
 virtual Microsoft.AspNetCore.Identity.TokenManager<TToken>.CheckTokenStatus(string! status) -> bool
 virtual Microsoft.AspNetCore.Identity.TokenManager<TToken>.Dispose(bool disposing) -> void
+virtual Microsoft.AspNetCore.Identity.TokenManager<TToken>.FindAsync(Microsoft.AspNetCore.Identity.TokenInfoFilter! filter) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<string!>!>!
 virtual Microsoft.AspNetCore.Identity.TokenManager<TToken>.FindByIdAsync<TPayload>(string! tokenId) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.TokenInfo?>!
 virtual Microsoft.AspNetCore.Identity.TokenManager<TToken>.Logger.get -> Microsoft.Extensions.Logging.ILogger!
 virtual Microsoft.AspNetCore.Identity.TokenManager<TToken>.Logger.set -> void

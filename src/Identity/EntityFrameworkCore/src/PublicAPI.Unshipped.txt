@@ -8,6 +8,7 @@ Microsoft.AspNetCore.Identity.EntityFrameworkCore.TokenStore<TToken, TContext>.A
 Microsoft.AspNetCore.Identity.EntityFrameworkCore.TokenStore<TToken, TContext>.Dispose() -> void
 Microsoft.AspNetCore.Identity.EntityFrameworkCore.TokenStore<TToken, TContext>.ErrorDescriber.get -> Microsoft.AspNetCore.Identity.IdentityErrorDescriber!
 Microsoft.AspNetCore.Identity.EntityFrameworkCore.TokenStore<TToken, TContext>.ErrorDescriber.set -> void
+Microsoft.AspNetCore.Identity.EntityFrameworkCore.TokenStore<TToken, TContext>.FindAsync(Microsoft.AspNetCore.Identity.TokenInfoFilter! filter, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<string!>!>!
 Microsoft.AspNetCore.Identity.EntityFrameworkCore.TokenStore<TToken, TContext>.FindByIdAsync(string! tokenId, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<TToken?>!
 Microsoft.AspNetCore.Identity.EntityFrameworkCore.TokenStore<TToken, TContext>.GetFormatAsync(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<string!>!
 Microsoft.AspNetCore.Identity.EntityFrameworkCore.TokenStore<TToken, TContext>.GetTokenInfoAsync<TPayload>(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.TokenInfo!>!

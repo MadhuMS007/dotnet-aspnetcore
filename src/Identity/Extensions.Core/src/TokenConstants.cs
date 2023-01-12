@@ -38,6 +38,11 @@ public static class TokenPurpose
     /// Purpose for refresh tokens.
     /// </summary>
     public const string RefreshToken = "refresh_token";
+
+    /// <summary>
+    /// Purpose for signing keys.
+    /// </summary>
+    internal const string SigningKey = "signing_key";
 }
 
 /// <summary>
@@ -92,7 +97,7 @@ public static class TokenFormat
     public const string JWT = "jwt";
 
     /// <summary>
-    /// Single use redemption
+    /// The token is the code.
     /// </summary>
-    public const string Single = "single";
+    public const string Code = "code";
 }

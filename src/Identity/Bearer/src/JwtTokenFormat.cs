@@ -53,7 +53,10 @@ internal class JwtTokenFormat : ITokenFormatProvider
     }
 }
 
-internal class GuidTokenFormat : ITokenFormatProvider
+/// <summary>
+/// Used when the token id is sufficient
+/// </summary>
+internal class TokenIdFormat : ITokenFormatProvider
 {
     public ITokenSerializer PayloadSerializer => JsonTokenSerializer.Instance;
 

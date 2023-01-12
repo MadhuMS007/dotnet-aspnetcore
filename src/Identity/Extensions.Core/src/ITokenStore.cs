@@ -2,10 +2,42 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Microsoft.AspNetCore.Identity;
+
+/// <summary>
+/// Used to filter token queries, any non null filter property must be an exact match for queries.
+/// </summary>
+public class TokenInfoFilter
+{
+    /// <summary>
+    /// Gets or sets the Id to filter.
+    /// </summary>
+    public string? Id { get; set; }
+
+    /// <summary>
+    /// Gets or sets the format to filter.
+    /// </summary>
+    public string? Format { get; set; }
+
+    /// <summary>
+    /// Gets or sets the purpose to filter.
+    /// </summary>
+    public string? Purpose { get; set; }
+
+    /// <summary>
+    /// Gets or sets the subject to filter.
+    /// </summary>
+    public string? Subject { get; set; }
+
+    /// <summary>
+    /// Gets or sets the status to filter.
+    /// </summary>
+    public string? Status { get; set; }
+}
 
 /// <summary>
 /// Provides an abstraction for a storage and management of tokens.
@@ -51,6 +83,14 @@ public interface ITokenStore<TToken> : IDisposable where TToken : class
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
     /// <returns>A <see cref="Task{TResult}"/> that represents the <see cref="TokenInfo"/> of the asynchronous query.</returns>
     Task<TokenInfo> GetTokenInfoAsync<TPayload>(TToken token, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Find tokens with the specified filter.
+    /// </summary>
+    /// <param name="filter">The filter to use.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+    /// <returns>A <see cref="Task{TResult}"/> with the token ids that match the filter.</returns>
+    Task<IEnumerable<string>> FindAsync(TokenInfoFilter filter, CancellationToken cancellationToken);
 
     /// <summary>
     /// Find a token with the specified tokenId

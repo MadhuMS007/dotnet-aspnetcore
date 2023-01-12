@@ -108,6 +108,21 @@ public class TokenStore<TToken, TContext> : ITokenStore<TToken>, IKeyStore
     }
 
     /// <inheritdoc/>
+    public Task<IEnumerable<string>> FindAsync(TokenInfoFilter filter, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ThrowIfDisposed();
+        return Task.FromResult<IEnumerable<string>>(Tokens
+            .Where(t =>
+                (filter.Id == null || filter.Id == t.Id) &&
+                (filter.Status == null || filter.Status == t.Status) &&
+                (filter.Subject == null || filter.Subject == t.Subject) &&
+                (filter.Purpose == null || filter.Purpose == t.Purpose) &&
+                (filter.Format == null || filter.Format == t.Format))
+            .Select(t => t.Id));
+    }
+
+    /// <inheritdoc/>
     public virtual async Task<TToken?> FindAsync(string purpose, string value, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();

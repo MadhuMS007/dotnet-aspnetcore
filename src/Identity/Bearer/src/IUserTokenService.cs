@@ -3,6 +3,7 @@
 
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.Extensions.Options;
 
 namespace Microsoft.AspNetCore.Identity;
 
@@ -48,11 +49,18 @@ internal class UserTokenService<TUser> : IUserTokenService<TUser> where TUser : 
     private readonly TokenManager<IdentityStoreToken> _tokenManager;
     private readonly ISystemClock _clock;
 
-    public UserTokenService(TokenManager<IdentityStoreToken> tokenManager, ISystemClock clock, UserManager<TUser> userManager)
+    public UserTokenService(TokenManager<IdentityStoreToken> tokenManager, ISystemClock clock, UserManager<TUser> userManager, IOptions<IdentityBearerOptions> bearerOptions)
     {
         _tokenManager = tokenManager;
         _clock = clock;
         UserManager = userManager;
+
+        // TODO: This should move to options config
+        _tokenManager.Options.FormatProviderMap[TokenFormat.JWT] = new JwtTokenFormat(bearerOptions);
+        _tokenManager.Options.FormatProviderMap[TokenFormat.Code] = new TokenIdFormat();
+
+        _tokenManager.Options.PurposeFormatMap[TokenPurpose.RefreshToken] = TokenFormat.Code;
+        _tokenManager.Options.PurposeFormatMap[TokenPurpose.AccessToken] = TokenFormat.JWT;
     }
 
     /// <summary>
@@ -115,7 +123,7 @@ internal class UserTokenService<TUser> : IUserTokenService<TUser> where TUser : 
 
         // Store the token metadata, with jwt token as payload
         var info = new TokenInfo(Guid.NewGuid().ToString(),
-            format, userId, TokenPurpose.RefreshToken, TokenStatus.Active)
+            format, userId, TokenPurpose.AccessToken, TokenStatus.Active)
         {
             Expiration = DateTimeOffset.UtcNow.AddDays(1),
             Payload = payload

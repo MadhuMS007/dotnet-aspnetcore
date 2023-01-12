@@ -45,12 +45,6 @@ public class TokenManager<TToken> : IDisposable
         // TODO: Move these to registered named options?
         _keyFormatProviders[JsonKeySerializer.ProviderId] = new JsonKeySerializer();
         _keyFormatProviders[Base64KeySerializer.ProviderId] = new Base64KeySerializer();
-
-        Options.FormatProviderMap[TokenFormat.JWT] = new JwtTokenFormat(bearerOptions);
-        Options.FormatProviderMap[TokenFormat.Single] = new GuidTokenFormat();
-
-        Options.PurposeFormatMap[TokenPurpose.RefreshToken] = TokenFormat.Single;
-        Options.PurposeFormatMap[TokenPurpose.AccessToken] = TokenFormat.JWT;
     }
 
     /// <summary>
@@ -101,9 +95,16 @@ public class TokenManager<TToken> : IDisposable
         {
             return null;
         }
-
         return await Store.GetTokenInfoAsync<TPayload>(tok, CancellationToken).ConfigureAwait(false);
     }
+
+    /// <summary>
+    /// Find all token ids that match the specified filter.
+    /// </summary>
+    /// <param name="filter">The filter to use to find tokens.</param>
+    /// <returns>The matching tokens id.</returns>
+    public virtual Task<IEnumerable<string>> FindAsync(TokenInfoFilter filter)
+        => Store.FindAsync(filter, CancellationToken);
 
     /// <summary>
     /// Revokes a token.

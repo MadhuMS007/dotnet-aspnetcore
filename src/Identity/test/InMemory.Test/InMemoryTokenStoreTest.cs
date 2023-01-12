@@ -47,7 +47,7 @@ public class InMemoryTokenStoreTest : TokenManagerSpecificationTestBase<PocoUser
     /// <param name="services">The service collection to use, optional.</param>
     /// <param name="configureServices">Delegate used to configure the services, optional.</param>
     /// <returns>The user manager to use for tests.</returns>
-    protected override TokenManager<PocoUser, IdentityStoreToken> CreateManager(object context = null, IServiceCollection services = null, Action<IServiceCollection> configureServices = null)
+    protected override TokenManager<IdentityStoreToken> CreateManager(object context = null, IServiceCollection services = null, Action<IServiceCollection> configureServices = null)
     {
         if (services == null)
         {
@@ -59,6 +59,6 @@ public class InMemoryTokenStoreTest : TokenManagerSpecificationTestBase<PocoUser
         }
         SetupIdentityServices(services, context);
         configureServices?.Invoke(services);
-        return services.BuildServiceProvider().GetService<TokenManager<PocoUser, IdentityStoreToken>>();
+        return services.BuildServiceProvider().GetService<TokenManager<IdentityStoreToken>>();
     }
 }

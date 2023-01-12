@@ -6,8 +6,8 @@ const Microsoft.AspNetCore.Identity.TokenClaims.Issuer = "iss" -> string!
 const Microsoft.AspNetCore.Identity.TokenClaims.Jti = "jti" -> string!
 const Microsoft.AspNetCore.Identity.TokenClaims.NotBefore = "nbf" -> string!
 const Microsoft.AspNetCore.Identity.TokenClaims.Subject = "sub" -> string!
+const Microsoft.AspNetCore.Identity.TokenFormat.Code = "code" -> string!
 const Microsoft.AspNetCore.Identity.TokenFormat.JWT = "jwt" -> string!
-const Microsoft.AspNetCore.Identity.TokenFormat.Single = "single" -> string!
 const Microsoft.AspNetCore.Identity.TokenPurpose.AccessToken = "access_token" -> string!
 const Microsoft.AspNetCore.Identity.TokenPurpose.RefreshToken = "refresh_token" -> string!
 const Microsoft.AspNetCore.Identity.TokenStatus.Active = "active" -> string!
@@ -34,6 +34,7 @@ Microsoft.AspNetCore.Identity.ITokenSerializer.Serialize<T>(T value) -> string!
 Microsoft.AspNetCore.Identity.ITokenStore<TToken>
 Microsoft.AspNetCore.Identity.ITokenStore<TToken>.CreateAsync(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.IdentityResult!>!
 Microsoft.AspNetCore.Identity.ITokenStore<TToken>.DeleteAsync(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.IdentityResult!>!
+Microsoft.AspNetCore.Identity.ITokenStore<TToken>.FindAsync(Microsoft.AspNetCore.Identity.TokenInfoFilter! filter, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<string!>!>!
 Microsoft.AspNetCore.Identity.ITokenStore<TToken>.FindAsync(string! purpose, string! value, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<TToken?>!
 Microsoft.AspNetCore.Identity.ITokenStore<TToken>.FindByIdAsync(string! tokenId, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<TToken?>!
 Microsoft.AspNetCore.Identity.ITokenStore<TToken>.GetExpirationAsync(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<System.DateTimeOffset>!
@@ -92,6 +93,18 @@ Microsoft.AspNetCore.Identity.TokenInfo.Status.set -> void
 Microsoft.AspNetCore.Identity.TokenInfo.Subject.get -> string!
 Microsoft.AspNetCore.Identity.TokenInfo.Subject.set -> void
 Microsoft.AspNetCore.Identity.TokenInfo.TokenInfo(string! id, string! format, string! subject, string! purpose, string! status) -> void
+Microsoft.AspNetCore.Identity.TokenInfoFilter
+Microsoft.AspNetCore.Identity.TokenInfoFilter.Format.get -> string?
+Microsoft.AspNetCore.Identity.TokenInfoFilter.Format.set -> void
+Microsoft.AspNetCore.Identity.TokenInfoFilter.Id.get -> string?
+Microsoft.AspNetCore.Identity.TokenInfoFilter.Id.set -> void
+Microsoft.AspNetCore.Identity.TokenInfoFilter.Purpose.get -> string?
+Microsoft.AspNetCore.Identity.TokenInfoFilter.Purpose.set -> void
+Microsoft.AspNetCore.Identity.TokenInfoFilter.Status.get -> string?
+Microsoft.AspNetCore.Identity.TokenInfoFilter.Status.set -> void
+Microsoft.AspNetCore.Identity.TokenInfoFilter.Subject.get -> string?
+Microsoft.AspNetCore.Identity.TokenInfoFilter.Subject.set -> void
+Microsoft.AspNetCore.Identity.TokenInfoFilter.TokenInfoFilter() -> void
 Microsoft.AspNetCore.Identity.TokenManagerOptions
 Microsoft.AspNetCore.Identity.TokenManagerOptions.AccessTokenDenyPolicy.get -> object?
 Microsoft.AspNetCore.Identity.TokenManagerOptions.AccessTokenDenyPolicy.set -> void

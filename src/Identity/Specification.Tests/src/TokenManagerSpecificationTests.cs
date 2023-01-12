@@ -230,7 +230,6 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
     public async Task CanRefreshTokens()
     {
         var sp = CreateTestServices();
-        var manager = sp.GetService<TokenManager<IdentityStoreToken>>();
         var userManager = sp.GetService<UserManager<TUser>>();
         var tokenService = sp.GetService<IUserTokenService<TUser>>();
         var user = CreateTestUser();
@@ -293,6 +292,46 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
         var payload = tok.Payload as IDictionary<string, string>;
         Assert.NotNull(payload);
         Assert.NotNull(payload["AspNet.Identity.SecurityStamp"]);
+    }
+
+    /// <summary>
+    /// Test.
+    /// </summary>
+    /// <returns>Task</returns>
+    [Fact]
+    public async Task CanFindAllUserAccessTokens()
+    {
+        var sp = CreateTestServices();
+        var manager = sp.GetService<TokenManager<IdentityStoreToken>>();
+        var userManager = sp.GetService<UserManager<TUser>>();
+        var validator = sp.GetService<IAccessTokenValidator>();
+        var tokenService = sp.GetService<IUserTokenService<TUser>>();
+        var user = CreateTestUser();
+        var userId = await userManager.GetUserIdAsync(user);
+        IdentityResultAssert.IsSuccess(await userManager.CreateAsync(user));
+
+        // Generate 2 access tokens
+        var token1 = await tokenService.GetAccessTokenAsync(user);
+        Assert.NotNull(token1);
+        var principal1 = await validator.ValidateAsync(token1);
+        Assert.NotNull(principal1);
+        var jti1 = principal1.Claims.FirstOrDefault(c => c.Type == TokenClaims.Jti)?.Value;
+        Assert.NotNull(jti1);
+
+        var token2 = await tokenService.GetAccessTokenAsync(user);
+        Assert.NotNull(token2);
+        var principal2 = await validator.ValidateAsync(token2);
+        Assert.NotNull(principal2);
+        var jti2 = principal2.Claims.FirstOrDefault(c => c.Type == TokenClaims.Jti)?.Value;
+        Assert.NotNull(jti2);
+
+        Assert.NotSame(jti1, jti2);
+
+        // Verify that we can get both tokens for the user
+        var tokens = await manager.FindAsync(new TokenInfoFilter { Purpose = TokenPurpose.AccessToken, Subject = userId });
+        Assert.Equal(2, tokens.Count());
+        Assert.Contains(jti1, tokens);
+        Assert.Contains(jti2, tokens);
     }
 
     /// <summary>
@@ -403,7 +442,6 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
     {
         var sp = CreateTestServices();
         var tokenService = sp.GetService<IUserTokenService<TUser>>();
-        var manager = sp.GetService<TokenManager<IdentityStoreToken>>();
         var userManager = sp.GetService<UserManager<TUser>>();
         var user = CreateTestUser();
         IdentityResultAssert.IsSuccess(await userManager.CreateAsync(user));

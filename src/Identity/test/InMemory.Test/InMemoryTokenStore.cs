@@ -132,4 +132,17 @@ public class InMemoryTokenStore<TUser, TRole> :
         }
         return Task.FromResult(count);
     }
+
+    public Task<IEnumerable<string>> FindAsync(TokenInfoFilter filter, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult<IEnumerable<string>>(_tokens.Values
+            .Where(t =>
+                (filter.Id == null || filter.Id == t.Id) &&
+                (filter.Status == null || filter.Status == t.Status) &&
+                (filter.Subject == null || filter.Subject == t.Subject) &&
+                (filter.Purpose == null || filter.Purpose == t.Purpose) &&
+                (filter.Format == null || filter.Format == t.Format))
+            .Select(t => t.Id));
+    }
 }
