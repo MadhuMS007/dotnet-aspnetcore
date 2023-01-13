@@ -12,6 +12,8 @@ Microsoft.AspNetCore.Identity.IdentityBearerOptions.Issuer.get -> string?
 Microsoft.AspNetCore.Identity.IdentityBearerOptions.Issuer.set -> void
 Microsoft.AspNetCore.Identity.IdentityBearerOptions.SigningCredentials.get -> Microsoft.AspNetCore.Identity.JsonWebKey?
 Microsoft.AspNetCore.Identity.IdentityBearerOptions.SigningCredentials.set -> void
+Microsoft.AspNetCore.Identity.IdentityBearerOptions.UseDataProtection.get -> bool
+Microsoft.AspNetCore.Identity.IdentityBearerOptions.UseDataProtection.set -> void
 Microsoft.AspNetCore.Identity.ITokenKeyRing
 Microsoft.AspNetCore.Identity.ITokenKeyRing.GetAllKeysAsync() -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<Microsoft.AspNetCore.Identity.TokenKey!>!>!
 Microsoft.AspNetCore.Identity.ITokenKeyRing.GetCurrentKeyAsync() -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.TokenKey!>!
@@ -19,6 +21,7 @@ Microsoft.AspNetCore.Identity.ITokenKeyRing.GetKeyAsync(string! keyId) -> System
 Microsoft.AspNetCore.Identity.IUserTokenService<TUser>
 Microsoft.AspNetCore.Identity.IUserTokenService<TUser>.GetAccessTokenAsync(TUser! user) -> System.Threading.Tasks.Task<string!>!
 Microsoft.AspNetCore.Identity.IUserTokenService<TUser>.GetRefreshTokenAsync(TUser! user) -> System.Threading.Tasks.Task<string!>!
+Microsoft.AspNetCore.Identity.IUserTokenService<TUser>.ReadAccessTokenAsync(string! accessToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.TokenInfo?>!
 Microsoft.AspNetCore.Identity.IUserTokenService<TUser>.RefreshTokensAsync(string! refreshToken) -> System.Threading.Tasks.Task<(string?, string?)>!
 Microsoft.AspNetCore.Identity.IUserTokenService<TUser>.RevokeRefreshAsync(TUser! user, string! token) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.IdentityResult!>!
 Microsoft.AspNetCore.Identity.JsonWebKey
@@ -64,6 +67,8 @@ Microsoft.AspNetCore.Identity.JwtBuilder.Jti.set -> void
 Microsoft.AspNetCore.Identity.JwtBuilder.JwtBuilder(string! algorithm, string! issuer, Microsoft.AspNetCore.Identity.JsonWebKey! signingKey, string! audience, string! subject, System.Collections.Generic.IDictionary<string!, string!>! payload, System.DateTimeOffset notBefore, System.DateTimeOffset expires) -> void
 Microsoft.AspNetCore.Identity.JwtBuilder.NotBefore.get -> System.DateTimeOffset
 Microsoft.AspNetCore.Identity.JwtBuilder.NotBefore.set -> void
+Microsoft.AspNetCore.Identity.JwtBuilder.PayloadProtector.get -> Microsoft.AspNetCore.DataProtection.IDataProtector?
+Microsoft.AspNetCore.Identity.JwtBuilder.PayloadProtector.set -> void
 Microsoft.AspNetCore.Identity.JwtBuilder.SigningKey.get -> Microsoft.AspNetCore.Identity.JsonWebKey!
 Microsoft.AspNetCore.Identity.JwtBuilder.SigningKey.set -> void
 Microsoft.AspNetCore.Identity.TokenKey

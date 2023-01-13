@@ -3,6 +3,7 @@
 
 using System.Globalization;
 using System.Text.Json;
+using Microsoft.AspNetCore.DataProtection;
 
 namespace Microsoft.AspNetCore.Identity;
 
@@ -67,6 +68,11 @@ public class JwtBuilder : TokenBuilder
     /// </summary>
     public string? Jti { get; set; }
 
+    /// <summary>
+    /// If set, the jwt payload will be additional protected with dataprotection
+    /// </summary>
+    public IDataProtector? PayloadProtector { get; set; }
+
     private void SetReservedPayload(string key, string value)
     {
         if (RawToken.ContainsKey(key))
@@ -113,21 +119,11 @@ public class JwtBuilder : TokenBuilder
         {
             Payload = JsonSerializer.Serialize(RawToken)
         };
+        if (PayloadProtector != null)
+        {
+            jwtData.Payload = PayloadProtector.Protect(jwtData.Payload);
+        }
 
         return Jwt.CreateAsync(jwtData, Algorithm, SigningKey);
-
-        //var handler = new JwtSecurityTokenHandler();
-
-        //var jwtToken = handler.CreateJwtSecurityToken(
-        //    Issuer,
-        //    Audience,
-        //    Identity,
-        //    NotBefore.UtcDateTime,
-        //    Expires.UtcDateTime,
-        //    //REVIEW: Do we want this configurable?
-        //    issuedAt: DateTime.UtcNow,
-        //    SigningCredentials);
-
-        //return handler.WriteToken(jwtToken);
     }
 }

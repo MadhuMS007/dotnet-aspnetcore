@@ -14,25 +14,22 @@ internal interface IAccessTokenValidator
     Task<ClaimsPrincipal?> ValidateAsync(string token);
 }
 
-internal class DefaultAccessTokenValidator<TUser, TToken> : IAccessTokenValidator
-    where TUser : class
-    where TToken : class
+internal class DefaultAccessTokenValidator<TUser> : IAccessTokenValidator
+    where TUser: class
 {
-    private readonly TokenManager<TToken> _tokenManager;
+    private readonly IUserTokenService<TUser> _tokenService;
     private readonly IAccessTokenDenyPolicy _accessTokenDenyPolicy;
 
-    public DefaultAccessTokenValidator(TokenManager<TToken> tokenManager, IAccessTokenDenyPolicy accessTokenDenyPolicy)
+    public DefaultAccessTokenValidator(IUserTokenService<TUser> tokenService, IAccessTokenDenyPolicy accessTokenDenyPolicy)
     {
-        _tokenManager = tokenManager;
+        _tokenService = tokenService;
         _accessTokenDenyPolicy = accessTokenDenyPolicy;
     }
 
     /// <inheritdoc/>
     async Task<ClaimsPrincipal?> IAccessTokenValidator.ValidateAsync(string token)
     {
-        (var _, var provider) = _tokenManager.GetFormatProvider(TokenPurpose.AccessToken);
-
-        var tokenInfo = await provider.ReadTokenAsync(token);
+        var tokenInfo = await _tokenService.ReadAccessTokenAsync(token);
         if (tokenInfo == null)
         {
             return null;

@@ -3,3 +3,9 @@ virtual Microsoft.AspNetCore.Identity.SignInManager<TUser>.IsTwoFactorEnabledAsy
 static readonly Microsoft.AspNetCore.Identity.IdentityConstants.JwtScheme -> string!
 static readonly Microsoft.AspNetCore.Identity.IdentityConstants.BearerCookieScheme -> string!
 static readonly Microsoft.AspNetCore.Identity.IdentityConstants.BearerScheme -> string!
+const Microsoft.AspNetCore.Identity.IdentityConstants.ApplicationSchemeName = "Identity.Application" -> string!
+const Microsoft.AspNetCore.Identity.IdentityConstants.BearerCookieScheme = "Identity.Bearer.Cookie" -> string!
+const Microsoft.AspNetCore.Identity.IdentityConstants.BearerScheme = "Identity.Bearer" -> string!
+const Microsoft.AspNetCore.Identity.IdentityConstants.ExternalSchemeName = "Identity.External" -> string!
+const Microsoft.AspNetCore.Identity.IdentityConstants.TwoFactorRememberMeSchemeName = "Identity.TwoFactorRememberMe" -> string!
+const Microsoft.AspNetCore.Identity.IdentityConstants.TwoFactorUserIdSchemeName = "Identity.TwoFactorUserId" -> string!

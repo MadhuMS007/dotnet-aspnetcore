@@ -27,7 +27,6 @@ internal class JsonTokenSerializer : ITokenSerializer
 /// </summary>
 public static class BearerBuilderExtensions
 {
-
     /// <summary>
     /// Adds bearer token services.
     /// </summary>
@@ -36,12 +35,13 @@ public static class BearerBuilderExtensions
     public static IdentityBearerTokenBuilder AddBearerTokens<TToken>(this IdentityBuilder builder)
         where TToken : class
     {
+        // TODO: should add options validation that identity stores schema version is at least 2 (token version)
         builder.Services.AddSingleton<IAccessTokenDenyPolicy, JtiBlocker>();
         builder.Services.AddSingleton<ITokenSerializer, JsonTokenSerializer>();
         var tokenManagerType = typeof(TokenManager<>).MakeGenericType(typeof(TToken));
         builder.Services.TryAddScoped(tokenManagerType);
         builder.Services.TryAddScoped(typeof(IUserTokenService<>).MakeGenericType(builder.UserType), typeof(UserTokenService<>).MakeGenericType(builder.UserType));
-        builder.Services.TryAddScoped(typeof(IAccessTokenValidator), typeof(DefaultAccessTokenValidator<,>).MakeGenericType(builder.UserType, typeof(TToken)));
+        builder.Services.TryAddScoped(typeof(IAccessTokenValidator), typeof(DefaultAccessTokenValidator<>).MakeGenericType(builder.UserType));
         return new IdentityBearerTokenBuilder(builder, typeof(TToken));
     }
 

@@ -95,4 +95,3 @@ internal sealed class JwtHeader : IDictionary<string, string>
     IEnumerator IEnumerable.GetEnumerator()
         => ((IEnumerable)Headers).GetEnumerator();
 }
-

@@ -3,6 +3,7 @@
 
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Options;
 
 namespace Microsoft.AspNetCore.Identity;
@@ -19,6 +20,13 @@ public interface IUserTokenService<TUser> where TUser : class
     /// <param name="user">The user.</param>
     /// <returns></returns>
     Task<string> GetAccessTokenAsync(TUser user);
+
+    /// <summary>
+    /// Attempt to read access token.
+    /// </summary>
+    /// <param name="accessToken">The access token.</param>
+    /// <returns>A TokenInfo for the accessToken, or null if the access token is invalid or unable to be read.</returns>
+    Task<TokenInfo?> ReadAccessTokenAsync(string accessToken);
 
     /// <summary>
     /// Get a refresh token for the user.
@@ -44,19 +52,27 @@ public interface IUserTokenService<TUser> where TUser : class
     Task<(string?, string?)> RefreshTokensAsync(string refreshToken);
 }
 
+// Scoped way to find or generate a session id for the current user/request
+internal interface IUserSessionTracker
+{
+    // This should return an existing session id if user is authenticated
+    // If request is not authenticated, this should create a new id
+    Task<string> GetSessionId();
+}
+
 internal class UserTokenService<TUser> : IUserTokenService<TUser> where TUser : class
 {
     private readonly TokenManager<IdentityStoreToken> _tokenManager;
     private readonly ISystemClock _clock;
 
-    public UserTokenService(TokenManager<IdentityStoreToken> tokenManager, ISystemClock clock, UserManager<TUser> userManager, IOptions<IdentityBearerOptions> bearerOptions)
+    public UserTokenService(TokenManager<IdentityStoreToken> tokenManager, ISystemClock clock, UserManager<TUser> userManager, IOptions<IdentityBearerOptions> bearerOptions, IDataProtectionProvider dp)
     {
         _tokenManager = tokenManager;
         _clock = clock;
         UserManager = userManager;
 
         // TODO: This should move to options config
-        _tokenManager.Options.FormatProviderMap[TokenFormat.JWT] = new JwtTokenFormat(bearerOptions);
+        _tokenManager.Options.FormatProviderMap[TokenFormat.JWT] = new JwtTokenFormat(bearerOptions, dp);
         _tokenManager.Options.FormatProviderMap[TokenFormat.Code] = new TokenIdFormat();
 
         _tokenManager.Options.PurposeFormatMap[TokenPurpose.RefreshToken] = TokenFormat.Code;
@@ -226,5 +242,12 @@ internal class UserTokenService<TUser> : IUserTokenService<TUser> where TUser : 
             return await _tokenManager.Store.UpdateAsync(tok, _tokenManager.CancellationToken).ConfigureAwait(false); ;
         }
         return IdentityResult.Success;
+    }
+
+    /// <inheritdoc/>
+    public virtual async Task<TokenInfo?> ReadAccessTokenAsync(string accessToken)
+    {
+        (var _, var provider) = _tokenManager.GetFormatProvider(TokenPurpose.AccessToken);
+        return await provider.ReadTokenAsync(accessToken).ConfigureAwait(false);
     }
 }

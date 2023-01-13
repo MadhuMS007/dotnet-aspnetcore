@@ -32,4 +32,9 @@ public class IdentityBearerOptions : AuthenticationSchemeOptions
     /// The list of valid audiences
     /// </summary>
     public IList<string> Audiences { get; set; } = new List<string>();
+
+    /// <summary>
+    /// IF true, JWT payloads should also be dataprotected
+    /// </summary>
+    public bool UseDataProtection { get; set; }
 }

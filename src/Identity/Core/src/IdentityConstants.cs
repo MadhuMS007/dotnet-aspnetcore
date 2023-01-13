@@ -8,36 +8,53 @@ namespace Microsoft.AspNetCore.Identity;
 /// </summary>
 public class IdentityConstants
 {
-    private const string CookiePrefix = "Identity";
+    /// <summary>
+    /// The scheme used to identify application authentication cookies.
+    /// </summary>
+    public static readonly string ApplicationScheme = ApplicationSchemeName;
 
     /// <summary>
     /// The scheme used to identify application authentication cookies.
     /// </summary>
-    public static readonly string ApplicationScheme = CookiePrefix + ".Application";
+    public const string ApplicationSchemeName = "Identity.Application";
 
     /// <summary>
     /// The scheme used to identify external authentication cookies.
     /// </summary>
-    public static readonly string ExternalScheme = CookiePrefix + ".External";
+    public static readonly string ExternalScheme = ExternalSchemeName;
+
+    /// <summary>
+    /// The scheme used to identify external authentication cookies.
+    /// </summary>
+    public const string ExternalSchemeName = "Identity.External";
 
     /// <summary>
     /// The scheme used to identify Two Factor authentication cookies for saving the Remember Me state.
     /// </summary>
-    public static readonly string TwoFactorRememberMeScheme = CookiePrefix + ".TwoFactorRememberMe";
+    public static readonly string TwoFactorRememberMeScheme = TwoFactorRememberMeSchemeName;
+
+    /// <summary>
+    /// The scheme used to identify Two Factor authentication cookies for saving the Remember Me state.
+    /// </summary>
+    public const string TwoFactorRememberMeSchemeName = "Identity.TwoFactorRememberMe";
 
     /// <summary>
     /// The scheme used to identify Two Factor authentication cookies for round tripping user identities.
     /// </summary>
-    public static readonly string TwoFactorUserIdScheme = CookiePrefix + ".TwoFactorUserId";
+    public static readonly string TwoFactorUserIdScheme = TwoFactorUserIdSchemeName;
+
+    /// <summary>
+    /// The scheme used to identify Two Factor authentication cookies for round tripping user identities.
+    /// </summary>
+    public const string TwoFactorUserIdSchemeName = "Identity.TwoFactorUserId";
 
     /// <summary>
     /// The scheme used to identify bearer authentication token.
     /// </summary>
-    //public static readonly string BearerScheme = "Bearer";
-    public static readonly string BearerScheme = CookiePrefix + ".Bearer";
+    public const string BearerScheme = "Identity.Bearer";
 
     /// <summary>
     /// The scheme used to identify bearer cookie.
     /// </summary>
-    public static readonly string BearerCookieScheme = CookiePrefix + ".Bearer.Cookie";
+    public const string BearerCookieScheme = "Identity.Bearer.Cookie";
 }

@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Linq;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -10,10 +11,17 @@ namespace Microsoft.AspNetCore.Identity;
 internal class JwtTokenFormat : ITokenFormatProvider
 {
     private readonly IdentityBearerOptions _options;
+    private readonly IDataProtector? _protector;
 
-    public JwtTokenFormat(IOptions<IdentityBearerOptions> options)
+    public JwtTokenFormat(IOptions<IdentityBearerOptions> options, IDataProtectionProvider dp)
     {
         _options = options.Value;
+
+        if (_options.UseDataProtection)
+        {
+            // TODO: Should have unique protectors per token purpose and user?
+            _protector = dp.CreateProtector("JwtTokenFormat");
+        }
     }
 
     public ITokenSerializer PayloadSerializer => JsonTokenSerializer.Instance;
@@ -38,6 +46,8 @@ internal class JwtTokenFormat : ITokenFormatProvider
             expires: DateTimeOffset.UtcNow.AddMinutes(30));
         jwtBuilder.IssuedAt = DateTimeOffset.UtcNow;
         jwtBuilder.Jti = token.Id;
+        jwtBuilder.PayloadProtector = _protector;
+
         return await jwtBuilder.CreateJwtAsync();
     }
 
@@ -48,8 +58,9 @@ internal class JwtTokenFormat : ITokenFormatProvider
             _options.Issuer!,
             _options.SigningCredentials!,
             _options.Audiences);
+        reader.PayloadProtector = _protector;
 
-        return reader.ReadToken(token);
+        return reader.ReadAsync(token);
     }
 }
 

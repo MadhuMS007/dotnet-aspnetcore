@@ -4,6 +4,7 @@
 using System.Globalization;
 using System.Security.Claims;
 using System.Text.Json;
+using Microsoft.AspNetCore.DataProtection;
 
 namespace Microsoft.AspNetCore.Identity;
 
@@ -43,6 +44,11 @@ internal sealed class JwtReader
     /// The intended audiences for the JWT.
     /// </summary>
     public IList<string> Audiences { get; set; }
+
+    /// <summary>
+    /// IF set, the payload will be additional unprotected with dataprotection
+    /// </summary>
+    public IDataProtector? PayloadProtector { get; set; }
 
     private static string? SafeGet(IDictionary<string, string> payload, string key)
     {
@@ -120,9 +126,9 @@ internal sealed class JwtReader
     /// </summary>
     /// <param name="jwtToken">The JWT.</param>
     /// <returns>A ClaimsPrincipal if the JWT is valid.</returns>
-    public async Task<ClaimsPrincipal?> ValidateJwtAsync(string jwtToken)
+    public async Task<ClaimsPrincipal?> ValidateAsync(string jwtToken)
     {
-        var payload = await ReadJwtAsync(jwtToken, Algorithm, SigningKey);
+        var payload = await ReadPayloadAsync(jwtToken);
         if (payload != null)
         {
             // Ensure that the payload is valid.
@@ -161,9 +167,9 @@ internal sealed class JwtReader
         };
     }
 
-    public async Task<TokenInfo?> ReadToken(string jwtToken)
+    public async Task<TokenInfo?> ReadAsync(string jwtToken)
     {
-        var payload = await ReadJwtAsync(jwtToken, Algorithm, SigningKey);
+        var payload = await ReadPayloadAsync(jwtToken);
         if (payload != null)
         {
             // Ensure that the payload is valid.
@@ -181,15 +187,19 @@ internal sealed class JwtReader
     /// 
     /// </summary>
     /// <param name="jwtToken"></param>
-    /// <param name="algorithm"></param>
-    /// <param name="signingKey"></param>
     /// <returns></returns>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
-    public static async Task<IDictionary<string, string>?> ReadJwtAsync(string jwtToken, string algorithm, JsonWebKey? signingKey)
+    private async Task<IDictionary<string, string>?> ReadPayloadAsync(string jwtToken)
     {
-        var data = await Jwt.ReadAsync(jwtToken, algorithm, signingKey);
-        return data?.Payload != null
-            ? JsonSerializer.Deserialize<IDictionary<string, string>>(data.Payload)
-            : null;
+        var data = await Jwt.ReadAsync(jwtToken, Algorithm, SigningKey);
+        if (data?.Payload == null)
+        {
+            return null;
+        }
+        if (PayloadProtector != null)
+        {
+            data.Payload = PayloadProtector.Unprotect(data.Payload);
+        }
+        return JsonSerializer.Deserialize<IDictionary<string, string>>(data.Payload);
     }
 }

@@ -24,7 +24,7 @@ public class JwtBuilderTest
         var token = await jwtBuilder.CreateJwtAsync();
 
         var jwtReader = new JwtReader(JWSAlg.None, "issuer", _noneKey, "audience");
-        var user = await jwtReader.ValidateJwtAsync(token);
+        var user = await jwtReader.ValidateAsync(token);
 
         Assert.NotNull(user);
         Assert.Contains(user.Claims, c => c.Type == "email" && c.Value == "email");
@@ -45,7 +45,7 @@ public class JwtBuilderTest
         var token = await jwtBuilder.CreateJwtAsync();
 
         var jwtReader = new JwtReader(JWSAlg.None, "issuer", _noneKey, "audience");
-        Assert.Null(await jwtReader.ValidateJwtAsync(token));
+        Assert.Null(await jwtReader.ValidateAsync(token));
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public class JwtBuilderTest
         var token = await jwtBuilder.CreateJwtAsync();
 
         var jwtReader = new JwtReader(JWSAlg.None, "issuer", _noneKey, "audience");
-        Assert.Null(await jwtReader.ValidateJwtAsync(token));
+        Assert.Null(await jwtReader.ValidateAsync(token));
     }
 
     [Fact]
@@ -81,7 +81,7 @@ public class JwtBuilderTest
         var token = await jwtBuilder.CreateJwtAsync();
 
         var jwtReader = new JwtReader(JWSAlg.None, "issuer", _noneKey, "audience");
-        Assert.Null(await jwtReader.ValidateJwtAsync(token));
+        Assert.Null(await jwtReader.ValidateAsync(token));
     }
 
     [Fact]
@@ -99,7 +99,7 @@ public class JwtBuilderTest
         var token = await jwtBuilder.CreateJwtAsync();
 
         var jwtReader = new JwtReader(JWSAlg.None, "issuer", _noneKey, "audience");
-        Assert.Null(await jwtReader.ValidateJwtAsync(token));
+        Assert.Null(await jwtReader.ValidateAsync(token));
     }
 
 }

@@ -137,10 +137,13 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
     /// Test.
     /// </summary>
     /// <returns>Task</returns>
-    [Fact]
-    public async Task AccessTokenFormat()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task AccessTokenFormat(bool useDataProtection)
     {
-        var sp = CreateTestServices();
+        var sp = CreateTestServices(configureServices:
+            s => s.Configure<IdentityBearerOptions>(o => o.UseDataProtection = useDataProtection));
         var manager = sp.GetService<TokenManager<IdentityStoreToken>>();
         var userManager = sp.GetService<UserManager<TUser>>();
         var tokenService = sp.GetService<IUserTokenService<TUser>>();
@@ -177,10 +180,13 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
     /// Test.
     /// </summary>
     /// <returns>Task</returns>
-    [Fact]
-    public async Task AccessTokenDuplicateClaimsFormat()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task AccessTokenDuplicateClaimsFormat(bool useDataProtection)
     {
-        var sp = CreateTestServices();
+        var sp = CreateTestServices(configureServices:
+            s => s.Configure<IdentityBearerOptions>(o => o.UseDataProtection = useDataProtection));
         var manager = sp.GetService<TokenManager<IdentityStoreToken>>();
         var userManager = sp.GetService<UserManager<TUser>>();
         var tokenService = sp.GetService<IUserTokenService<TUser>>();
@@ -248,10 +254,13 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
     /// Test.
     /// </summary>
     /// <returns>Task</returns>
-    [Fact]
-    public async Task CanStoreAccessTokens()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task CanStoreAccessTokens(bool useDataProtection)
     {
-        var sp = CreateTestServices();
+        var sp = CreateTestServices(configureServices:
+            s => s.Configure<IdentityBearerOptions>(o => o.UseDataProtection = useDataProtection));
         var manager = sp.GetService<TokenManager<IdentityStoreToken>>();
         var userManager = sp.GetService<UserManager<TUser>>();
         var validator = sp.GetService<IAccessTokenValidator>();
@@ -338,12 +347,18 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
     /// Test.
     /// </summary>
     /// <returns>Task</returns>
-    [Fact]
-    public async Task CanRevokeAccessTokens()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task CanRevokeAccessTokens(bool useDataProtection)
     {
         var blockerOptions = new JtiBlockerOptions();
         var blocker = new JtiBlocker(Options.Create(blockerOptions));
-        var sp = CreateTestServices(configureServices: o => o.AddSingleton<IAccessTokenDenyPolicy>(blocker));
+        var sp = CreateTestServices(configureServices: s =>
+        {
+            s.AddSingleton<IAccessTokenDenyPolicy>(blocker);
+            s.Configure<IdentityBearerOptions>(o => o.UseDataProtection = useDataProtection);
+        });
         var manager = sp.GetService<TokenManager< IdentityStoreToken>>();
         var userManager = sp.GetService<UserManager<TUser>>();
         var tokenService = sp.GetService<IUserTokenService<TUser>>();

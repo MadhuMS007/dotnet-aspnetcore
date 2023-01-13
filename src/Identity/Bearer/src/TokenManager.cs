@@ -1,10 +1,55 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Microsoft.AspNetCore.Identity;
+
+/// <summary>
+/// Responsible for mapping token formats to <see cref="ITokenFormatProvider"/>.
+/// </summary>
+internal interface ITokenFormatManager
+{
+    /// <summary>
+    /// Associate a format with a provider.
+    /// </summary>
+    /// <param name="format">The token format.</param>
+    /// <param name="provider">The provider.</param>
+    /// <returns></returns>
+    void SetProvider(string format, ITokenFormatProvider provider);
+
+    /// <summary>
+    /// Return the <see cref="ITokenFormatProvider"/> for the specified format.
+    /// </summary>
+    /// <param name="format">The token format.</param>
+    /// <returns>The <see cref="ITokenFormatProvider"/> for the format.</returns>
+    ITokenFormatProvider? GetProvider(string format);
+}
+
+internal class TokenFormatManager : ITokenFormatManager
+{
+    public TokenFormatManager(IOptions<TokenManagerOptions> options, IOptions<IdentityBearerOptions> bearerOptions, IDataProtectionProvider dp)
+    {
+        Options = options.Value;
+
+        // TODO: This should move to options config
+        Options.FormatProviderMap[TokenFormat.JWT] = new JwtTokenFormat(bearerOptions, dp);
+        Options.FormatProviderMap[TokenFormat.Code] = new TokenIdFormat();
+    }
+
+    public ITokenFormatProvider? GetProvider(string format)
+        => Options.FormatProviderMap.TryGetValue(format, out var value) ? value : null;
+
+    public void SetProvider(string format, ITokenFormatProvider provider)
+        => Options.FormatProviderMap[format] = provider;
+
+    /// <summary>
+    /// The <see cref="TokenManagerOptions"/>.
+    /// </summary>
+    public TokenManagerOptions Options { get; set; }
+}
 
 /// <summary>
 /// Provides the APIs for managing tokens in a persistence store.
