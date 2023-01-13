@@ -23,7 +23,7 @@ public class JwtBuilderTest
             DateTimeOffset.UtcNow.AddMinutes(30));
         var token = await jwtBuilder.CreateJwtAsync();
 
-        var jwtReader = new JwtReader(JWSAlg.None, "issuer", _noneKey, "audience");
+        var jwtReader = new JwtReader(JWSAlg.None, "issuer", _noneKey, new string[] { "audience" });
         var user = await jwtReader.ValidateAsync(token);
 
         Assert.NotNull(user);
@@ -44,7 +44,7 @@ public class JwtBuilderTest
             DateTimeOffset.UtcNow.AddMinutes(-30));
         var token = await jwtBuilder.CreateJwtAsync();
 
-        var jwtReader = new JwtReader(JWSAlg.None, "issuer", _noneKey, "audience");
+        var jwtReader = new JwtReader(JWSAlg.None, "issuer", _noneKey, new string[] { "audience" });
         Assert.Null(await jwtReader.ValidateAsync(token));
     }
 
@@ -62,7 +62,7 @@ public class JwtBuilderTest
             DateTimeOffset.UtcNow.AddMinutes(30));
         var token = await jwtBuilder.CreateJwtAsync();
 
-        var jwtReader = new JwtReader(JWSAlg.None, "issuer", _noneKey, "audience");
+        var jwtReader = new JwtReader(JWSAlg.None, "issuer", _noneKey, new string[] { "audience" });
         Assert.Null(await jwtReader.ValidateAsync(token));
     }
 
@@ -80,7 +80,7 @@ public class JwtBuilderTest
             DateTimeOffset.UtcNow.AddMinutes(30));
         var token = await jwtBuilder.CreateJwtAsync();
 
-        var jwtReader = new JwtReader(JWSAlg.None, "issuer", _noneKey, "audience");
+        var jwtReader = new JwtReader(JWSAlg.None, "issuer", _noneKey, new string[] { "audience" });
         Assert.Null(await jwtReader.ValidateAsync(token));
     }
 
@@ -98,7 +98,7 @@ public class JwtBuilderTest
             DateTimeOffset.UtcNow.AddMinutes(30));
         var token = await jwtBuilder.CreateJwtAsync();
 
-        var jwtReader = new JwtReader(JWSAlg.None, "issuer", _noneKey, "audience");
+        var jwtReader = new JwtReader(JWSAlg.None, "issuer", _noneKey, new string[] { "audience" });
         Assert.Null(await jwtReader.ValidateAsync(token));
     }
 

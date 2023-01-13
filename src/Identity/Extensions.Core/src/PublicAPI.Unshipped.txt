@@ -106,12 +106,12 @@ Microsoft.AspNetCore.Identity.TokenInfoFilter.Subject.get -> string?
 Microsoft.AspNetCore.Identity.TokenInfoFilter.Subject.set -> void
 Microsoft.AspNetCore.Identity.TokenInfoFilter.TokenInfoFilter() -> void
 Microsoft.AspNetCore.Identity.TokenManagerOptions
-Microsoft.AspNetCore.Identity.TokenManagerOptions.AccessTokenDenyPolicy.get -> object?
-Microsoft.AspNetCore.Identity.TokenManagerOptions.AccessTokenDenyPolicy.set -> void
 Microsoft.AspNetCore.Identity.TokenManagerOptions.FormatProviderMap.get -> System.Collections.Generic.IDictionary<string!, Microsoft.AspNetCore.Identity.ITokenFormatProvider!>!
 Microsoft.AspNetCore.Identity.TokenManagerOptions.FormatProviderMap.set -> void
 Microsoft.AspNetCore.Identity.TokenManagerOptions.PurposeFormatMap.get -> System.Collections.Generic.IDictionary<string!, string!>!
 Microsoft.AspNetCore.Identity.TokenManagerOptions.PurposeFormatMap.set -> void
+Microsoft.AspNetCore.Identity.TokenManagerOptions.StoreAccessTokens.get -> bool
+Microsoft.AspNetCore.Identity.TokenManagerOptions.StoreAccessTokens.set -> void
 Microsoft.AspNetCore.Identity.TokenManagerOptions.TokenManagerOptions() -> void
 Microsoft.AspNetCore.Identity.TokenPurpose
 Microsoft.AspNetCore.Identity.TokenStatus

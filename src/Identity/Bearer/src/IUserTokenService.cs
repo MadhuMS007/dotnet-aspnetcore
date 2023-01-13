@@ -64,28 +64,20 @@ internal class UserTokenService<TUser> : IUserTokenService<TUser> where TUser : 
 {
     private readonly TokenManager<IdentityStoreToken> _tokenManager;
     private readonly ISystemClock _clock;
+    private readonly ITokenFormatManager _formatManager;
 
-    public UserTokenService(TokenManager<IdentityStoreToken> tokenManager, ISystemClock clock, UserManager<TUser> userManager, IOptions<IdentityBearerOptions> bearerOptions, IDataProtectionProvider dp)
+    public UserTokenService(TokenManager<IdentityStoreToken> tokenManager, ISystemClock clock, UserManager<TUser> userManager, ITokenFormatManager formatManager)
     {
         _tokenManager = tokenManager;
         _clock = clock;
         UserManager = userManager;
-
-        // TODO: This should move to options config
-        _tokenManager.Options.FormatProviderMap[TokenFormat.JWT] = new JwtTokenFormat(bearerOptions, dp);
-        _tokenManager.Options.FormatProviderMap[TokenFormat.Code] = new TokenIdFormat();
-
-        _tokenManager.Options.PurposeFormatMap[TokenPurpose.RefreshToken] = TokenFormat.Code;
-        _tokenManager.Options.PurposeFormatMap[TokenPurpose.AccessToken] = TokenFormat.JWT;
+        _formatManager = formatManager;
     }
 
     /// <summary>
     /// The <see cref="UserManager{TUser}"/> used.
     /// </summary>
     public UserManager<TUser> UserManager { get; set; }
-
-    internal (string, ITokenFormatProvider) GetFormatProvider(string tokenPurpose)
-        => _tokenManager.GetFormatProvider(tokenPurpose);
 
     private async Task BuildPayloadAsync(TUser user, IDictionary<string, string> payload)
     {
@@ -135,7 +127,7 @@ internal class UserTokenService<TUser> : IUserTokenService<TUser> where TUser : 
         await BuildPayloadAsync(user, payload);
         var userId = await UserManager.GetUserIdAsync(user).ConfigureAwait(false);
 
-        (var format, var provider) = GetFormatProvider(TokenPurpose.AccessToken);
+        (var format, var provider) = _formatManager.GetFormatProvider(TokenPurpose.AccessToken);
 
         // Store the token metadata, with jwt token as payload
         var info = new TokenInfo(Guid.NewGuid().ToString(),
@@ -145,8 +137,7 @@ internal class UserTokenService<TUser> : IUserTokenService<TUser> where TUser : 
             Payload = payload
         };
 
-        // TODO: need flags to control storing access tokens
-        if (true)
+        if (_tokenManager.Options.StoreAccessTokens)
         {
             await _tokenManager.StoreAsync(info).ConfigureAwait(false);
         }
@@ -157,7 +148,7 @@ internal class UserTokenService<TUser> : IUserTokenService<TUser> where TUser : 
     /// <inheritdoc/>
     public virtual async Task<string> GetRefreshTokenAsync(TUser user)
     {
-        (var format, var provider) = GetFormatProvider(TokenPurpose.RefreshToken);
+        (var format, var provider) = _formatManager.GetFormatProvider(TokenPurpose.RefreshToken);
 
         // Build the raw token and payload
         var userId = await UserManager.GetUserIdAsync(user);
@@ -187,7 +178,7 @@ internal class UserTokenService<TUser> : IUserTokenService<TUser> where TUser : 
     {
         // TODO: tests to write:
         // with deleted user
-        (var _, var provider) = GetFormatProvider(TokenPurpose.RefreshToken);
+        (var _, var provider) = _formatManager.GetFormatProvider(TokenPurpose.RefreshToken);
 
         var tokenInfo = await provider.ReadTokenAsync(refreshToken);
         if (tokenInfo == null)
@@ -227,7 +218,7 @@ internal class UserTokenService<TUser> : IUserTokenService<TUser> where TUser : 
 
     public virtual async Task<IdentityResult> RevokeRefreshAsync(TUser user, string token)
     {
-        (var _, var provider) = GetFormatProvider(TokenPurpose.RefreshToken);
+        (var _, var provider) = _formatManager.GetFormatProvider(TokenPurpose.RefreshToken);
 
         var tokenInfo = await provider.ReadTokenAsync(token);
         if (tokenInfo == null)
@@ -247,7 +238,74 @@ internal class UserTokenService<TUser> : IUserTokenService<TUser> where TUser : 
     /// <inheritdoc/>
     public virtual async Task<TokenInfo?> ReadAccessTokenAsync(string accessToken)
     {
-        (var _, var provider) = _tokenManager.GetFormatProvider(TokenPurpose.AccessToken);
+        (var _, var provider) = _formatManager.GetFormatProvider(TokenPurpose.AccessToken);
         return await provider.ReadTokenAsync(accessToken).ConfigureAwait(false);
     }
 }
+
+/// <summary>
+/// Responsible for mapping token formats to <see cref="ITokenFormatProvider"/>.
+/// </summary>
+internal interface ITokenFormatManager
+{
+    /// <summary>
+    /// Associate a format with a provider.
+    /// </summary>
+    /// <param name="format">The token format.</param>
+    /// <param name="provider">The provider.</param>
+    /// <returns></returns>
+    void SetProvider(string format, ITokenFormatProvider provider);
+
+    /// <summary>
+    /// Return the <see cref="ITokenFormatProvider"/> for the specified format.
+    /// </summary>
+    /// <param name="format">The token format.</param>
+    /// <returns>The <see cref="ITokenFormatProvider"/> for the format.</returns>
+    ITokenFormatProvider? GetProvider(string format);
+
+    /// <summary>
+    /// Get the format and provider for a token purpose.
+    /// </summary>
+    /// <param name="tokenPurpose">The token purpose.</param>
+    /// <returns>The token format and provider for the purpose.</returns>
+    (string, ITokenFormatProvider) GetFormatProvider(string tokenPurpose);
+}
+
+// Maybe just merge into UserTokenService??
+internal class TokenFormatManager : ITokenFormatManager
+{
+    public TokenFormatManager(IOptions<TokenManagerOptions> options, IOptions<IdentityBearerOptions> bearerOptions, IDataProtectionProvider dp)
+    {
+        Options = options.Value;
+
+        // TODO: This should move to options config
+        Options.FormatProviderMap[TokenFormat.JWT] = new JwtTokenFormat(bearerOptions, dp);
+        Options.FormatProviderMap[TokenFormat.Code] = new TokenIdFormat();
+
+        Options.PurposeFormatMap[TokenPurpose.RefreshToken] = TokenFormat.Code;
+        Options.PurposeFormatMap[TokenPurpose.AccessToken] = TokenFormat.JWT;
+    }
+
+    public ITokenFormatProvider? GetProvider(string format)
+        => Options.FormatProviderMap.TryGetValue(format, out var value) ? value : null;
+
+    public void SetProvider(string format, ITokenFormatProvider provider)
+        => Options.FormatProviderMap[format] = provider;
+
+    public (string, ITokenFormatProvider) GetFormatProvider(string tokenPurpose)
+    {
+        // TODO: someone should be validating these
+        var format = Options.PurposeFormatMap[tokenPurpose];
+        if (!Options.FormatProviderMap.TryGetValue(format, out var provider))
+        {
+            throw new InvalidOperationException($"Could not find token format provider {format} registered for purpose: {tokenPurpose}.");
+        }
+        return (format, provider);
+    }
+
+    /// <summary>
+    /// The <see cref="TokenManagerOptions"/>.
+    /// </summary>
+    public TokenManagerOptions Options { get; set; }
+}
+

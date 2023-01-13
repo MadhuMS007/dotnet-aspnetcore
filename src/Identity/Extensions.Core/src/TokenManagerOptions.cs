@@ -24,7 +24,7 @@ public class TokenManagerOptions
     public IDictionary<string, string> PurposeFormatMap { get; set; } = new Dictionary<string, string>();
 
     /// <summary>
-    /// Gets or sets the IAccessTokenDenyPolicy.
+    /// If true, Access tokens will be stored.
     /// </summary>
-    public object? AccessTokenDenyPolicy { get; set; } // TODO: fix type once layering
+    public bool StoreAccessTokens { get; set; }
 }

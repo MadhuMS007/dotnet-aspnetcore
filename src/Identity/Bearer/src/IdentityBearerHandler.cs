@@ -65,7 +65,7 @@ internal class DefaultAccessTokenValidator<TUser> : IAccessTokenValidator
     }
 }
 
-internal sealed class IdentityBearerHandler : AuthenticationHandler<BearerSchemeOptions>
+internal sealed class IdentityBearerHandler : AuthenticationHandler<BearerSchemeOptions>, IAuthenticationSignInHandler
 {
     internal static AuthenticateResult ValidatorNotFound = AuthenticateResult.Fail("No SecurityTokenValidator available for token.");
     private readonly IAccessTokenValidator _tokenValidator;
@@ -114,4 +114,11 @@ internal sealed class IdentityBearerHandler : AuthenticationHandler<BearerScheme
         }
         return AuthenticateResult.NoResult();
     }
+
+    // REVIEW: maybe this should just forward?
+    public Task SignInAsync(ClaimsPrincipal user, AuthenticationProperties? properties)
+        => Context.SignInAsync(IdentityConstants.BearerCookieScheme, user, properties);
+
+    public Task SignOutAsync(AuthenticationProperties? properties)
+        => Context.SignOutAsync(IdentityConstants.BearerCookieScheme, properties);
 }

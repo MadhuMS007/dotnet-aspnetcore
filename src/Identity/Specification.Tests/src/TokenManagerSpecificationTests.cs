@@ -231,6 +231,51 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
     /// <summary>
     /// Test.
     /// </summary>
+    /// <returns></returns>
+    [Fact]
+    public async Task AccessTokensNotStoredByDefault()
+    {
+        var sp = CreateTestServices();
+        var manager = sp.GetService<TokenManager<IdentityStoreToken>>();
+        var userManager = sp.GetService<UserManager<TUser>>();
+        var validator = sp.GetService<IAccessTokenValidator>();
+        var tokenService = sp.GetService<IUserTokenService<TUser>>();
+        var user = CreateTestUser();
+        var userId = await userManager.GetUserIdAsync(user);
+        IdentityResultAssert.IsSuccess(await userManager.CreateAsync(user));
+
+        var claims = new[] {
+            new Claim("custom", "value"),
+            new Claim("custom2", "value"),
+        };
+
+        await userManager.AddClaimsAsync(user, claims);
+
+        var token = await tokenService.GetAccessTokenAsync(user);
+        Assert.NotNull(token);
+
+        var principal = await validator.ValidateAsync(token);
+
+        Assert.NotNull(principal);
+        foreach (var cl in claims)
+        {
+            Assert.Contains(principal.Claims, c => c.Type == cl.Type && c.Value == cl.Value);
+        }
+        EnsureClaim(principal, "iss", Issuer);
+        EnsureClaim(principal, "aud", Audience);
+        EnsureClaim(principal, "sub", userId);
+
+        var jti = principal.Claims.FirstOrDefault(c => c.Type == TokenClaims.Jti)?.Value;
+        Assert.NotNull(jti);
+
+        // Verify the token is not in the store
+        var tok = await manager.FindByIdAsync<IDictionary<string, string>>(jti);
+        Assert.Null(tok);
+    }
+
+    /// <summary>
+    /// Test.
+    /// </summary>
     /// <returns>Task</returns>
     [Fact]
     public async Task CanRefreshTokens()
@@ -260,7 +305,11 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
     public async Task CanStoreAccessTokens(bool useDataProtection)
     {
         var sp = CreateTestServices(configureServices:
-            s => s.Configure<IdentityBearerOptions>(o => o.UseDataProtection = useDataProtection));
+            s =>
+            {
+                s.Configure<IdentityBearerOptions>(o => o.UseDataProtection = useDataProtection);
+                s.Configure<IdentityOptions>(o => o.TokenManager.StoreAccessTokens = true);
+            });
         var manager = sp.GetService<TokenManager<IdentityStoreToken>>();
         var userManager = sp.GetService<UserManager<TUser>>();
         var validator = sp.GetService<IAccessTokenValidator>();
@@ -303,14 +352,118 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
         Assert.NotNull(payload["AspNet.Identity.SecurityStamp"]);
     }
 
+    private class AccessTokenChecker : IAccessTokenDenyPolicy
+    {
+        private readonly TokenManager<IdentityStoreToken> _tokenManager;
+
+        public AccessTokenChecker(TokenManager<IdentityStoreToken> tokenManager)
+        {
+            _tokenManager = tokenManager;
+        }
+
+        public async Task<bool> IsDeniedAsync(string tokenId)
+        {
+            // check for revocation is done by looking for a token record that has invalid status
+            var storageToken = await _tokenManager.FindByIdAsync<object>(tokenId);
+            return storageToken?.Status != TokenStatus.Active;
+        }
+    }
+
     /// <summary>
     /// Test.
     /// </summary>
     /// <returns>Task</returns>
-    [Fact]
-    public async Task CanFindAllUserAccessTokens()
+    [Theory]
+    [InlineData(true, true)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(false, false)]
+    public async Task CannotRevokeAccessTokenDefault(bool useDataProtection, bool storeTokens)
     {
-        var sp = CreateTestServices();
+        var sp = CreateTestServices(configureServices:
+            s =>
+            {
+                s.Configure<IdentityBearerOptions>(o => o.UseDataProtection = useDataProtection);
+                s.Configure<IdentityOptions>(o => o.TokenManager.StoreAccessTokens = storeTokens);
+            });
+        var manager = sp.GetService<TokenManager<IdentityStoreToken>>();
+        var userManager = sp.GetService<UserManager<TUser>>();
+        var validator = sp.GetService<IAccessTokenValidator>();
+        var tokenService = sp.GetService<IUserTokenService<TUser>>();
+        var user = CreateTestUser();
+        var userId = await userManager.GetUserIdAsync(user);
+        IdentityResultAssert.IsSuccess(await userManager.CreateAsync(user));
+
+        var token = await tokenService.GetAccessTokenAsync(user);
+        Assert.NotNull(token);
+
+        var principal = await validator.ValidateAsync(token);
+        Assert.NotNull(principal);
+
+        // Revoke the token and verify that by default nothing checks revocation
+        var jti = principal.Claims.FirstOrDefault(c => c.Type == TokenClaims.Jti)?.Value;
+        Assert.NotNull(jti);
+
+        // Can only revoke if access tokens are stored
+        Assert.Equal(storeTokens, await manager.RevokeAsync(jti));
+        Assert.NotNull(await validator.ValidateAsync(token));
+    }
+
+    /// <summary>
+    /// Test.
+    /// </summary>
+    /// <returns>Task</returns>
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task CanCheckAccessPerRequest(bool useDataProtection)
+    {
+        var sp = CreateTestServices(configureServices:
+            s =>
+            {
+                s.Configure<IdentityBearerOptions>(o => o.UseDataProtection = useDataProtection);
+                s.Configure<IdentityOptions>(o => o.TokenManager.StoreAccessTokens = true);
+                s.AddSingleton<IAccessTokenDenyPolicy, AccessTokenChecker>();
+            });
+        var manager = sp.GetService<TokenManager<IdentityStoreToken>>();
+        var userManager = sp.GetService<UserManager<TUser>>();
+        var validator = sp.GetService<IAccessTokenValidator>();
+        var tokenService = sp.GetService<IUserTokenService<TUser>>();
+        var user = CreateTestUser();
+        var userId = await userManager.GetUserIdAsync(user);
+        IdentityResultAssert.IsSuccess(await userManager.CreateAsync(user));
+
+        var token = await tokenService.GetAccessTokenAsync(user);
+        Assert.NotNull(token);
+
+        var principal = await validator.ValidateAsync(token);
+        Assert.NotNull(principal);
+
+        // Revoke the token and see if its rejected immediately
+        var jti = principal.Claims.FirstOrDefault(c => c.Type == TokenClaims.Jti)?.Value;
+        Assert.NotNull(jti);
+
+        Assert.True(await manager.RevokeAsync(jti));
+        Assert.Null(await validator.ValidateAsync(token));
+    }
+
+    /// <summary>
+    /// Test.
+    /// </summary>
+    /// <returns>Task</returns>
+    [Theory]
+    [InlineData(true, true)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(false, false)]
+    public async Task CanFindAllUserAccessTokensIfStored(bool useDataProtection, bool storeTokens)
+    {
+        var sp = CreateTestServices(configureServices:
+            s =>
+            {
+                s.Configure<IdentityBearerOptions>(o => o.UseDataProtection = useDataProtection);
+                s.Configure<IdentityOptions>(o => o.TokenManager.StoreAccessTokens = storeTokens);
+            });
         var manager = sp.GetService<TokenManager<IdentityStoreToken>>();
         var userManager = sp.GetService<UserManager<TUser>>();
         var validator = sp.GetService<IAccessTokenValidator>();
@@ -336,11 +489,11 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
 
         Assert.NotSame(jti1, jti2);
 
-        // Verify that we can get both tokens for the user
+        // Verify that we can get both tokens for the user only when they are stored
         var tokens = await manager.FindAsync(new TokenInfoFilter { Purpose = TokenPurpose.AccessToken, Subject = userId });
-        Assert.Equal(2, tokens.Count());
-        Assert.Contains(jti1, tokens);
-        Assert.Contains(jti2, tokens);
+        Assert.Equal(storeTokens ? 2 : 0, tokens.Count());
+        Assert.Equal(storeTokens, tokens.Contains(jti1));
+        Assert.Equal(storeTokens, tokens.Contains(jti2));
     }
 
     /// <summary>

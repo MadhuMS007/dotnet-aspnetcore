@@ -4,6 +4,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
 
 namespace Todo.Web.Server;
 
@@ -97,7 +98,7 @@ public static class AuthApi
 
     private static IResult SignIn(string userId, string userName, string token)
     {
-        var identity = new ClaimsIdentity(CookieAuthenticationDefaults.AuthenticationScheme);
+        var identity = new ClaimsIdentity(IdentityConstants.BearerScheme);
         identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, userId));
         identity.AddClaim(new Claim(ClaimTypes.Name, userName));
 
@@ -111,6 +112,6 @@ public static class AuthApi
 
         return Results.SignIn(new ClaimsPrincipal(identity),
             properties: properties,
-            authenticationScheme: CookieAuthenticationDefaults.AuthenticationScheme);
+            authenticationScheme: IdentityConstants.BearerScheme);
     }
 }

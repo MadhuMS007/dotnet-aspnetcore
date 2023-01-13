@@ -36,6 +36,7 @@ public static class BearerBuilderExtensions
         where TToken : class
     {
         // TODO: should add options validation that identity stores schema version is at least 2 (token version)
+        builder.Services.TryAddSingleton<ITokenFormatManager, TokenFormatManager>();
         builder.Services.AddSingleton<IAccessTokenDenyPolicy, JtiBlocker>();
         builder.Services.AddSingleton<ITokenSerializer, JsonTokenSerializer>();
         var tokenManagerType = typeof(TokenManager<>).MakeGenericType(typeof(TToken));
