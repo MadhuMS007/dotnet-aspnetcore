@@ -1,8 +1,10 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using Microsoft.IdentityModel.Tokens;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Microsoft.AspNetCore.Identity;
 
@@ -52,10 +54,10 @@ public static class JWSAlg
     ///// </summary>
     //public static readonly string HS512 = "HS512";
 
-    ///// <summary>
-    ///// RS256
-    ///// </summary>
-    //public static readonly string RS256 = "RS256";
+    /// <summary>
+    /// RS256
+    /// </summary>
+    public static readonly string RS256 = "RS256";
 
     ///// <summary>
     ///// RS384
@@ -160,4 +162,67 @@ internal sealed class JwtAlgHS256 : IJwtAlgorithm
 
     public Task<bool> ValidateKeyAsync(JsonWebKey? key)
         => Task.FromResult(key != null && key.Kid != null);
+}
+
+internal sealed class JwtAlgRS256 : IJwtAlgorithm
+{
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
+    public Task<string> CreateJwtAsync(Jwt jwt, JsonWebKey? key)
+    {
+        jwt.Header = new JwtHeader(JWSAlg.RS256);
+        jwt.Header.Type = "JWT";
+        // TODO: This should actually do RS256 using the key to sign, instead of just sending the key as the signature
+
+        var encodedHeaderPayload = $"{Base64UrlEncoder.Encode(JsonSerializer.Serialize(jwt.Header))}.{Base64UrlEncoder.Encode(jwt.Payload)}";
+
+        var signature = "";
+        using (var rsa = RSA.Create(2048))
+        {
+            rsa.ImportRSAPrivateKey(Base64UrlEncoder.DecodeBytes(key!.AdditionalData["k"]), out var bytesRead);
+            signature = Base64UrlEncoder.Encode(rsa.SignData(Encoding.Unicode.GetBytes(encodedHeaderPayload), HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1));
+        }
+
+        return Task.FromResult($"{encodedHeaderPayload}.{signature}");
+    }
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
+    public Task<Jwt?> ReadJwtAsync(string jwtToken, JsonWebKey? key)
+    {
+        if (key == null)
+        {
+            return Task.FromResult<Jwt?>(null);
+        }
+
+        var sections = jwtToken.Split('.');
+        if (sections.Length != 3)
+        {
+            // Expected 3 sections
+            return Task.FromResult<Jwt?>(null);
+        }
+        var header = JsonSerializer.Deserialize<IDictionary<string, string>>(Base64UrlEncoder.Decode(sections[0]));
+        if (header?["alg"] != "RS256" || header?["typ"] != "JWT")
+        {
+            // Verify the signature
+            using (var rsa = RSA.Create(2048))
+            {
+                // TODO: need Base64 encoding replacement
+                rsa.ImportRSAPublicKey(Base64UrlEncoder.DecodeBytes(key!.AdditionalData["k"]), out var bytesRead);
+
+                if (!rsa.VerifyData(Base64UrlEncoder.DecodeBytes($"{sections[0]}.{sections[1]}"),
+                        Base64UrlEncoder.DecodeBytes(sections[2]),
+                        HashAlgorithmName.SHA256,
+                        RSASignaturePadding.Pkcs1))
+                {
+                    // Signature failed.
+                    return Task.FromResult<Jwt?>(null);
+                }
+            }
+        }
+        var data = new Jwt(new JwtHeader(header!));
+        data.Payload = Base64UrlEncoder.Decode(sections[1]);
+        return Task.FromResult<Jwt?>(data);
+    }
+
+    public Task<bool> ValidateKeyAsync(JsonWebKey? key)
+        => Task.FromResult(key != null && key.AdditionalData["k"] != null);
 }

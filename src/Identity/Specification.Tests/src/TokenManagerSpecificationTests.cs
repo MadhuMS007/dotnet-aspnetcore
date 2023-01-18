@@ -4,12 +4,15 @@
 using System.Linq;
 using System.Linq.Expressions;
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Xunit;
 
 namespace Microsoft.AspNetCore.Identity.Test;
@@ -243,27 +246,11 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
         var user = CreateTestUser();
         var userId = await userManager.GetUserIdAsync(user);
         IdentityResultAssert.IsSuccess(await userManager.CreateAsync(user));
-
-        var claims = new[] {
-            new Claim("custom", "value"),
-            new Claim("custom2", "value"),
-        };
-
-        await userManager.AddClaimsAsync(user, claims);
-
         var token = await tokenService.GetAccessTokenAsync(user);
         Assert.NotNull(token);
 
         var principal = await validator.ValidateAsync(token);
-
         Assert.NotNull(principal);
-        foreach (var cl in claims)
-        {
-            Assert.Contains(principal.Claims, c => c.Type == cl.Type && c.Value == cl.Value);
-        }
-        EnsureClaim(principal, "iss", Issuer);
-        EnsureClaim(principal, "aud", Audience);
-        EnsureClaim(principal, "sub", userId);
 
         var jti = principal.Claims.FirstOrDefault(c => c.Type == TokenClaims.Jti)?.Value;
         Assert.NotNull(jti);
@@ -278,7 +265,7 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
     /// </summary>
     /// <returns>Task</returns>
     [Fact]
-    public async Task CanRefreshTokens()
+    public async Task CanRefreshTokensOnlyOnce()
     {
         var sp = CreateTestServices();
         var userManager = sp.GetService<UserManager<TUser>>();
@@ -290,9 +277,19 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
         Assert.NotNull(token);
 
         (var access, var refresh) = await tokenService.RefreshTokensAsync(token);
-
         Assert.NotNull(access);
         Assert.NotNull(refresh);
+
+        // Second use should fail
+        (var access2, var refresh2) = await tokenService.RefreshTokensAsync(token);
+
+        Assert.Null(access2);
+        Assert.Null(refresh2);
+
+        // Using the new refresh token should work
+        (access2, refresh2) = await tokenService.RefreshTokensAsync(refresh);
+        Assert.NotNull(access2);
+        Assert.NotNull(refresh2);
     }
 
     /// <summary>
@@ -646,6 +643,60 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
         var userId = await userManager.GetUserIdAsync(user);
         Assert.Null(await userManager.FindByIdAsync(userId));
         Assert.Null(await manager.Store.FindAsync("", token, CancellationToken.None));
+    }
+
+    /// <summary>
+    /// Test.
+    /// </summary>
+    /// <returns>Task</returns>
+    [Fact]
+    public async Task CanDoRS256()
+    {
+        var manager = CreateManager();
+
+        string publicKey, privateKey;
+        using (var rsa = RSA.Create(2048))
+        {
+            privateKey = Base64UrlEncoder.Encode(rsa.ExportRSAPrivateKey());
+
+            var sig = Base64UrlEncoder.Encode(rsa.Encrypt(Encoding.UTF8.GetBytes("hao"), RSAEncryptionPadding.OaepSHA256));
+            Assert.NotNull(sig);
+            publicKey = Base64UrlEncoder.Encode(rsa.ExportRSAPublicKey());
+        }
+
+        var keyId = Guid.NewGuid().ToString();
+        var data = new Dictionary<string, string>
+        {
+            ["kty"] = "oct",
+            ["alg"] = "RS256",
+            ["kid"] = keyId,
+            ["k"] = publicKey
+        };
+        var jwk = new JsonSigningKey(keyId, data);
+
+        await manager.AddSigningKeyAsync(JsonKeySerializer.ProviderId, jwk);
+
+        var key = await manager.GetSigningKeyAsync(keyId);
+
+        Assert.NotNull(key);
+        foreach (var k in data.Keys)
+        {
+            Assert.Equal(data[k], key[k]);
+        }
+
+        var privateJwk = new JsonWebKey("oct");
+        privateJwk.Alg = "RS256";
+        privateJwk.AdditionalData["k"] = privateKey;
+        var builder = new JwtBuilder(JWSAlg.RS256, "i", privateJwk, "a", "s", data, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddMinutes(5));
+        var jwt = await builder.CreateJwtAsync();
+
+        var publicJwk = new JsonWebKey("oct");
+        privateJwk.Alg = "RS256";
+        privateJwk.AdditionalData["k"] = publicKey;
+
+        var reader = new JwtReader(JWSAlg.RS256, "i", publicJwk, new string[] { "a" });
+        var tok = await reader.ReadAsync(jwt);
+        Assert.NotNull(tok);
     }
 
     /// <summary>

@@ -28,5 +28,4 @@ public interface ITokenFormatProvider
     /// <param name="token">The token to read.</param>
     /// <returns>The token info.</returns>
     Task<TokenInfo?> ReadTokenAsync(string token);
-
 }

@@ -11,6 +11,7 @@ internal sealed class Jwt
     {
         Algorithms[JWSAlg.None] = new JwtAlgNone();
         Algorithms[JWSAlg.HS256] = new JwtAlgHS256();
+        Algorithms[JWSAlg.RS256] = new JwtAlgRS256();
     }
 
     /// <summary>
