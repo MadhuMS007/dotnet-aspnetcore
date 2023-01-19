@@ -4,16 +4,18 @@
 namespace Microsoft.AspNetCore.Identity;
 
 using System.Text.Json;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using Microsoft.Extensions.Options;
 
 /// <summary>
 /// Represents a single key ring, each key ring should be in its own named options instance.
 /// </summary>
-internal class KeyRingOptions
+public class KeyRingOptions
 {
-    public IActiveKeyRingSelector? ActiveKeySelector { get; set; }
+    internal IActiveKeyRingSelector? ActiveKeySelector { get; set; }
 
+    /// <summary>
+    /// Represents a list of key sources.
+    /// </summary>
     public IList<IKeySource> KeySources { get; set; } = new List<IKeySource>();
 }
 
@@ -62,8 +64,14 @@ internal class KeyRingManager
         return new KeyRing(keyRingOptions.ActiveKeySelector ?? new DefaultActiveKeySelector(), keys);
     }
 
-    public async Task<IKeyRing> GetKeyRingAsync(string keyRingName)
+    /// <summary>
+    /// Omitting the key ring name uses the default key ring of string.Empty.
+    /// </summary>
+    /// <param name="keyRingName"></param>
+    /// <returns></returns>
+    public async Task<IKeyRing> GetKeyRingAsync(string? keyRingName = null)
     {
+        keyRingName ??= string.Empty;
         if (!_keyRingMap.ContainsKey(keyRingName))
         {
             _keyRingMap[keyRingName] = await BuildKeyRingAsync(keyRingName);
@@ -81,7 +89,10 @@ internal class ActualKeySource : IKeySource
         => Task.FromResult<IEnumerable<IKey>>(new[] { _key });
 }
 
-internal interface IKeySource
+/// <summary>
+/// Represents a key source
+/// </summary>
+public interface IKeySource
 {
     /// <summary>
     /// Loads the keys from the source.
@@ -111,14 +122,14 @@ internal class KeyRing : IKeyRing
         _keys = keys;
     }
 
-    public Task<IKey> GetActiveKey()
+    public async Task<IKey> GetActiveKeyAsync()
     {
-        var active = _selector.SelectActiveAsync(_keys);
+        var active = await _selector.SelectActiveAsync(_keys);
         if (active == null)
         {
             throw new InvalidOperationException("There are no active keys in the key ring.");
         }
-        return active!;
+        return active;
     }
 
     public IEnumerable<IKey> GetAllKeys()
@@ -130,7 +141,7 @@ internal interface IKeyRing
     /// <summary>
     /// Return the current active key
     /// </summary>
-    Task<IKey> GetActiveKey();
+    Task<IKey> GetActiveKeyAsync();
 
     /// <summary>
     /// Returns all of the keys in the ring.
@@ -192,7 +203,10 @@ internal interface IKeyRing
     //void RevokeAllKeys(DateTimeOffset revocationDate, string? reason = null);
 }
 
-internal interface IKey
+/// <summary>
+/// Represents a key used to protect tokens.
+/// </summary>
+public interface IKey
 {
     /// <summary>
     /// The date at which encryptions with this key can begin taking place.
@@ -227,11 +241,25 @@ internal interface IKey
     /// </summary>
     string KeyId { get; }
 
+    /// <summary>
+    /// 
+    /// </summary>
     byte[] Data { get; }
 }
 
-internal class BaseKey : IKey
+/// <summary>
+/// 
+/// </summary>
+public class BaseKey : IKey
 {
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="data"></param>
+    /// <param name="expirationDate"></param>
+    /// <param name="keyId"></param>
+    /// <param name="activationDate"></param>
+    /// <param name="creationDate"></param>
     public BaseKey(byte[] data, DateTimeOffset expirationDate, string? keyId = null, DateTimeOffset? activationDate = null, DateTimeOffset? creationDate = null)
     {
         KeyId = keyId ?? Guid.NewGuid().ToString();
@@ -241,15 +269,22 @@ internal class BaseKey : IKey
         Data = data;
     }
 
+    /// <inheritdoc/>
     public DateTimeOffset ActivationDate { get; }
 
+    /// <inheritdoc/>
     public DateTimeOffset CreationDate { get; }
 
+    /// <inheritdoc/>
     public DateTimeOffset ExpirationDate { get; }
 
+    /// <inheritdoc/>
     public bool IsRevoked { get; }
 
+    /// <inheritdoc/>
     public string KeyId { get; }
+
+    /// <inheritdoc/>
     public byte[] Data { get; }
 }
 

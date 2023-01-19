@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -49,10 +50,25 @@ internal class TodoApplication : WebApplicationFactory<Program>
         }));
     }
 
+    internal class ActualKeySource : IKeySource
+    {
+        private readonly IKey _key;
+        public ActualKeySource(IKey key) => _key = key;
+
+        public Task<IEnumerable<IKey>> LoadKeysAsync()
+            => Task.FromResult<IEnumerable<IKey>>(new[] { _key });
+    }
+
     protected override IHost CreateHost(IHostBuilder builder)
     {
         // Open the connection, this creates the SQLite in-memory database, which will persist until the connection is closed
         _sqliteConnection.Open();
+
+        // We need to configure signing keys for CI scenarios where
+        // there's no user-jwts tool
+        var keyBytes = new byte[32];
+        RandomNumberGenerator.Fill(keyBytes);
+        var base64Key = Convert.ToBase64String(keyBytes);
 
         builder.ConfigureServices(services =>
         {
@@ -72,13 +88,10 @@ internal class TodoApplication : WebApplicationFactory<Program>
                 o.Password.RequireLowercase = false;
                 o.Password.RequireUppercase = false;
             });
-        });
 
-        // We need to configure signing keys for CI scenarios where
-        // there's no user-jwts tool
-        var keyBytes = new byte[32];
-        RandomNumberGenerator.Fill(keyBytes);
-        var base64Key = Convert.ToBase64String(keyBytes);
+            // Add the key to the default key ring
+            services.AddOptions<KeyRingOptions>().Configure(o => o.KeySources.Add(new ActualKeySource(new BaseKey(keyBytes, DateTimeOffset.UtcNow.AddDays(1)))));
+        });
 
         builder.ConfigureAppConfiguration(config =>
         {

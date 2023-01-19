@@ -1,27 +1,33 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.Linq;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 
 namespace Microsoft.AspNetCore.Identity;
 
 internal class JwtTokenFormat : ITokenFormatProvider
 {
-    private readonly IdentityBearerOptions _options;
+    private readonly TokenFormatOptions _options;
     private readonly IDataProtector? _protector;
+    private readonly KeyRingManager _keyRings;
+    private readonly string _issuer;
+    private readonly string _audience;
 
-    public JwtTokenFormat(IOptions<IdentityBearerOptions> options, IDataProtectionProvider dp)
+    public JwtTokenFormat(KeyRingManager keyRings, TokenFormatOptions options, IDataProtectionProvider dp, string issuer, string audience)
     {
-        _options = options.Value;
+        _keyRings = keyRings;
+        _options = options;
+        _issuer = issuer;
+        _audience = audience;
 
         if (_options.UseDataProtection)
         {
             // TODO: Should have unique protectors per token purpose and user?
             _protector = dp.CreateProtector("JwtTokenFormat");
         }
+        _issuer = issuer;
     }
 
     public ITokenSerializer PayloadSerializer => JsonTokenSerializer.Instance;
@@ -34,12 +40,22 @@ internal class JwtTokenFormat : ITokenFormatProvider
             throw new InvalidOperationException("Expected IDictionary<string, string> token payload.");
         }
 
+        // No key ring specified would just use the default key ring
+        var keyRing = await _keyRings.GetKeyRingAsync(_options.SigningKeyRing);
+        var key = await keyRing.GetActiveKeyAsync();
+
+        var jwk = new JsonWebKey("oct")
+        {
+            Alg = "HS256",
+        };
+        jwk.AdditionalData["k"] = WebEncoders.Base64UrlEncode(key.Data);
+
         // REVIEW: Check that using token.Id is okay for jti
         var jwtBuilder = new JwtBuilder(
             JWSAlg.HS256,
-            _options.Issuer!,
-            _options.SigningCredentials!,
-            _options.Audiences.LastOrDefault()!,
+            _issuer,
+            jwk,
+            _audience, // TODO: audience feels weird here
             token.Subject,
             payloadDict,
             notBefore: DateTimeOffset.UtcNow,
@@ -51,16 +67,26 @@ internal class JwtTokenFormat : ITokenFormatProvider
         return await jwtBuilder.CreateJwtAsync();
     }
 
-    public Task<TokenInfo?> ReadTokenAsync(string token)
+    public async Task<TokenInfo?> ReadTokenAsync(string token)
     {
+        // No key ring specified would just use the default key ring
+        var keyRing = await _keyRings.GetKeyRingAsync(_options.ValidationKeyRing);
+        var key = await keyRing.GetActiveKeyAsync();
+
+        var jwk = new JsonWebKey("oct")
+        {
+            Alg = "HS256",
+        };
+        jwk.AdditionalData["k"] = WebEncoders.Base64UrlEncode(key.Data);
+
         var reader = new JwtReader(
             JWSAlg.HS256,
-            _options.Issuer!,
-            _options.SigningCredentials!,
-            _options.Audiences);
+            _issuer,
+            jwk,
+            new[] { _audience });
         reader.PayloadProtector = _protector;
 
-        return reader.ReadAsync(token);
+        return await reader.ReadAsync(token);
     }
 }
 

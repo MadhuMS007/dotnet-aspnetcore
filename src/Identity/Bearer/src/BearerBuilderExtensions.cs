@@ -43,6 +43,9 @@ public static class BearerBuilderExtensions
         builder.Services.TryAddScoped(tokenManagerType);
         builder.Services.TryAddScoped(typeof(IUserTokenService<>).MakeGenericType(builder.UserType), typeof(UserTokenService<>).MakeGenericType(builder.UserType));
         builder.Services.TryAddScoped(typeof(IAccessTokenValidator), typeof(DefaultAccessTokenValidator<>).MakeGenericType(builder.UserType));
+
+        // REVIEW: singleton?
+        builder.Services.AddSingleton<KeyRingManager>();
         return new IdentityBearerTokenBuilder(builder, typeof(TToken));
     }
 

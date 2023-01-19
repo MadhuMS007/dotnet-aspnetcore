@@ -1,6 +1,14 @@
 #nullable enable
 const Microsoft.AspNetCore.Identity.JWSAlg.HS256 = "HS256" -> string!
 const Microsoft.AspNetCore.Identity.JWSAlg.RS256 = "RS256" -> string!
+Microsoft.AspNetCore.Identity.BaseKey
+Microsoft.AspNetCore.Identity.BaseKey.ActivationDate.get -> System.DateTimeOffset
+Microsoft.AspNetCore.Identity.BaseKey.BaseKey(byte[]! data, System.DateTimeOffset expirationDate, string? keyId = null, System.DateTimeOffset? activationDate = null, System.DateTimeOffset? creationDate = null) -> void
+Microsoft.AspNetCore.Identity.BaseKey.CreationDate.get -> System.DateTimeOffset
+Microsoft.AspNetCore.Identity.BaseKey.Data.get -> byte[]!
+Microsoft.AspNetCore.Identity.BaseKey.ExpirationDate.get -> System.DateTimeOffset
+Microsoft.AspNetCore.Identity.BaseKey.IsRevoked.get -> bool
+Microsoft.AspNetCore.Identity.BaseKey.KeyId.get -> string!
 Microsoft.AspNetCore.Identity.BearerSchemeOptions
 Microsoft.AspNetCore.Identity.BearerSchemeOptions.BearerSchemeOptions() -> void
 Microsoft.AspNetCore.Identity.BearerServiceCollectionExtensions
@@ -16,6 +24,15 @@ Microsoft.AspNetCore.Identity.IdentityBearerOptions.SigningCredentials.get -> Mi
 Microsoft.AspNetCore.Identity.IdentityBearerOptions.SigningCredentials.set -> void
 Microsoft.AspNetCore.Identity.IdentityBearerOptions.UseDataProtection.get -> bool
 Microsoft.AspNetCore.Identity.IdentityBearerOptions.UseDataProtection.set -> void
+Microsoft.AspNetCore.Identity.IKey
+Microsoft.AspNetCore.Identity.IKey.ActivationDate.get -> System.DateTimeOffset
+Microsoft.AspNetCore.Identity.IKey.CreationDate.get -> System.DateTimeOffset
+Microsoft.AspNetCore.Identity.IKey.Data.get -> byte[]!
+Microsoft.AspNetCore.Identity.IKey.ExpirationDate.get -> System.DateTimeOffset
+Microsoft.AspNetCore.Identity.IKey.IsRevoked.get -> bool
+Microsoft.AspNetCore.Identity.IKey.KeyId.get -> string!
+Microsoft.AspNetCore.Identity.IKeySource
+Microsoft.AspNetCore.Identity.IKeySource.LoadKeysAsync() -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<Microsoft.AspNetCore.Identity.IKey!>!>!
 Microsoft.AspNetCore.Identity.ITokenKeyRing
 Microsoft.AspNetCore.Identity.ITokenKeyRing.GetAllKeysAsync() -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<Microsoft.AspNetCore.Identity.TokenKey!>!>!
 Microsoft.AspNetCore.Identity.ITokenKeyRing.GetCurrentKeyAsync() -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.TokenKey!>!
@@ -73,6 +90,10 @@ Microsoft.AspNetCore.Identity.JwtBuilder.PayloadProtector.get -> Microsoft.AspNe
 Microsoft.AspNetCore.Identity.JwtBuilder.PayloadProtector.set -> void
 Microsoft.AspNetCore.Identity.JwtBuilder.SigningKey.get -> Microsoft.AspNetCore.Identity.JsonWebKey!
 Microsoft.AspNetCore.Identity.JwtBuilder.SigningKey.set -> void
+Microsoft.AspNetCore.Identity.KeyRingOptions
+Microsoft.AspNetCore.Identity.KeyRingOptions.KeyRingOptions() -> void
+Microsoft.AspNetCore.Identity.KeyRingOptions.KeySources.get -> System.Collections.Generic.IList<Microsoft.AspNetCore.Identity.IKeySource!>!
+Microsoft.AspNetCore.Identity.KeyRingOptions.KeySources.set -> void
 Microsoft.AspNetCore.Identity.TokenKey
 Microsoft.AspNetCore.Identity.TokenKey.Created.get -> System.DateTimeOffset
 Microsoft.AspNetCore.Identity.TokenKey.Created.set -> void

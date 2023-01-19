@@ -5,8 +5,10 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -81,6 +83,14 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
                 ["Authentication:Schemes:Identity.Bearer:SigningCredentials:kid"] = "someguid",
             })
             .Build());
+
+        // We need to configure a default signing key
+        var keyBytes = new byte[32];
+        RandomNumberGenerator.Fill(keyBytes);
+        var base64Key = Convert.ToBase64String(keyBytes);
+
+        // Add the key to the default key ring
+        services.AddOptions<KeyRingOptions>().Configure(o => o.KeySources.Add(new ActualKeySource(new BaseKey(keyBytes, DateTimeOffset.UtcNow.AddDays(1)))));
 
         services.AddAuthentication();
         services.AddDataProtection();
@@ -686,8 +696,8 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
         var jwt = await builder.CreateJwtAsync();
 
         var publicJwk = new JsonWebKey("oct");
-        privateJwk.Alg = "RS256";
-        privateJwk.AdditionalData["k"] = publicKey;
+        publicJwk.Alg = "RS256";
+        publicJwk.AdditionalData["k"] = publicKey;
 
         var reader = new JwtReader(JWSAlg.RS256, "i", publicJwk, new string[] { "a" });
         var tok = await reader.ReadAsync(jwt);

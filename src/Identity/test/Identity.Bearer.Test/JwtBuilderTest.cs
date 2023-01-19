@@ -1,6 +1,8 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Security.Cryptography;
+
 namespace Microsoft.AspNetCore.Identity.Test;
 
 public class JwtBuilderTest
@@ -102,4 +104,74 @@ public class JwtBuilderTest
         Assert.Null(await jwtReader.ValidateAsync(token));
     }
 
+    /// <summary>
+    /// Test.
+    /// </summary>
+    /// <returns>Task</returns>
+    [Fact]
+    public async Task CanDoHS256()
+    {
+        var keyBytes = new byte[32];
+        RandomNumberGenerator.Fill(keyBytes);
+        var base64Key = Convert.ToBase64String(keyBytes);
+
+        // TODO: Add signing key -> key store
+        var data = new Dictionary<string, string>
+        {
+            ["heya"] = "woo"
+        };
+
+        var jwk = new JsonWebKey("oct");
+        jwk.Alg = JWSAlg.HS256;
+        jwk.AdditionalData["k"] = base64Key;
+        var builder = new JwtBuilder(JWSAlg.HS256, "i", jwk, "a", "s", data, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddMinutes(5));
+        var jwt = await builder.CreateJwtAsync();
+
+        var publicJwk = new JsonWebKey("oct");
+        publicJwk.Alg = JWSAlg.HS256;
+        publicJwk.AdditionalData["k"] = base64Key;
+
+        var reader = new JwtReader(JWSAlg.HS256, "i", publicJwk, new string[] { "a" });
+        var tok = await reader.ReadAsync(jwt);
+        Assert.NotNull(tok);
+        Assert.NotNull(tok.Payload);
+    }
+
+    /// <summary>
+    /// Test.
+    /// </summary>
+    /// <returns>Task</returns>
+    [Fact]
+    public async Task CanDoRS256()
+    {
+        string publicKey, privateKey;
+        using (var rsa = RSA.Create(2048))
+        {
+            privateKey = Convert.ToBase64String(rsa.ExportRSAPrivateKey());
+            publicKey = Convert.ToBase64String(rsa.ExportRSAPublicKey());
+        }
+
+        var keyId = Guid.NewGuid().ToString();
+        var data = new Dictionary<string, string>
+        {
+            ["kty"] = "oct",
+            ["alg"] = "RS256",
+            ["kid"] = keyId,
+            ["k"] = publicKey
+        };
+
+        var privateJwk = new JsonWebKey("oct");
+        privateJwk.Alg = JWSAlg.RS256;
+        privateJwk.AdditionalData["k"] = privateKey;
+        var builder = new JwtBuilder(JWSAlg.RS256, "i", privateJwk, "a", "s", data, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddMinutes(5));
+        var jwt = await builder.CreateJwtAsync();
+
+        var publicJwk = new JsonWebKey("oct");
+        publicJwk.Alg = JWSAlg.RS256;
+        publicJwk.AdditionalData["k"] = publicKey;
+
+        var reader = new JwtReader(JWSAlg.RS256, "i", publicJwk, new string[] { "a" });
+        var tok = await reader.ReadAsync(jwt);
+        Assert.NotNull(tok);
+    }
 }
