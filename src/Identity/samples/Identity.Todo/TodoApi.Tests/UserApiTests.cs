@@ -63,35 +63,36 @@ public class UserApiTests
         //Assert.Equal(new[] { "The Username field is required." }, problemDetails.Errors["Username"]);
     }
 
-    [Fact]
-    public async Task MissingUsernameOrProviderKeyReturnsBadRequest()
-    {
-        await using var application = new TodoApplication();
-        await using var db = application.CreateTodoDbContext();
+    // TODO: Validation was removed
+    //[Fact]
+    //public async Task MissingUsernameOrProviderKeyReturnsBadRequest()
+    //{
+    //    await using var application = new TodoApplication();
+    //    await using var db = application.CreateTodoDbContext();
 
-        var client = application.CreateClient();
-        var response = await client.PostAsJsonAsync("/users/token/Google", new ExternalUserInfo { Username = "todouser" });
+    //    var client = application.CreateClient();
+    //    var response = await client.PostAsJsonAsync("/users/token/Google", new ExternalUserInfo { Username = "todouser" });
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    //    Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
-        var problemDetails = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
-        Assert.NotNull(problemDetails);
+    //    var problemDetails = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+    //    Assert.NotNull(problemDetails);
 
-        Assert.Equal("One or more validation errors occurred.", problemDetails.Title);
-        Assert.NotEmpty(problemDetails.Errors);
-        Assert.Equal(new[] { $"The {nameof(ExternalUserInfo.ProviderKey)} field is required." }, problemDetails.Errors[nameof(ExternalUserInfo.ProviderKey)]);
+    //    Assert.Equal("One or more validation errors occurred.", problemDetails.Title);
+    //    Assert.NotEmpty(problemDetails.Errors);
+    //    Assert.Equal(new[] { $"The {nameof(ExternalUserInfo.ProviderKey)} field is required." }, problemDetails.Errors[nameof(ExternalUserInfo.ProviderKey)]);
 
-        response = await client.PostAsJsonAsync("/users/token/Google", new ExternalUserInfo { ProviderKey = "somekey" });
+    //    response = await client.PostAsJsonAsync("/users/token/Google", new ExternalUserInfo { ProviderKey = "somekey" });
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    //    Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
-        problemDetails = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
-        Assert.NotNull(problemDetails);
+    //    problemDetails = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+    //    Assert.NotNull(problemDetails);
 
-        Assert.Equal("One or more validation errors occurred.", problemDetails.Title);
-        Assert.NotEmpty(problemDetails.Errors);
-        Assert.Equal(new[] { $"The Username field is required." }, problemDetails.Errors["Username"]);
-    }
+    //    Assert.Equal("One or more validation errors occurred.", problemDetails.Title);
+    //    Assert.NotEmpty(problemDetails.Errors);
+    //    Assert.Equal(new[] { $"The Username field is required." }, problemDetails.Errors["Username"]);
+    //}
 
     [Fact]
     public async Task CanGetATokenForValidUser()

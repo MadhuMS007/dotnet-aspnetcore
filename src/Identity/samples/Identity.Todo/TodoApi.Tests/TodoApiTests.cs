@@ -130,26 +130,27 @@ public class TodoApiTests
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
-    [Fact]
-    public async Task PostingTodoWithoutTitleReturnsProblemDetails()
-    {
-        var userId = "34";
-        await using var application = new TodoApplication();
-        await using var db = application.CreateTodoDbContext();
-        await application.CreateUserAsync(userId);
+    // TODO: Validation was removed
+    //[Fact]
+    //public async Task PostingTodoWithoutTitleReturnsProblemDetails()
+    //{
+    //    var userId = "34";
+    //    await using var application = new TodoApplication();
+    //    await using var db = application.CreateTodoDbContext();
+    //    await application.CreateUserAsync(userId);
 
-        var client = await application.CreateClientAsync(userId);
-        var response = await client.PostAsJsonAsync("/todos", new TodoItem { });
+    //    var client = await application.CreateClientAsync(userId);
+    //    var response = await client.PostAsJsonAsync("/todos", new TodoItem { });
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    //    Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
-        var problemDetails = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
-        Assert.NotNull(problemDetails);
+    //    var problemDetails = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+    //    Assert.NotNull(problemDetails);
 
-        Assert.Equal("One or more validation errors occurred.", problemDetails.Title);
-        Assert.NotEmpty(problemDetails.Errors);
-        Assert.Equal(new[] { "The Title field is required." }, problemDetails.Errors["Title"]);
-    }
+    //    Assert.Equal("One or more validation errors occurred.", problemDetails.Title);
+    //    Assert.NotEmpty(problemDetails.Errors);
+    //    Assert.Equal(new[] { "The Title field is required." }, problemDetails.Errors["Title"]);
+    //}
 
     [Fact]
     public async Task CannotDeleteUnownedTodos()
