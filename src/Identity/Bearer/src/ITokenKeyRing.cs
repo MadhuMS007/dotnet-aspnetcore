@@ -4,6 +4,254 @@
 namespace Microsoft.AspNetCore.Identity;
 
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
+using Microsoft.Extensions.Options;
+
+/// <summary>
+/// Represents a single key ring, each key ring should be in its own named options instance.
+/// </summary>
+internal class KeyRingOptions
+{
+    public IActiveKeyRingSelector? ActiveKeySelector { get; set; }
+
+    public IList<IKeySource> KeySources { get; set; } = new List<IKeySource>();
+}
+
+internal class DefaultActiveKeySelector : IActiveKeyRingSelector
+{
+    /// <summary>
+    /// Returns the first key that is active.
+    /// </summary>
+    /// <param name="keys"></param>
+    /// <returns></returns>
+    /// <exception cref="NotImplementedException"></exception>
+    public Task<IKey?> SelectActiveAsync(IEnumerable<IKey> keys)
+    {
+        // Return the first non revoked active key.
+        foreach (var key in keys)
+        {
+            var now = DateTimeOffset.UtcNow;
+            if (!key.IsRevoked && now > key.ActivationDate && key.ExpirationDate > now)
+            {
+                return Task.FromResult<IKey?>(key);
+            }
+        }
+        // Return null if we have no active keys
+        return Task.FromResult<IKey?>(null);
+    }
+}
+
+internal class KeyRingManager
+{
+    private readonly IOptionsMonitor<KeyRingOptions> _options;
+    private readonly Dictionary<string, IKeyRing> _keyRingMap = new Dictionary<string, IKeyRing>();
+
+    public KeyRingManager(IOptionsMonitor<KeyRingOptions> options)
+    {
+        _options = options;
+    }
+
+    private async Task<IKeyRing> BuildKeyRingAsync(string keyRingName)
+    {
+        var keyRingOptions = _options.Get(keyRingName);
+        var keys = new List<IKey>();
+        foreach (var source in keyRingOptions.KeySources)
+        {
+            keys.AddRange(await source.LoadKeysAsync());
+        }
+        return new KeyRing(keyRingOptions.ActiveKeySelector ?? new DefaultActiveKeySelector(), keys);
+    }
+
+    public async Task<IKeyRing> GetKeyRingAsync(string keyRingName)
+    {
+        if (!_keyRingMap.ContainsKey(keyRingName))
+        {
+            _keyRingMap[keyRingName] = await BuildKeyRingAsync(keyRingName);
+        }
+        return _keyRingMap[keyRingName];
+    }
+}
+
+internal class ActualKeySource : IKeySource
+{
+    private readonly IKey _key;
+    public ActualKeySource(IKey key) => _key = key;
+
+    public Task<IEnumerable<IKey>> LoadKeysAsync()
+        => Task.FromResult<IEnumerable<IKey>>(new[] { _key });
+}
+
+internal interface IKeySource
+{
+    /// <summary>
+    /// Loads the keys from the source.
+    /// </summary>
+    /// <returns></returns>
+    Task<IEnumerable<IKey>> LoadKeysAsync();
+}
+
+internal interface IActiveKeyRingSelector
+{
+    /// <summary>
+    /// Select the key to be the active key.
+    /// </summary>
+    /// <param name="keys"></param>
+    /// <returns></returns>
+    Task<IKey?> SelectActiveAsync(IEnumerable<IKey> keys);
+}
+
+internal class KeyRing : IKeyRing
+{
+    private readonly IList<IKey> _keys = new List<IKey>();
+    private readonly IActiveKeyRingSelector _selector;
+
+    public KeyRing(IActiveKeyRingSelector selector, IList<IKey> keys)
+    {
+        _selector = selector;
+        _keys = keys;
+    }
+
+    public Task<IKey> GetActiveKey()
+    {
+        var active = _selector.SelectActiveAsync(_keys);
+        if (active == null)
+        {
+            throw new InvalidOperationException("There are no active keys in the key ring.");
+        }
+        return active!;
+    }
+
+    public IEnumerable<IKey> GetAllKeys()
+        => _keys;
+}
+
+internal interface IKeyRing
+{
+    /// <summary>
+    /// Return the current active key
+    /// </summary>
+    Task<IKey> GetActiveKey();
+
+    /// <summary>
+    /// Returns all of the keys in the ring.
+    /// </summary>
+    /// <returns>An enumeration of all keys.</returns>
+    IEnumerable<IKey> GetAllKeys();
+
+    ///// <summary>
+    ///// Creates a new key with the specified activation and expiration dates and persists
+    ///// the new key to the underlying repository.
+    ///// </summary>
+    ///// <param name="activationDate">The date on which encryptions to this key may begin.</param>
+    ///// <param name="expirationDate">The date after which encryptions to this key may no longer take place.</param>
+    ///// <returns>The newly-created IKey instance.</returns>
+    //IKey CreateNewKey(DateTimeOffset activationDate, DateTimeOffset expirationDate);
+
+    ///// <summary>
+    ///// Retrieves a token that signals that callers who have cached the return value of
+    ///// GetAllKeys should clear their caches. This could be in response to a call to
+    ///// CreateNewKey or RevokeKey, or it could be in response to some other external notification.
+    ///// Callers who are interested in observing this token should call this method before the
+    ///// corresponding call to GetAllKeys.
+    ///// </summary>
+    ///// <returns>
+    ///// The cache expiration token. When an expiration notification is triggered, any
+    ///// tokens previously returned by this method will become canceled, and tokens returned by
+    ///// future invocations of this method will themselves not trigger until the next expiration
+    ///// event.
+    ///// </returns>
+    ///// <remarks>
+    ///// Implementations are free to return 'CancellationToken.None' from this method.
+    ///// Since this token is never guaranteed to fire, callers should still manually
+    ///// clear their caches at a regular interval.
+    ///// </remarks>
+    //CancellationToken GetCacheExpirationToken();
+
+    ///// <summary>
+    ///// Revokes a specific key and persists the revocation to the underlying repository.
+    ///// </summary>
+    ///// <param name="keyId">The id of the key to revoke.</param>
+    ///// <param name="reason">An optional human-readable reason for revocation.</param>
+    ///// <remarks>
+    ///// This method will not mutate existing IKey instances. After calling this method,
+    ///// all existing IKey instances should be discarded, and GetAllKeys should be called again.
+    ///// </remarks>
+    //void RevokeKey(string keyId, string? reason = null);
+
+    ///// <summary>
+    ///// Revokes all keys created before a specified date and persists the revocation to the
+    ///// underlying repository.
+    ///// </summary>
+    ///// <param name="revocationDate">The revocation date. All keys with a creation date before
+    ///// this value will be revoked.</param>
+    ///// <param name="reason">An optional human-readable reason for revocation.</param>
+    ///// <remarks>
+    ///// This method will not mutate existing IKey instances. After calling this method,
+    ///// all existing IKey instances should be discarded, and GetAllKeys should be called again.
+    ///// </remarks>
+    //void RevokeAllKeys(DateTimeOffset revocationDate, string? reason = null);
+}
+
+internal interface IKey
+{
+    /// <summary>
+    /// The date at which encryptions with this key can begin taking place.
+    /// </summary>
+    DateTimeOffset ActivationDate { get; }
+
+    /// <summary>
+    /// The date on which this key was created.
+    /// </summary>
+    DateTimeOffset CreationDate { get; }
+
+    /// <summary>
+    /// The date after which encryptions with this key may no longer take place.
+    /// </summary>
+    /// <remarks>
+    /// An expired key may still be used to decrypt existing payloads.
+    /// </remarks>
+    DateTimeOffset ExpirationDate { get; }
+
+    /// <summary>
+    /// Returns a value stating whether this key was revoked.
+    /// </summary>
+    /// <remarks>
+    /// A revoked key may still be used to decrypt existing payloads, but the payloads
+    /// must be treated as tampered unless the application has some other assurance
+    /// that the payloads are authentic.
+    /// </remarks>
+    bool IsRevoked { get; }
+
+    /// <summary>
+    /// The id of the key.
+    /// </summary>
+    string KeyId { get; }
+
+    byte[] Data { get; }
+}
+
+internal class BaseKey : IKey
+{
+    public BaseKey(byte[] data, DateTimeOffset expirationDate, string? keyId = null, DateTimeOffset? activationDate = null, DateTimeOffset? creationDate = null)
+    {
+        KeyId = keyId ?? Guid.NewGuid().ToString();
+        ActivationDate = activationDate ?? DateTimeOffset.UtcNow;
+        CreationDate = creationDate ?? DateTimeOffset.UtcNow;
+        ExpirationDate = expirationDate;
+        Data = data;
+    }
+
+    public DateTimeOffset ActivationDate { get; }
+
+    public DateTimeOffset CreationDate { get; }
+
+    public DateTimeOffset ExpirationDate { get; }
+
+    public bool IsRevoked { get; }
+
+    public string KeyId { get; }
+    public byte[] Data { get; }
+}
 
 internal interface IIdentityKeyDataSerializer
 {
