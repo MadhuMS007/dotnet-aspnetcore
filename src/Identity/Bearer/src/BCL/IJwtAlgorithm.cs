@@ -4,7 +4,6 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using Microsoft.IdentityModel.Tokens;
 
 namespace Microsoft.AspNetCore.Identity;
 
@@ -42,7 +41,7 @@ public static class JWSAlg
     /// <summary>
     /// HS256
     /// </summary>
-    public static readonly string HS256 = "HS256";
+    public const string HS256 = "HS256";
 
     ///// <summary>
     ///// HS384
@@ -57,7 +56,7 @@ public static class JWSAlg
     /// <summary>
     /// RS256
     /// </summary>
-    public static readonly string RS256 = "RS256";
+    public const string RS256 = "RS256";
 
     ///// <summary>
     ///// RS384
@@ -131,7 +130,7 @@ internal sealed class JwtAlgHS256 : IJwtAlgorithm
         jwt.Header = new JwtHeader(JWSAlg.HS256);
         jwt.Header.Type = "JWT";
         // TODO: This should actually do HS256 using the key to sign, instead of just sending the key as the signature
-        return Task.FromResult($"{Base64UrlEncoder.Encode(JsonSerializer.Serialize(jwt.Header))}.{Base64UrlEncoder.Encode(jwt.Payload)}.{key!.Kid}");
+        return Task.FromResult($"{Convert.FromBase64String(JsonSerializer.Serialize(jwt.Header))}.{Convert.FromBase64String(jwt.Payload)}.{key!.Kid}");
     }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
@@ -148,7 +147,7 @@ internal sealed class JwtAlgHS256 : IJwtAlgorithm
             // Expected 3 sections
             return Task.FromResult<Jwt?>(null);
         }
-        var header = JsonSerializer.Deserialize<IDictionary<string, string>>(Base64UrlEncoder.Decode(sections[0]));
+        var header = JsonSerializer.Deserialize<IDictionary<string, string>>(Convert.FromBase64String(sections[0]));
         // TODO: Actually do HS256 signing
         if (header?["alg"] != "HS256" || header?["typ"] != "JWT" || sections[2] != key.Kid)
         {
@@ -156,7 +155,7 @@ internal sealed class JwtAlgHS256 : IJwtAlgorithm
             return Task.FromResult<Jwt?>(null);
         }
         var data = new Jwt(new JwtHeader(header));
-        data.Payload = Base64UrlEncoder.Decode(sections[1]);
+        data.Payload = Encoding.UTF8.GetString(Convert.FromBase64String(sections[1]));
         return Task.FromResult<Jwt?>(data);
     }
 
@@ -173,13 +172,13 @@ internal sealed class JwtAlgRS256 : IJwtAlgorithm
         jwt.Header.Type = "JWT";
         // TODO: This should actually do RS256 using the key to sign, instead of just sending the key as the signature
 
-        var encodedHeaderPayload = $"{Base64UrlEncoder.Encode(JsonSerializer.Serialize(jwt.Header))}.{Base64UrlEncoder.Encode(jwt.Payload)}";
+        var encodedHeaderPayload = $"{Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(jwt.Header)))}.{Convert.ToBase64String(Encoding.UTF8.GetBytes(jwt.Payload))}";
 
         var signature = "";
         using (var rsa = RSA.Create(2048))
         {
-            rsa.ImportRSAPrivateKey(Base64UrlEncoder.DecodeBytes(key!.AdditionalData["k"]), out var bytesRead);
-            signature = Base64UrlEncoder.Encode(rsa.SignData(Encoding.Unicode.GetBytes(encodedHeaderPayload), HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1));
+            rsa.ImportRSAPrivateKey(Convert.FromBase64String(key!.AdditionalData["k"]), out var bytesRead);
+            signature = Convert.ToBase64String(rsa.SignData(Encoding.Unicode.GetBytes(encodedHeaderPayload), HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1));
         }
 
         return Task.FromResult($"{encodedHeaderPayload}.{signature}");
@@ -199,17 +198,17 @@ internal sealed class JwtAlgRS256 : IJwtAlgorithm
             // Expected 3 sections
             return Task.FromResult<Jwt?>(null);
         }
-        var header = JsonSerializer.Deserialize<IDictionary<string, string>>(Base64UrlEncoder.Decode(sections[0]));
+        var header = JsonSerializer.Deserialize<IDictionary<string, string>>(Convert.FromBase64String(sections[0]));
         if (header?["alg"] != "RS256" || header?["typ"] != "JWT")
         {
             // Verify the signature
             using (var rsa = RSA.Create(2048))
             {
                 // TODO: need Base64 encoding replacement
-                rsa.ImportRSAPublicKey(Base64UrlEncoder.DecodeBytes(key!.AdditionalData["k"]), out var bytesRead);
+                rsa.ImportRSAPublicKey(Convert.FromBase64String(key!.AdditionalData["k"]), out var bytesRead);
 
-                if (!rsa.VerifyData(Base64UrlEncoder.DecodeBytes($"{sections[0]}.{sections[1]}"),
-                        Base64UrlEncoder.DecodeBytes(sections[2]),
+                if (!rsa.VerifyData(Convert.FromBase64String($"{sections[0]}.{sections[1]}"),
+                        Convert.FromBase64String(sections[2]),
                         HashAlgorithmName.SHA256,
                         RSASignaturePadding.Pkcs1))
                 {
@@ -219,7 +218,7 @@ internal sealed class JwtAlgRS256 : IJwtAlgorithm
             }
         }
         var data = new Jwt(new JwtHeader(header!));
-        data.Payload = Base64UrlEncoder.Decode(sections[1]);
+        data.Payload = Encoding.UTF8.GetString(Convert.FromBase64String(sections[1]));
         return Task.FromResult<Jwt?>(data);
     }
 

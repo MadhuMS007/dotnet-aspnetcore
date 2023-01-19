@@ -36,7 +36,7 @@ internal sealed class Jwt
     /// <summary>
     /// The payload of the token.
     /// </summary>
-    public string? Payload { get; set; }
+    public string Payload { get; set; } = string.Empty;
 
     // The signature is computed from the header and payload
 

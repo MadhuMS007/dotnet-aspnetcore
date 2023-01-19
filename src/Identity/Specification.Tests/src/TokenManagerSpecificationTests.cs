@@ -5,14 +5,12 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using System.Text;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 using Xunit;
 
 namespace Microsoft.AspNetCore.Identity.Test;
@@ -657,11 +655,8 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
         string publicKey, privateKey;
         using (var rsa = RSA.Create(2048))
         {
-            privateKey = Base64UrlEncoder.Encode(rsa.ExportRSAPrivateKey());
-
-            var sig = Base64UrlEncoder.Encode(rsa.Encrypt(Encoding.UTF8.GetBytes("hao"), RSAEncryptionPadding.OaepSHA256));
-            Assert.NotNull(sig);
-            publicKey = Base64UrlEncoder.Encode(rsa.ExportRSAPublicKey());
+            privateKey = Convert.ToBase64String(rsa.ExportRSAPrivateKey());
+            publicKey = Convert.ToBase64String(rsa.ExportRSAPublicKey());
         }
 
         var keyId = Guid.NewGuid().ToString();

@@ -1,4 +1,6 @@
 #nullable enable
+const Microsoft.AspNetCore.Identity.JWSAlg.HS256 = "HS256" -> string!
+const Microsoft.AspNetCore.Identity.JWSAlg.RS256 = "RS256" -> string!
 Microsoft.AspNetCore.Identity.BearerSchemeOptions
 Microsoft.AspNetCore.Identity.BearerSchemeOptions.BearerSchemeOptions() -> void
 Microsoft.AspNetCore.Identity.BearerServiceCollectionExtensions
@@ -95,7 +97,6 @@ static Microsoft.AspNetCore.Identity.BearerServiceCollectionExtensions.AddDefaul
 static Microsoft.AspNetCore.Identity.BearerServiceCollectionExtensions.AddIdentityCore<TUser, TToken>(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<Microsoft.AspNetCore.Identity.IdentityOptions!>! setupAction) -> Microsoft.AspNetCore.Identity.IdentityBearerTokenBuilder!
 static Microsoft.Extensions.DependencyInjection.BearerBuilderExtensions.AddBearerTokens<TToken>(this Microsoft.AspNetCore.Identity.IdentityBuilder! builder) -> Microsoft.AspNetCore.Identity.IdentityBearerTokenBuilder!
 static Microsoft.Extensions.DependencyInjection.BearerBuilderExtensions.AddTokenStore<TContext>(this Microsoft.AspNetCore.Identity.IdentityBuilder! builder) -> Microsoft.AspNetCore.Identity.IdentityBuilder!
-static readonly Microsoft.AspNetCore.Identity.JWSAlg.HS256 -> string!
 static readonly Microsoft.AspNetCore.Identity.JWSAlg.None -> string!
 virtual Microsoft.AspNetCore.Identity.TokenManager<TToken>.CancellationToken.get -> System.Threading.CancellationToken
 virtual Microsoft.AspNetCore.Identity.TokenManager<TToken>.CheckTokenStatus(string! status) -> bool
