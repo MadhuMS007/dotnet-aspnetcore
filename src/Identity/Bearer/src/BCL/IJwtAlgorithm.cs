@@ -146,7 +146,7 @@ internal abstract class JwtAlg : IJwtAlgorithm
         => signature == ComputeSignature(encodedHeaderPayload, key);
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
-    public Task<Jwt?> ReadJwtAsync(string jwtToken, JsonWebKey? key)
+    public virtual Task<Jwt?> ReadJwtAsync(string jwtToken, JsonWebKey? key)
     {
         if (key == null)
         {
@@ -207,7 +207,8 @@ internal sealed class JwtAlgRS256 : JwtAlg
         using (var rsa = RSA.Create(2048))
         {
             rsa.ImportRSAPublicKey(WebEncoders.Base64UrlDecode(key!.AdditionalData["k"]), out var bytesRead);
-            return rsa.VerifyData(WebEncoders.Base64UrlDecode(encodedHeaderPayload),
+            var headerBytes = Encoding.Unicode.GetBytes(encodedHeaderPayload);
+            return rsa.VerifyData(headerBytes,
                     WebEncoders.Base64UrlDecode(signature),
                     HashAlgorithmName.SHA256,
                     RSASignaturePadding.Pkcs1);
