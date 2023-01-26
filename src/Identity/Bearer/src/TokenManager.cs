@@ -41,10 +41,6 @@ public class TokenManager<TToken> : IDisposable
         Store = store ?? throw new ArgumentNullException(nameof(store));
         ErrorDescriber = errors;
         Logger = logger;
-
-        // TODO: Move these to registered named options?
-        _keyFormatProviders[JsonKeySerializer.ProviderId] = new JsonKeySerializer();
-        _keyFormatProviders[Base64KeySerializer.ProviderId] = new Base64KeySerializer();
     }
 
     /// <summary>
@@ -152,36 +148,6 @@ public class TokenManager<TToken> : IDisposable
     /// <returns>true if the token is should be allowed.</returns>
     protected virtual bool CheckTokenStatus(string status)
         => status == TokenStatus.Active;
-
-    private readonly IDictionary<string, IIdentityKeyDataSerializer> _keyFormatProviders = new Dictionary<string, IIdentityKeyDataSerializer>();
-
-    // TODO: move these
-    internal virtual async Task AddSigningKeyAsync(string keyProvider, SigningKeyInfo key)
-    {
-        if (!_keyFormatProviders.ContainsKey(keyProvider))
-        {
-            throw new InvalidOperationException($"Unknown format {keyProvider}.");
-        }
-        var provider = _keyFormatProviders[keyProvider];
-        var keyData = provider.Serialize(key);
-
-        await ((IKeyStore)Store).AddAsync(key.Id, provider.ProviderId, provider.Format, keyData, CancellationToken);
-    }
-
-    internal virtual async Task<SigningKeyInfo?> GetSigningKeyAsync(string keyId)
-    {
-        var keyData = await ((IKeyStore)Store).FindByIdAsync(keyId, CancellationToken);
-        if (keyData == null)
-        {
-            return null;
-        }
-        if (!_keyFormatProviders.ContainsKey(keyData.ProviderId))
-        {
-            throw new InvalidOperationException($"Unknown format {keyData.Format}.");
-        }
-        var provider = _keyFormatProviders[keyData.ProviderId];
-        return provider.Deserialize(keyData);
-    }
 
     /// <summary>
     /// Releases the unmanaged resources used by the role manager and optionally releases the managed resources.

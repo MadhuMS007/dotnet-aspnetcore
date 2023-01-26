@@ -11,7 +11,7 @@ namespace Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 /// </summary>
 /// <typeparam name="TToken">The type representing a token.</typeparam>
 /// <typeparam name="TContext">The type of the data context class used to access the store.</typeparam>
-public class TokenStore<TToken, TContext> : ITokenStore<TToken>, IKeyStore
+public class TokenStore<TToken, TContext> : ITokenStore<TToken>
     where TToken : IdentityStoreToken
     where TContext : DbContext
 {
@@ -311,52 +311,4 @@ public class TokenStore<TToken, TContext> : ITokenStore<TToken>, IKeyStore
     /// </summary>
     public void Dispose()
         => _disposed = true;
-
-    async Task<IdentityResult> IKeyStore.AddAsync(string keyId, string providerId, string format, string data, CancellationToken cancellationToken)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        ThrowIfDisposed();
-        var key = new KeyInfo()
-        {
-            Id = keyId,
-            ProviderId = providerId,
-            Format = format,
-            Data = data,
-            Created = DateTimeOffset.UtcNow
-        };
-        Context.Add(key);
-        await SaveChanges(cancellationToken);
-        return IdentityResult.Success;
-    }
-
-    async Task<KeyInfo?> IKeyStore.FindByIdAsync(string keyId, CancellationToken cancellationToken)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        ThrowIfDisposed();
-
-        return await Context.Set<KeyInfo>().FindAsync(new object?[] { keyId }, cancellationToken: cancellationToken);
-    }
-
-    /// <inheritdoc/>
-    async Task<IdentityResult> IKeyStore.RemoveAsync(string keyId, CancellationToken cancellationToken)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        ThrowIfDisposed();
-
-        var key = Context.Set<KeyInfo>().Find(keyId);
-        if (key == null)
-        {
-            return IdentityResult.Success;
-        }
-        Context.Remove(key);
-        try
-        {
-            await SaveChanges(cancellationToken);
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            return IdentityResult.Failed(ErrorDescriber.ConcurrencyFailure());
-        }
-        return IdentityResult.Success;
-    }
 }

@@ -1,14 +1,8 @@
 #nullable enable
+const Microsoft.AspNetCore.Identity.JWEAlg.RSA_OAEP = "RSA-OAEP" -> string!
 const Microsoft.AspNetCore.Identity.JWSAlg.HS256 = "HS256" -> string!
+const Microsoft.AspNetCore.Identity.JWSAlg.None = "none" -> string!
 const Microsoft.AspNetCore.Identity.JWSAlg.RS256 = "RS256" -> string!
-Microsoft.AspNetCore.Identity.BaseKey
-Microsoft.AspNetCore.Identity.BaseKey.ActivationDate.get -> System.DateTimeOffset
-Microsoft.AspNetCore.Identity.BaseKey.BaseKey(byte[]! data, System.DateTimeOffset expirationDate, string? keyId = null, System.DateTimeOffset? activationDate = null, System.DateTimeOffset? creationDate = null) -> void
-Microsoft.AspNetCore.Identity.BaseKey.CreationDate.get -> System.DateTimeOffset
-Microsoft.AspNetCore.Identity.BaseKey.Data.get -> byte[]!
-Microsoft.AspNetCore.Identity.BaseKey.ExpirationDate.get -> System.DateTimeOffset
-Microsoft.AspNetCore.Identity.BaseKey.IsRevoked.get -> bool
-Microsoft.AspNetCore.Identity.BaseKey.KeyId.get -> string!
 Microsoft.AspNetCore.Identity.BearerSchemeOptions
 Microsoft.AspNetCore.Identity.BearerSchemeOptions.BearerSchemeOptions() -> void
 Microsoft.AspNetCore.Identity.BearerServiceCollectionExtensions
@@ -24,19 +18,6 @@ Microsoft.AspNetCore.Identity.IdentityBearerOptions.SigningCredentials.get -> Mi
 Microsoft.AspNetCore.Identity.IdentityBearerOptions.SigningCredentials.set -> void
 Microsoft.AspNetCore.Identity.IdentityBearerOptions.UseDataProtection.get -> bool
 Microsoft.AspNetCore.Identity.IdentityBearerOptions.UseDataProtection.set -> void
-Microsoft.AspNetCore.Identity.IKey
-Microsoft.AspNetCore.Identity.IKey.ActivationDate.get -> System.DateTimeOffset
-Microsoft.AspNetCore.Identity.IKey.CreationDate.get -> System.DateTimeOffset
-Microsoft.AspNetCore.Identity.IKey.Data.get -> byte[]!
-Microsoft.AspNetCore.Identity.IKey.ExpirationDate.get -> System.DateTimeOffset
-Microsoft.AspNetCore.Identity.IKey.IsRevoked.get -> bool
-Microsoft.AspNetCore.Identity.IKey.KeyId.get -> string!
-Microsoft.AspNetCore.Identity.IKeySource
-Microsoft.AspNetCore.Identity.IKeySource.LoadKeysAsync() -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<Microsoft.AspNetCore.Identity.IKey!>!>!
-Microsoft.AspNetCore.Identity.ITokenKeyRing
-Microsoft.AspNetCore.Identity.ITokenKeyRing.GetAllKeysAsync() -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<Microsoft.AspNetCore.Identity.TokenKey!>!>!
-Microsoft.AspNetCore.Identity.ITokenKeyRing.GetCurrentKeyAsync() -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.TokenKey!>!
-Microsoft.AspNetCore.Identity.ITokenKeyRing.GetKeyAsync(string! keyId) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.TokenKey!>!
 Microsoft.AspNetCore.Identity.IUserTokenService<TUser>
 Microsoft.AspNetCore.Identity.IUserTokenService<TUser>.GetAccessTokenAsync(TUser! user) -> System.Threading.Tasks.Task<string!>!
 Microsoft.AspNetCore.Identity.IUserTokenService<TUser>.GetRefreshTokenAsync(TUser! user) -> System.Threading.Tasks.Task<string!>!
@@ -70,6 +51,7 @@ Microsoft.AspNetCore.Identity.JtiBlocker.JtiBlocker(Microsoft.Extensions.Options
 Microsoft.AspNetCore.Identity.JtiBlockerOptions
 Microsoft.AspNetCore.Identity.JtiBlockerOptions.BlockedJti.get -> System.Collections.Generic.HashSet<string!>!
 Microsoft.AspNetCore.Identity.JtiBlockerOptions.JtiBlockerOptions() -> void
+Microsoft.AspNetCore.Identity.JWEAlg
 Microsoft.AspNetCore.Identity.JWSAlg
 Microsoft.AspNetCore.Identity.JwtBuilder
 Microsoft.AspNetCore.Identity.JwtBuilder.Algorithm.get -> string!
@@ -83,25 +65,13 @@ Microsoft.AspNetCore.Identity.JwtBuilder.Issuer.get -> string!
 Microsoft.AspNetCore.Identity.JwtBuilder.Issuer.set -> void
 Microsoft.AspNetCore.Identity.JwtBuilder.Jti.get -> string?
 Microsoft.AspNetCore.Identity.JwtBuilder.Jti.set -> void
-Microsoft.AspNetCore.Identity.JwtBuilder.JwtBuilder(string! algorithm, string! issuer, Microsoft.AspNetCore.Identity.JsonWebKey! signingKey, string! audience, string! subject, System.Collections.Generic.IDictionary<string!, string!>! payload, System.DateTimeOffset notBefore, System.DateTimeOffset expires) -> void
+Microsoft.AspNetCore.Identity.JwtBuilder.JwtBuilder(string! algorithm, string! issuer, Microsoft.AspNetCore.Identity.JsonWebKey? signingKey, string! audience, string! subject, System.Collections.Generic.IDictionary<string!, string!>! payload, System.DateTimeOffset notBefore, System.DateTimeOffset expires) -> void
 Microsoft.AspNetCore.Identity.JwtBuilder.NotBefore.get -> System.DateTimeOffset
 Microsoft.AspNetCore.Identity.JwtBuilder.NotBefore.set -> void
 Microsoft.AspNetCore.Identity.JwtBuilder.PayloadProtector.get -> Microsoft.AspNetCore.DataProtection.IDataProtector?
 Microsoft.AspNetCore.Identity.JwtBuilder.PayloadProtector.set -> void
-Microsoft.AspNetCore.Identity.JwtBuilder.SigningKey.get -> Microsoft.AspNetCore.Identity.JsonWebKey!
+Microsoft.AspNetCore.Identity.JwtBuilder.SigningKey.get -> Microsoft.AspNetCore.Identity.JsonWebKey?
 Microsoft.AspNetCore.Identity.JwtBuilder.SigningKey.set -> void
-Microsoft.AspNetCore.Identity.KeyRingOptions
-Microsoft.AspNetCore.Identity.KeyRingOptions.KeyRingOptions() -> void
-Microsoft.AspNetCore.Identity.KeyRingOptions.KeySources.get -> System.Collections.Generic.IList<Microsoft.AspNetCore.Identity.IKeySource!>!
-Microsoft.AspNetCore.Identity.KeyRingOptions.KeySources.set -> void
-Microsoft.AspNetCore.Identity.TokenKey
-Microsoft.AspNetCore.Identity.TokenKey.Created.get -> System.DateTimeOffset
-Microsoft.AspNetCore.Identity.TokenKey.Created.set -> void
-Microsoft.AspNetCore.Identity.TokenKey.Id.get -> string!
-Microsoft.AspNetCore.Identity.TokenKey.Id.set -> void
-Microsoft.AspNetCore.Identity.TokenKey.Key.get -> string!
-Microsoft.AspNetCore.Identity.TokenKey.Key.set -> void
-Microsoft.AspNetCore.Identity.TokenKey.TokenKey(string! id, string! key, System.DateTimeOffset created) -> void
 Microsoft.AspNetCore.Identity.TokenManager<TToken>
 Microsoft.AspNetCore.Identity.TokenManager<TToken>.Dispose() -> void
 Microsoft.AspNetCore.Identity.TokenManager<TToken>.ErrorDescriber.get -> Microsoft.AspNetCore.Identity.IdentityErrorDescriber!
@@ -118,7 +88,6 @@ static Microsoft.AspNetCore.Identity.BearerServiceCollectionExtensions.AddDefaul
 static Microsoft.AspNetCore.Identity.BearerServiceCollectionExtensions.AddIdentityCore<TUser, TToken>(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<Microsoft.AspNetCore.Identity.IdentityOptions!>! setupAction) -> Microsoft.AspNetCore.Identity.IdentityBearerTokenBuilder!
 static Microsoft.Extensions.DependencyInjection.BearerBuilderExtensions.AddBearerTokens<TToken>(this Microsoft.AspNetCore.Identity.IdentityBuilder! builder) -> Microsoft.AspNetCore.Identity.IdentityBearerTokenBuilder!
 static Microsoft.Extensions.DependencyInjection.BearerBuilderExtensions.AddTokenStore<TContext>(this Microsoft.AspNetCore.Identity.IdentityBuilder! builder) -> Microsoft.AspNetCore.Identity.IdentityBuilder!
-static readonly Microsoft.AspNetCore.Identity.JWSAlg.None -> string!
 virtual Microsoft.AspNetCore.Identity.TokenManager<TToken>.CancellationToken.get -> System.Threading.CancellationToken
 virtual Microsoft.AspNetCore.Identity.TokenManager<TToken>.CheckTokenStatus(string! status) -> bool
 virtual Microsoft.AspNetCore.Identity.TokenManager<TToken>.Dispose(bool disposing) -> void

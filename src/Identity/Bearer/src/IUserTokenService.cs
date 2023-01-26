@@ -1,7 +1,6 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.Linq;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.DataProtection;
@@ -275,12 +274,12 @@ internal interface ITokenFormatManager
 // Maybe just merge into UserTokenService??
 internal class TokenFormatManager : ITokenFormatManager
 {
-    public TokenFormatManager(KeyRingManager keys, IOptions<TokenManagerOptions> options, IOptionsMonitor<TokenFormatOptions> formatOptions, IOptions<IdentityBearerOptions> bearerOptions, IDataProtectionProvider dp)
+    public TokenFormatManager(IOptions<TokenManagerOptions> options, IOptionsMonitor<TokenFormatOptions> formatOptions, IDataProtectionProvider dp)
     {
         Options = options.Value;
 
         // TODO: This should move to options config
-        Options.FormatProviderMap[TokenFormat.JWT] = new JwtTokenFormat(keys, formatOptions.Get(TokenFormat.JWT), dp, bearerOptions.Value.Issuer!, bearerOptions.Value.Audiences.LastOrDefault()!);
+        Options.FormatProviderMap[TokenFormat.JWT] = new DefaultTokenFormat(formatOptions.Get(TokenFormat.JWT), dp);
         Options.FormatProviderMap[TokenFormat.Code] = new TokenIdFormat();
 
         Options.PurposeFormatMap[TokenPurpose.RefreshToken] = TokenFormat.Code;

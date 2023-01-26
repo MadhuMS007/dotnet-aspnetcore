@@ -72,51 +72,10 @@ public static class BearerServiceCollectionExtensions
             .AddCookie(IdentityConstants.BearerCookieScheme)
             .AddScheme<BearerSchemeOptions, IdentityBearerHandler>(IdentityConstants.BearerScheme, o => { });
 
-        services.AddOptions<IdentityBearerOptions>().Configure<IAuthenticationConfigurationProvider>((o, cp) =>
-        {
-            // We're reading the authentication configuration for the Bearer scheme
-            var bearerSection = cp.GetSchemeConfiguration(IdentityConstants.BearerScheme);
-
-            // An example of what the expected schema looks like
-            // "Authentication": {
-            //     "Schemes": {
-            //       "Identity.Bearer": {
-            //         "Audience": "",
-            //         "Issuer": "",
-            //         "SigningKeys": [ { "Issuer": .., "Payload": base64Key, "Length": 32 } ]
-            //       }
-            //     }
-            //   }
-
-//            var section = bearerSection.GetSection("SigningKeys:0");
-
-            o.Issuer = bearerSection["Issuer"] ?? throw new InvalidOperationException("Issuer is not specified");
-            //            var signingKeyBase64 = section["Payload"] ?? throw new InvalidOperationException("Signing key is not specified");
-
-            //var signingKeyBytes = Convert.FromBase64String(signingKeyBase64);
-
-            // An example of what the expected signing keys (JWKs) looks like
-            //"SigningCredentials": {
-            //  "kty": "oct",
-            //  "alg": "HS256",
-            //  "kid": "randomguid",
-            //  "k": "(G+KbPeShVmYq3t6w9z$C&F)J@McQfTj"
-            //}
-
-            // TODO: should this support a JWKS (set of keys?)
-            // TODO: This should go into some other key manager API
-            var jwkSection = bearerSection.GetRequiredSection("SigningCredentials");
-            o.SigningCredentials = jwkSection.Get<JsonWebKey>();
-
-            //o.SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(signingKeyBytes),
-            //        SecurityAlgorithms.HmacSha256Signature);
-
-            // TODO: Resolve multiple audiences read vs write??
-            o.Audiences = bearerSection.GetSection("Audiences").GetChildren()
-                        .Where(s => !string.IsNullOrEmpty(s.Value))
-                        .Select(s => s.Value!)
-                        .ToList();
-        });
+        // TODO: do we need to read anything from config?
+        //services.AddOptions<IdentityBearerOptions>().Configure<IAuthenticationConfigurationProvider>((o, cp) =>
+        //{
+        //});
 
         services.Configure<IdentityOptions>(o => o.Stores.SchemaVersion = IdentityVersions.Version2);
         return services.AddIdentityCore<TUser, TToken>(setupAction).IdentityBuilder;

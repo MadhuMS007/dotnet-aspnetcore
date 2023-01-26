@@ -6,6 +6,7 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
@@ -50,30 +51,18 @@ internal class TodoApplication : WebApplicationFactory<Program>
         }));
     }
 
-    internal class ActualKeySource : IKeySource
-    {
-        private readonly IKey _key;
-        public ActualKeySource(IKey key) => _key = key;
-
-        public Task<IEnumerable<IKey>> LoadKeysAsync()
-            => Task.FromResult<IEnumerable<IKey>>(new[] { _key });
-    }
-
     protected override IHost CreateHost(IHostBuilder builder)
     {
         // Open the connection, this creates the SQLite in-memory database, which will persist until the connection is closed
         _sqliteConnection.Open();
 
-        // We need to configure signing keys for CI scenarios where
-        // there's no user-jwts tool
-        var keyBytes = new byte[32];
-        RandomNumberGenerator.Fill(keyBytes);
-        var base64Key = Convert.ToBase64String(keyBytes);
-
         builder.ConfigureServices(services =>
         {
             // We're going to use the factory from our tests
             services.AddDbContextFactory<TodoDbContext>();
+
+            // Throw away dataprotection
+            services.AddSingleton<IDataProtectionProvider, EphemeralDataProtectionProvider>();
 
             // We need to replace the configuration for the DbContext to use a different configured database
             services.AddDbContextOptions<TodoDbContext>(o => o.UseSqlite(_sqliteConnection));
@@ -87,18 +76,6 @@ internal class TodoApplication : WebApplicationFactory<Program>
                 o.Password.RequiredLength = 1;
                 o.Password.RequireLowercase = false;
                 o.Password.RequireUppercase = false;
-            });
-
-            // Add the key to the default key ring
-            services.AddOptions<KeyRingOptions>().Configure(o => o.KeySources.Add(new ActualKeySource(new BaseKey(keyBytes, DateTimeOffset.UtcNow.AddDays(1)))));
-        });
-
-        builder.ConfigureAppConfiguration(config =>
-        {
-            config.AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["Authentication:Schemes:Bearer:SigningKeys:0:Issuer"] = "dotnet-user-jwts",
-                ["Authentication:Schemes:Bearer:SigningKeys:0:Value"] = base64Key
             });
         });
 

@@ -41,15 +41,6 @@ internal class DefaultAccessTokenValidator<TUser> : IAccessTokenValidator
             return null;
         }
 
-        //// check for revocation is done by looking for a token record that has invalid status
-        //// TODO: add revocation strategies/logic
-        //var storageToken = await FindByIdAsync<object>(tokenInfo.Id);
-        //if (storageToken != null && storageToken.Status != TokenStatus.Active)
-        //{
-        //    // It's okay if the token isn't found, but it must have active status if exists.
-        //    return null;
-        //}
-
         var payloadDict = tokenInfo.Payload as IDictionary<string, string>;
         if (payloadDict == null)
         {

@@ -5,10 +5,8 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.DataProtection;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -37,8 +35,6 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
     /// Error describer.
     /// </summary>
     protected readonly IdentityErrorDescriber _errorDescriber = new IdentityErrorDescriber();
-    private readonly string Issuer = "dotnet-user-jwts";
-    private readonly string Audience = "<audience>";
 
     /// <summary>
     /// Configure the service collection used for tests.
@@ -76,8 +72,6 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
         services.AddSingleton<IConfiguration>(new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string>
             {
-                ["Authentication:Schemes:Identity.Bearer:Issuer"] = Issuer,
-                ["Authentication:Schemes:Identity.Bearer:Audiences:0"] = Audience,
                 ["Authentication:Schemes:Identity.Bearer:SigningCredentials:kty"] = "oct",
                 ["Authentication:Schemes:Identity.Bearer:SigningCredentials:alg"] = "HS256",
                 ["Authentication:Schemes:Identity.Bearer:SigningCredentials:kid"] = "someguid",
@@ -88,9 +82,6 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
         var keyBytes = new byte[32];
         RandomNumberGenerator.Fill(keyBytes);
         var base64Key = Convert.ToBase64String(keyBytes);
-
-        // Add the key to the default key ring
-        services.AddOptions<KeyRingOptions>().Configure(o => o.KeySources.Add(new ActualKeySource(new BaseKey(keyBytes, DateTimeOffset.UtcNow.AddDays(1)))));
 
         services.AddAuthentication();
         services.AddDataProtection();
@@ -148,13 +139,10 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
     /// Test.
     /// </summary>
     /// <returns>Task</returns>
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public async Task AccessTokenFormat(bool useDataProtection)
+    [Fact]
+    public async Task AccessTokenFormat()
     {
-        var sp = CreateTestServices(configureServices:
-            s => s.Configure<IdentityBearerOptions>(o => o.UseDataProtection = useDataProtection));
+        var sp = CreateTestServices();
         var manager = sp.GetService<TokenManager<IdentityStoreToken>>();
         var userManager = sp.GetService<UserManager<TUser>>();
         var tokenService = sp.GetService<IUserTokenService<TUser>>();
@@ -180,8 +168,6 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
         {
             Assert.Contains(principal.Claims, c => c.Type == cl.Type && c.Value == cl.Value);
         }
-        EnsureClaim(principal, "iss", Issuer);
-        EnsureClaim(principal, "aud", Audience);
         EnsureClaim(principal, "sub", userId);
 
         Assert.NotNull(principal.Claims.FirstOrDefault(c => c.Type == TokenClaims.Jti));
@@ -191,13 +177,10 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
     /// Test.
     /// </summary>
     /// <returns>Task</returns>
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public async Task AccessTokenDuplicateClaimsFormat(bool useDataProtection)
+    [Fact]
+    public async Task AccessTokenDuplicateClaimsFormat()
     {
-        var sp = CreateTestServices(configureServices:
-            s => s.Configure<IdentityBearerOptions>(o => o.UseDataProtection = useDataProtection));
+        var sp = CreateTestServices();
         var manager = sp.GetService<TokenManager<IdentityStoreToken>>();
         var userManager = sp.GetService<UserManager<TUser>>();
         var tokenService = sp.GetService<IUserTokenService<TUser>>();
@@ -223,8 +206,6 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
         Assert.NotNull(principal);
         EnsureClaim(principal, "custom", "value2");
         EnsureClaim(principal, "custom2", "value2");
-        EnsureClaim(principal, "iss", Issuer);
-        EnsureClaim(principal, "aud", Audience);
         EnsureClaim(principal, "sub", userId);
 
         Assert.NotNull(principal.Claims.FirstOrDefault(c => c.Type == TokenClaims.Jti));
@@ -304,15 +285,12 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
     /// Test.
     /// </summary>
     /// <returns>Task</returns>
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public async Task CanStoreAccessTokens(bool useDataProtection)
+    [Fact]
+    public async Task CanStoreAccessTokens()
     {
         var sp = CreateTestServices(configureServices:
             s =>
             {
-                s.Configure<IdentityBearerOptions>(o => o.UseDataProtection = useDataProtection);
                 s.Configure<IdentityOptions>(o => o.TokenManager.StoreAccessTokens = true);
             });
         var manager = sp.GetService<TokenManager<IdentityStoreToken>>();
@@ -340,8 +318,6 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
         {
             Assert.Contains(principal.Claims, c => c.Type == cl.Type && c.Value == cl.Value);
         }
-        EnsureClaim(principal, "iss", Issuer);
-        EnsureClaim(principal, "aud", Audience);
         EnsureClaim(principal, "sub", userId);
 
         var jti = principal.Claims.FirstOrDefault(c => c.Type == TokenClaims.Jti)?.Value;
@@ -357,7 +333,7 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
         Assert.NotNull(payload["AspNet.Identity.SecurityStamp"]);
     }
 
-    private class AccessTokenChecker : IAccessTokenDenyPolicy
+    private sealed class AccessTokenChecker : IAccessTokenDenyPolicy
     {
         private readonly TokenManager<IdentityStoreToken> _tokenManager;
 
@@ -379,16 +355,13 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
     /// </summary>
     /// <returns>Task</returns>
     [Theory]
-    [InlineData(true, true)]
-    [InlineData(false, true)]
-    [InlineData(true, false)]
-    [InlineData(false, false)]
-    public async Task CannotRevokeAccessTokenDefault(bool useDataProtection, bool storeTokens)
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task CannotRevokeAccessTokenDefault(bool storeTokens)
     {
         var sp = CreateTestServices(configureServices:
             s =>
             {
-                s.Configure<IdentityBearerOptions>(o => o.UseDataProtection = useDataProtection);
                 s.Configure<IdentityOptions>(o => o.TokenManager.StoreAccessTokens = storeTokens);
             });
         var manager = sp.GetService<TokenManager<IdentityStoreToken>>();
@@ -418,15 +391,12 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
     /// Test.
     /// </summary>
     /// <returns>Task</returns>
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public async Task CanCheckAccessPerRequest(bool useDataProtection)
+    [Fact]
+    public async Task CanCheckAccessPerRequest()
     {
         var sp = CreateTestServices(configureServices:
             s =>
             {
-                s.Configure<IdentityBearerOptions>(o => o.UseDataProtection = useDataProtection);
                 s.Configure<IdentityOptions>(o => o.TokenManager.StoreAccessTokens = true);
                 s.AddSingleton<IAccessTokenDenyPolicy, AccessTokenChecker>();
             });
@@ -457,16 +427,13 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
     /// </summary>
     /// <returns>Task</returns>
     [Theory]
-    [InlineData(true, true)]
-    [InlineData(false, true)]
-    [InlineData(true, false)]
-    [InlineData(false, false)]
-    public async Task CanFindAllUserAccessTokensIfStored(bool useDataProtection, bool storeTokens)
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task CanFindAllUserAccessTokensIfStored(bool storeTokens)
     {
         var sp = CreateTestServices(configureServices:
             s =>
             {
-                s.Configure<IdentityBearerOptions>(o => o.UseDataProtection = useDataProtection);
                 s.Configure<IdentityOptions>(o => o.TokenManager.StoreAccessTokens = storeTokens);
             });
         var manager = sp.GetService<TokenManager<IdentityStoreToken>>();
@@ -505,17 +472,14 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
     /// Test.
     /// </summary>
     /// <returns>Task</returns>
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public async Task CanRevokeAccessTokens(bool useDataProtection)
+    [Fact]
+    public async Task CanRevokeAccessTokens()
     {
         var blockerOptions = new JtiBlockerOptions();
         var blocker = new JtiBlocker(Options.Create(blockerOptions));
         var sp = CreateTestServices(configureServices: s =>
         {
             s.AddSingleton<IAccessTokenDenyPolicy>(blocker);
-            s.Configure<IdentityBearerOptions>(o => o.UseDataProtection = useDataProtection);
         });
         var manager = sp.GetService<TokenManager< IdentityStoreToken>>();
         var userManager = sp.GetService<UserManager<TUser>>();
@@ -531,8 +495,6 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
         var principal = await validator.ValidateAsync(token);
 
         Assert.NotNull(principal);
-        EnsureClaim(principal, "iss", Issuer);
-        EnsureClaim(principal, "aud", Audience);
         EnsureClaim(principal, "sub", userId);
 
         var jti = principal.Claims.FirstOrDefault(c => c.Type == TokenClaims.Jti)?.Value;
@@ -660,8 +622,6 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
     [Fact]
     public async Task CanDoRS256()
     {
-        var manager = CreateManager();
-
         string publicKey, privateKey;
         using (var rsa = RSA.Create(2048))
         {
@@ -677,17 +637,6 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
             ["kid"] = keyId,
             ["k"] = publicKey
         };
-        var jwk = new JsonSigningKey(keyId, data);
-
-        await manager.AddSigningKeyAsync(JsonKeySerializer.ProviderId, jwk);
-
-        var key = await manager.GetSigningKeyAsync(keyId);
-
-        Assert.NotNull(key);
-        foreach (var k in data.Keys)
-        {
-            Assert.Equal(data[k], key[k]);
-        }
 
         var privateJwk = new JsonWebKey("oct");
         privateJwk.Alg = "RS256";
@@ -702,57 +651,5 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
         var reader = new JwtReader(JWSAlg.RS256, "i", publicJwk, new string[] { "a" });
         var tok = await reader.ReadAsync(jwt);
         Assert.NotNull(tok);
-    }
-
-    /// <summary>
-    /// Test.
-    /// </summary>
-    /// <returns>Task</returns>
-    [Fact]
-    public async Task CanStoreJWK()
-    {
-        var manager = CreateManager();
-
-        var keyId = Guid.NewGuid().ToString();
-        var data = new Dictionary<string, string>();
-        data["kty"] = "oct";
-        data["alg"] = "HS256";
-        data["kid"] = keyId;
-        data["k"] = "(G+KbPeShVmYq3t6w9z$C&F)J@McQfTj";
-        var jwk = new JsonSigningKey(keyId, data);
-
-        await manager.AddSigningKeyAsync(JsonKeySerializer.ProviderId, jwk);
-
-        var key = await manager.GetSigningKeyAsync(keyId);
-
-        Assert.NotNull(key);
-        foreach (var k in data.Keys)
-        {
-            Assert.Equal(data[k], key[k]);
-        }
-    }
-
-    /// <summary>
-    /// Test.
-    /// </summary>
-    /// <returns>Task</returns>
-    [Fact]
-    public async Task CanStoreBase64Key()
-    {
-        var manager = CreateManager();
-
-        var keyId = Guid.NewGuid().ToString();
-        var base64Key = "(G+KbPeShVmYq3t6w9z$C&F)J@McQfTj";
-        var baseKey = new Base64Key(keyId, base64Key);
-
-        await manager.AddSigningKeyAsync(Base64KeySerializer.ProviderId, baseKey);
-
-        var key = await manager.GetSigningKeyAsync(keyId);
-
-        Assert.NotNull(key);
-        foreach (var k in baseKey.Data.Keys)
-        {
-            Assert.Equal(baseKey.Data[k], key.Data[k]);
-        }
     }
 }

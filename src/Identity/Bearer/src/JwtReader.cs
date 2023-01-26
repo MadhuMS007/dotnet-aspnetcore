@@ -8,21 +8,22 @@ using Microsoft.AspNetCore.DataProtection;
 
 namespace Microsoft.AspNetCore.Identity;
 
+// TODO: Add required claims validation, exact match, required, and forbidden lists
 internal sealed class JwtReader
 {
     /// <summary>
     /// 
     /// </summary>
     /// <param name="algorithm"></param>
-    /// <param name="issuer"></param>
+    /// <param name="validIssuer"></param>
     /// <param name="signingKey"></param>
-    /// <param name="audiences"></param>
-    public JwtReader(string algorithm, string issuer, JsonWebKey signingKey, IList<string> audiences)
+    /// <param name="validAudiences"></param>
+    public JwtReader(string algorithm, string? validIssuer = null, JsonWebKey? signingKey = null, IList<string>? validAudiences = null)
     {
         Algorithm = algorithm;
-        Issuer = issuer;
+        ValidIssuer = validIssuer;
         SigningKey = signingKey;
-        Audiences = audiences;
+        ValidAudiences = validAudiences;
     }
 
     /// <summary>
@@ -33,17 +34,17 @@ internal sealed class JwtReader
     /// <summary>
     /// The Issuer for the JWT.
     /// </summary>
-    public string Issuer { get; set; }
+    public string? ValidIssuer { get; set; }
 
     /// <summary>
     /// The signing key to use.
     /// </summary>
-    public JsonWebKey SigningKey { get; set; }
+    public JsonWebKey? SigningKey { get; set; }
 
     /// <summary>
     /// The intended audiences for the JWT.
     /// </summary>
-    public IList<string> Audiences { get; set; }
+    public IList<string>? ValidAudiences { get; set; }
 
     /// <summary>
     /// IF set, the payload will be additional unprotected with dataprotection
@@ -87,18 +88,21 @@ internal sealed class JwtReader
     private static DateTimeOffset FromUtcTicks(string utcTicks)
         => new DateTimeOffset(long.Parse(utcTicks, CultureInfo.InvariantCulture), TimeSpan.Zero);
 
+    private bool ValidateIssuer(IDictionary<string, string> payload)
+        => ValidIssuer == null || SafeGet(payload, "iss") == ValidIssuer;
+
     // Make sure that the payload is valid and not expired
     private bool ValidatePayload(IDictionary<string, string> payload)
     {
-        var issuer = SafeGet(payload, "iss");
-        if (issuer != Issuer)
+        if (!ValidateIssuer(payload))
         {
             return false;
         }
 
         // REVIEW: more than one valid?
         var audience = SafeGet(payload, "aud");
-        if (audience != null && !Audiences.Contains(audience))
+        if (ValidAudiences != null &&
+            (audience == null || !ValidAudiences.Contains(audience)))
         {
             return false;
         }

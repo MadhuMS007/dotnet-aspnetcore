@@ -23,7 +23,7 @@ public class JwtBuilder : TokenBuilder
     /// <param name="payload"></param>
     /// <param name="notBefore"></param>
     /// <param name="expires"></param>
-    public JwtBuilder(string algorithm, string issuer, JsonWebKey signingKey, string audience, string subject, IDictionary<string, string> payload, DateTimeOffset notBefore, DateTimeOffset expires)
+    public JwtBuilder(string algorithm, string issuer, JsonWebKey? signingKey, string audience, string subject, IDictionary<string, string> payload, DateTimeOffset notBefore, DateTimeOffset expires)
         : base(subject, expires, payload)
     {
         Algorithm = algorithm;
@@ -46,7 +46,7 @@ public class JwtBuilder : TokenBuilder
     /// <summary>
     /// The signing key to use.
     /// </summary>
-    public JsonWebKey SigningKey { get; set; }
+    public JsonWebKey? SigningKey { get; set; }
 
     /// <summary>
     /// The intended audience for the JWT.
