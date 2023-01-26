@@ -26,32 +26,7 @@ public interface ITokenFormatProvider
     /// 
     /// </summary>
     /// <param name="token">The token to read.</param>
+    /// <param name="purpose">The token purpose.</param>
     /// <returns>The token info.</returns>
-    Task<TokenInfo?> ReadTokenAsync(string token);
-}
-
-/// <summary>
-/// Responsible for configuration of token formats.
-/// </summary>
-public class TokenFormatOptions
-{
-    /// <summary>
-    /// The key ring to use for signing.
-    /// </summary>
-    public string? SigningKeyRing { get; set; }
-
-    /// <summary>
-    /// The key ring to use for validation.
-    /// </summary>
-    public string? ValidationKeyRing { get; set; }
-
-    /// <summary>
-    /// Issuer for this token.
-    /// </summary>
-    public string Issuer { get; set; }
-
-    /// <summary>
-    /// If true, the token should be data protected.
-    /// </summary>
-    public bool UseDataProtection { get; set; }
+    Task<TokenInfo?> ReadTokenAsync(string token, string purpose);
 }

@@ -11,17 +11,13 @@ namespace Microsoft.AspNetCore.Identity;
 /// </summary>
 internal class DefaultTokenFormat : ITokenFormatProvider
 {
-    private readonly TokenFormatOptions _options;
-    private readonly IDataProtector? _protector;
+    private readonly IDataProtectionProvider _dp;
     private const string Issuer = "identity";
     private const string Audience = "identity";
 
-    public DefaultTokenFormat(TokenFormatOptions options, IDataProtectionProvider dp)
+    public DefaultTokenFormat(IDataProtectionProvider dp)
     {
-        _options = options;
-
-        // TODO: Should have unique protectors per token purpose and user?
-        _protector = dp.CreateProtector("DefaultTokenFormat");
+        _dp = dp;
     }
 
     public ITokenSerializer PayloadSerializer => JsonTokenSerializer.Instance;
@@ -48,15 +44,29 @@ internal class DefaultTokenFormat : ITokenFormatProvider
             expires: DateTimeOffset.UtcNow.AddMinutes(30));
         jwtBuilder.IssuedAt = DateTimeOffset.UtcNow;
         jwtBuilder.Jti = token.Id;
-        jwtBuilder.PayloadProtector = _protector;
+        jwtBuilder.PayloadProtector = _dp.CreateProtector($"Token:{token.Purpose}");
 
         return await jwtBuilder.CreateJwtAsync();
     }
 
-    public async Task<TokenInfo?> ReadTokenAsync(string token)
+    public async Task<TokenInfo?> ReadTokenAsync(string token, string purpose)
     {
         var reader = new JwtReader(JWSAlg.None);
-        reader.PayloadProtector = _protector;
+        reader.PayloadProtector = _dp.CreateProtector($"Token:{purpose}");
         return await reader.ReadAsync(token);
     }
+}
+
+/// <summary>
+/// Used when the token id is sufficient
+/// </summary>
+internal class TokenIdFormat : ITokenFormatProvider
+{
+    public ITokenSerializer PayloadSerializer => JsonTokenSerializer.Instance;
+
+    public Task<string> CreateTokenAsync(TokenInfo token)
+        => Task.FromResult(token.Id);
+
+    public Task<TokenInfo?> ReadTokenAsync(string token, string purpose)
+        => Task.FromResult<TokenInfo?>(new TokenInfo(token, "", "", "", ""));
 }

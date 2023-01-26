@@ -27,7 +27,7 @@ Microsoft.AspNetCore.Identity.IKeyStore.RemoveAsync(string! keyId, System.Thread
 Microsoft.AspNetCore.Identity.ITokenFormatProvider
 Microsoft.AspNetCore.Identity.ITokenFormatProvider.CreateTokenAsync(Microsoft.AspNetCore.Identity.TokenInfo! token) -> System.Threading.Tasks.Task<string!>!
 Microsoft.AspNetCore.Identity.ITokenFormatProvider.PayloadSerializer.get -> Microsoft.AspNetCore.Identity.ITokenSerializer!
-Microsoft.AspNetCore.Identity.ITokenFormatProvider.ReadTokenAsync(string! token) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.TokenInfo?>!
+Microsoft.AspNetCore.Identity.ITokenFormatProvider.ReadTokenAsync(string! token, string! purpose) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.TokenInfo?>!
 Microsoft.AspNetCore.Identity.ITokenSerializer
 Microsoft.AspNetCore.Identity.ITokenSerializer.Deserialize<T>(string? serializedValue) -> T?
 Microsoft.AspNetCore.Identity.ITokenSerializer.Serialize<T>(T value) -> string!
@@ -75,16 +75,6 @@ Microsoft.AspNetCore.Identity.TokenBuilder.Subject.set -> void
 Microsoft.AspNetCore.Identity.TokenBuilder.TokenBuilder(string! subject, System.DateTimeOffset expires, System.Collections.Generic.IDictionary<string!, string!>? data = null) -> void
 Microsoft.AspNetCore.Identity.TokenClaims
 Microsoft.AspNetCore.Identity.TokenFormat
-Microsoft.AspNetCore.Identity.TokenFormatOptions
-Microsoft.AspNetCore.Identity.TokenFormatOptions.Issuer.get -> string!
-Microsoft.AspNetCore.Identity.TokenFormatOptions.Issuer.set -> void
-Microsoft.AspNetCore.Identity.TokenFormatOptions.SigningKeyRing.get -> string?
-Microsoft.AspNetCore.Identity.TokenFormatOptions.SigningKeyRing.set -> void
-Microsoft.AspNetCore.Identity.TokenFormatOptions.TokenFormatOptions() -> void
-Microsoft.AspNetCore.Identity.TokenFormatOptions.UseDataProtection.get -> bool
-Microsoft.AspNetCore.Identity.TokenFormatOptions.UseDataProtection.set -> void
-Microsoft.AspNetCore.Identity.TokenFormatOptions.ValidationKeyRing.get -> string?
-Microsoft.AspNetCore.Identity.TokenFormatOptions.ValidationKeyRing.set -> void
 Microsoft.AspNetCore.Identity.TokenInfo
 Microsoft.AspNetCore.Identity.TokenInfo.Created.get -> System.DateTimeOffset?
 Microsoft.AspNetCore.Identity.TokenInfo.Created.set -> void
@@ -115,8 +105,6 @@ Microsoft.AspNetCore.Identity.TokenInfoFilter.Status.set -> void
 Microsoft.AspNetCore.Identity.TokenInfoFilter.Subject.get -> string?
 Microsoft.AspNetCore.Identity.TokenInfoFilter.Subject.set -> void
 Microsoft.AspNetCore.Identity.TokenInfoFilter.TokenInfoFilter() -> void
-Microsoft.AspNetCore.Identity.TokenIssuerOptions.SigningKeyRing.get -> string?
-Microsoft.AspNetCore.Identity.TokenIssuerOptions.SigningKeyRing.set -> void
 Microsoft.AspNetCore.Identity.TokenManagerOptions
 Microsoft.AspNetCore.Identity.TokenManagerOptions.FormatProviderMap.get -> System.Collections.Generic.IDictionary<string!, Microsoft.AspNetCore.Identity.ITokenFormatProvider!>!
 Microsoft.AspNetCore.Identity.TokenManagerOptions.FormatProviderMap.set -> void

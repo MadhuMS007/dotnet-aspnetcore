@@ -180,7 +180,7 @@ internal class UserTokenService<TUser> : IUserTokenService<TUser> where TUser : 
         // with deleted user
         (var _, var provider) = _formatManager.GetFormatProvider(TokenPurpose.RefreshToken);
 
-        var tokenInfo = await provider.ReadTokenAsync(refreshToken);
+        var tokenInfo = await provider.ReadTokenAsync(refreshToken, TokenPurpose.RefreshToken);
         if (tokenInfo == null)
         {
             return (null, null);
@@ -220,7 +220,7 @@ internal class UserTokenService<TUser> : IUserTokenService<TUser> where TUser : 
     {
         (var _, var provider) = _formatManager.GetFormatProvider(TokenPurpose.RefreshToken);
 
-        var tokenInfo = await provider.ReadTokenAsync(token);
+        var tokenInfo = await provider.ReadTokenAsync(token, TokenPurpose.RefreshToken);
         if (tokenInfo == null)
         {
             return IdentityResult.Success;
@@ -239,7 +239,7 @@ internal class UserTokenService<TUser> : IUserTokenService<TUser> where TUser : 
     public virtual async Task<TokenInfo?> ReadAccessTokenAsync(string accessToken)
     {
         (var _, var provider) = _formatManager.GetFormatProvider(TokenPurpose.AccessToken);
-        return await provider.ReadTokenAsync(accessToken).ConfigureAwait(false);
+        return await provider.ReadTokenAsync(accessToken, TokenPurpose.AccessToken).ConfigureAwait(false);
     }
 }
 
@@ -274,12 +274,12 @@ internal interface ITokenFormatManager
 // Maybe just merge into UserTokenService??
 internal class TokenFormatManager : ITokenFormatManager
 {
-    public TokenFormatManager(IOptions<TokenManagerOptions> options, IOptionsMonitor<TokenFormatOptions> formatOptions, IDataProtectionProvider dp)
+    public TokenFormatManager(IOptions<TokenManagerOptions> options, IDataProtectionProvider dp)
     {
         Options = options.Value;
 
         // TODO: This should move to options config
-        Options.FormatProviderMap[TokenFormat.JWT] = new DefaultTokenFormat(formatOptions.Get(TokenFormat.JWT), dp);
+        Options.FormatProviderMap[TokenFormat.JWT] = new DefaultTokenFormat(dp);
         Options.FormatProviderMap[TokenFormat.Code] = new TokenIdFormat();
 
         Options.PurposeFormatMap[TokenPurpose.RefreshToken] = TokenFormat.Code;

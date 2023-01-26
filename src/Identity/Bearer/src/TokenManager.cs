@@ -27,15 +27,13 @@ public class TokenManager<TToken> : IDisposable
     /// <param name="store"></param>
     /// <param name="errors">The <see cref="IdentityErrorDescriber"/> used to provider error messages.</param>
     /// <param name="logger">The logger used to log messages, warnings and errors.</param>
-    /// <param name="bearerOptions">The options which configure the bearer token such as signing key, audience, and issuer.</param>
     /// <exception cref="ArgumentNullException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
     public TokenManager(
         IOptions<IdentityOptions> identityOptions,
         ITokenStore<TToken> store,
         IdentityErrorDescriber errors,
-        ILogger<TokenManager<TToken>> logger,
-        IOptions<IdentityBearerOptions> bearerOptions)
+        ILogger<TokenManager<TToken>> logger)
     {
         Options = identityOptions.Value.TokenManager;
         Store = store ?? throw new ArgumentNullException(nameof(store));

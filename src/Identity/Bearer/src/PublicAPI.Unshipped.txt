@@ -8,16 +8,6 @@ Microsoft.AspNetCore.Identity.BearerSchemeOptions.BearerSchemeOptions() -> void
 Microsoft.AspNetCore.Identity.BearerServiceCollectionExtensions
 Microsoft.AspNetCore.Identity.IAccessTokenDenyPolicy
 Microsoft.AspNetCore.Identity.IAccessTokenDenyPolicy.IsDeniedAsync(string! tokenId) -> System.Threading.Tasks.Task<bool>!
-Microsoft.AspNetCore.Identity.IdentityBearerOptions
-Microsoft.AspNetCore.Identity.IdentityBearerOptions.Audiences.get -> System.Collections.Generic.IList<string!>!
-Microsoft.AspNetCore.Identity.IdentityBearerOptions.Audiences.set -> void
-Microsoft.AspNetCore.Identity.IdentityBearerOptions.IdentityBearerOptions() -> void
-Microsoft.AspNetCore.Identity.IdentityBearerOptions.Issuer.get -> string?
-Microsoft.AspNetCore.Identity.IdentityBearerOptions.Issuer.set -> void
-Microsoft.AspNetCore.Identity.IdentityBearerOptions.SigningCredentials.get -> Microsoft.AspNetCore.Identity.JsonWebKey?
-Microsoft.AspNetCore.Identity.IdentityBearerOptions.SigningCredentials.set -> void
-Microsoft.AspNetCore.Identity.IdentityBearerOptions.UseDataProtection.get -> bool
-Microsoft.AspNetCore.Identity.IdentityBearerOptions.UseDataProtection.set -> void
 Microsoft.AspNetCore.Identity.IUserTokenService<TUser>
 Microsoft.AspNetCore.Identity.IUserTokenService<TUser>.GetAccessTokenAsync(TUser! user) -> System.Threading.Tasks.Task<string!>!
 Microsoft.AspNetCore.Identity.IUserTokenService<TUser>.GetRefreshTokenAsync(TUser! user) -> System.Threading.Tasks.Task<string!>!
@@ -80,7 +70,7 @@ Microsoft.AspNetCore.Identity.TokenManager<TToken>.Options.get -> Microsoft.AspN
 Microsoft.AspNetCore.Identity.TokenManager<TToken>.Options.set -> void
 Microsoft.AspNetCore.Identity.TokenManager<TToken>.Store.get -> Microsoft.AspNetCore.Identity.ITokenStore<TToken!>!
 Microsoft.AspNetCore.Identity.TokenManager<TToken>.ThrowIfDisposed() -> void
-Microsoft.AspNetCore.Identity.TokenManager<TToken>.TokenManager(Microsoft.Extensions.Options.IOptions<Microsoft.AspNetCore.Identity.IdentityOptions!>! identityOptions, Microsoft.AspNetCore.Identity.ITokenStore<TToken!>! store, Microsoft.AspNetCore.Identity.IdentityErrorDescriber! errors, Microsoft.Extensions.Logging.ILogger<Microsoft.AspNetCore.Identity.TokenManager<TToken!>!>! logger, Microsoft.Extensions.Options.IOptions<Microsoft.AspNetCore.Identity.IdentityBearerOptions!>! bearerOptions) -> void
+Microsoft.AspNetCore.Identity.TokenManager<TToken>.TokenManager(Microsoft.Extensions.Options.IOptions<Microsoft.AspNetCore.Identity.IdentityOptions!>! identityOptions, Microsoft.AspNetCore.Identity.ITokenStore<TToken!>! store, Microsoft.AspNetCore.Identity.IdentityErrorDescriber! errors, Microsoft.Extensions.Logging.ILogger<Microsoft.AspNetCore.Identity.TokenManager<TToken!>!>! logger) -> void
 Microsoft.Extensions.DependencyInjection.BearerBuilderExtensions
 static Microsoft.AspNetCore.Identity.BearerServiceCollectionExtensions.AddBearerServerAuthentication(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.AspNetCore.Authentication.AuthenticationBuilder!
 static Microsoft.AspNetCore.Identity.BearerServiceCollectionExtensions.AddDefaultIdentityBearer<TUser, TToken>(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<Microsoft.AspNetCore.Identity.IdentityOptions!>! setupAction) -> Microsoft.AspNetCore.Identity.IdentityBuilder!
