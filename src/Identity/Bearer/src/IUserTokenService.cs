@@ -52,14 +52,6 @@ public interface IUserTokenService<TUser> where TUser : class
     Task<(string?, string?)> RefreshTokensAsync(string refreshToken);
 }
 
-// Scoped way to find or generate a session id for the current user/request
-internal interface IUserSessionTracker
-{
-    // This should return an existing session id if user is authenticated
-    // If request is not authenticated, this should create a new id
-    Task<string> GetSessionId();
-}
-
 internal class UserTokenService<TUser> : IUserTokenService<TUser> where TUser : class
 {
     private readonly TokenManager<IdentityStoreToken> _tokenManager;
