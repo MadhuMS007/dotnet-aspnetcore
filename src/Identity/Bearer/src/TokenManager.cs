@@ -164,10 +164,5 @@ public class TokenManager<TToken> : IDisposable
     /// Throws if this class has been disposed.
     /// </summary>
     protected void ThrowIfDisposed()
-    {
-        if (_disposed)
-        {
-            throw new ObjectDisposedException(GetType().Name);
-        }
-    }
+        => ObjectDisposedException.ThrowIf(_disposed, this);
 }

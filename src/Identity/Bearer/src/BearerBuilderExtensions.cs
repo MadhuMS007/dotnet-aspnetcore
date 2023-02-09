@@ -13,10 +13,12 @@ internal class JsonTokenSerializer : ITokenSerializer
 {
     public static JsonTokenSerializer Instance { get; private set; } = new JsonTokenSerializer();
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("AOT", "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.", Justification = "<Pending>")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
     public T? Deserialize<T>(string? serializedValue)
         => serializedValue != null ? JsonSerializer.Deserialize<T>(serializedValue) : default;
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("AOT", "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.", Justification = "<Pending>")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
     public string Serialize<T>(T value)
         => JsonSerializer.Serialize(value);
@@ -32,6 +34,7 @@ public static class BearerBuilderExtensions
     /// </summary>
     /// <typeparam name="TToken">The token type</typeparam>
     /// <returns>A <see cref="IdentityBearerTokenBuilder"/> instance.</returns>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("AOT", "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.", Justification = "<Pending>")]
     public static IdentityBearerTokenBuilder AddBearerTokens<TToken>(this IdentityBuilder builder)
         where TToken : class
     {
@@ -53,6 +56,7 @@ public static class BearerBuilderExtensions
     /// <typeparam name="TContext">The Entity Framework database context to use.</typeparam>
     /// <param name="builder">The <see cref="IdentityBuilder"/> instance this method extends.</param>
     /// <returns>The <see cref="IdentityBuilder"/> instance this method extends.</returns>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("AOT", "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.", Justification = "<Pending>")]
     public static IdentityBuilder AddTokenStore<TContext>(this IdentityBuilder builder)
         where TContext : DbContext
     {

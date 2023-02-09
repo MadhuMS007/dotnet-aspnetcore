@@ -67,10 +67,7 @@ public class TokenStore<TToken, TContext> : ITokenStore<TToken>
     {
         cancellationToken.ThrowIfCancellationRequested();
         ThrowIfDisposed();
-        if (token == null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
+        ArgumentNullException.ThrowIfNull(token);
 
         Context.Add(token);
         await SaveChanges(cancellationToken);
@@ -82,10 +79,7 @@ public class TokenStore<TToken, TContext> : ITokenStore<TToken>
     {
         cancellationToken.ThrowIfCancellationRequested();
         ThrowIfDisposed();
-        if (token == null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
+        ArgumentNullException.ThrowIfNull(token);
 
         Context.Remove(token);
         try
@@ -135,10 +129,7 @@ public class TokenStore<TToken, TContext> : ITokenStore<TToken>
     {
         cancellationToken.ThrowIfCancellationRequested();
         ThrowIfDisposed();
-        if (token == null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
+        ArgumentNullException.ThrowIfNull(token);
 
         Context.Attach(token);
         token.ConcurrencyStamp = Guid.NewGuid().ToString();
@@ -159,10 +150,7 @@ public class TokenStore<TToken, TContext> : ITokenStore<TToken>
     {
         cancellationToken.ThrowIfCancellationRequested();
         ThrowIfDisposed();
-        if (token == null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
+        ArgumentNullException.ThrowIfNull(token);
         return Task.FromResult(token.Subject);
     }
 
@@ -171,10 +159,7 @@ public class TokenStore<TToken, TContext> : ITokenStore<TToken>
     {
         cancellationToken.ThrowIfCancellationRequested();
         ThrowIfDisposed();
-        if (token == null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
+        ArgumentNullException.ThrowIfNull(token);
         token.Subject = subject;
         return Task.CompletedTask;
     }
@@ -184,10 +169,7 @@ public class TokenStore<TToken, TContext> : ITokenStore<TToken>
     {
         cancellationToken.ThrowIfCancellationRequested();
         ThrowIfDisposed();
-        if (token == null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
+        ArgumentNullException.ThrowIfNull(token);
         return Task.FromResult(token.Status);
     }
 
@@ -196,10 +178,7 @@ public class TokenStore<TToken, TContext> : ITokenStore<TToken>
     {
         cancellationToken.ThrowIfCancellationRequested();
         ThrowIfDisposed();
-        if (token == null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
+        ArgumentNullException.ThrowIfNull(token);
         token.Status = status;
         return Task.CompletedTask;
     }
@@ -209,10 +188,7 @@ public class TokenStore<TToken, TContext> : ITokenStore<TToken>
     {
         cancellationToken.ThrowIfCancellationRequested();
         ThrowIfDisposed();
-        if (token == null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
+        ArgumentNullException.ThrowIfNull(token);
         var info = new TokenInfo(token.Id, token.Format, token.Subject, token.Purpose, token.Status);
         info.Payload = _serializer.Deserialize<TPayload>(token.Payload);
         return Task.FromResult(info);
@@ -223,10 +199,7 @@ public class TokenStore<TToken, TContext> : ITokenStore<TToken>
     {
         cancellationToken.ThrowIfCancellationRequested();
         ThrowIfDisposed();
-        if (token == null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
+        ArgumentNullException.ThrowIfNull(token);
         return Task.FromResult(token.Format);
     }
 
@@ -235,10 +208,7 @@ public class TokenStore<TToken, TContext> : ITokenStore<TToken>
     {
         cancellationToken.ThrowIfCancellationRequested();
         ThrowIfDisposed();
-        if (token == null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
+        ArgumentNullException.ThrowIfNull(token);
         token.Format = format;
         return Task.CompletedTask;
     }
@@ -248,10 +218,7 @@ public class TokenStore<TToken, TContext> : ITokenStore<TToken>
     {
         cancellationToken.ThrowIfCancellationRequested();
         ThrowIfDisposed();
-        if (token == null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
+        ArgumentNullException.ThrowIfNull(token);
         return Task.FromResult(token.Expiration);
     }
 
@@ -260,10 +227,7 @@ public class TokenStore<TToken, TContext> : ITokenStore<TToken>
     {
         cancellationToken.ThrowIfCancellationRequested();
         ThrowIfDisposed();
-        if (token == null)
-        {
-            throw new ArgumentNullException(nameof(token));
-        }
+        ArgumentNullException.ThrowIfNull(token);
         token.Expiration = expiration;
         return Task.CompletedTask;
     }
@@ -299,12 +263,7 @@ public class TokenStore<TToken, TContext> : ITokenStore<TToken>
     /// Throws if this class has been disposed.
     /// </summary>
     protected void ThrowIfDisposed()
-    {
-        if (_disposed)
-        {
-            throw new ObjectDisposedException(GetType().Name);
-        }
-    }
+        => ObjectDisposedException.ThrowIf(_disposed, this);
 
     /// <summary>
     /// Dispose the store

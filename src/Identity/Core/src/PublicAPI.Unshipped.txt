@@ -1,8 +1,5 @@
 #nullable enable
 virtual Microsoft.AspNetCore.Identity.SignInManager<TUser>.IsTwoFactorEnabledAsync(TUser! user) -> System.Threading.Tasks.Task<bool>!
-static readonly Microsoft.AspNetCore.Identity.IdentityConstants.JwtScheme -> string!
-static readonly Microsoft.AspNetCore.Identity.IdentityConstants.BearerCookieScheme -> string!
-static readonly Microsoft.AspNetCore.Identity.IdentityConstants.BearerScheme -> string!
 const Microsoft.AspNetCore.Identity.IdentityConstants.ApplicationSchemeName = "Identity.Application" -> string!
 const Microsoft.AspNetCore.Identity.IdentityConstants.BearerCookieScheme = "Identity.Bearer.Cookie" -> string!
 const Microsoft.AspNetCore.Identity.IdentityConstants.BearerScheme = "Identity.Bearer" -> string!

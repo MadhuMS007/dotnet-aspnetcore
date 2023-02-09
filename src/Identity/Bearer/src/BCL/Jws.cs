@@ -101,6 +101,7 @@ internal abstract class JwsAlg : IJwtAlgorithm
 {
     public abstract string HeaderAlg { get; }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("AOT", "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.", Justification = "<Pending>")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
     public virtual Task<string> CreateJwtAsync(Jwt jwt, JsonWebKey? key)
     {
@@ -119,6 +120,7 @@ internal abstract class JwsAlg : IJwtAlgorithm
     protected virtual bool ValidateSignature(string signature, string encodedHeaderPayload, JsonWebKey? key)
         => signature == ComputeSignature(encodedHeaderPayload, key);
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("AOT", "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.", Justification = "<Pending>")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
     public virtual Task<Jwt?> ReadJwtAsync(string jwtToken, JsonWebKey? key)
     {

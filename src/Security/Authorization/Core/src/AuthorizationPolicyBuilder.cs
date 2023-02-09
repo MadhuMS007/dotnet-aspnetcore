@@ -94,23 +94,21 @@ public class AuthorizationPolicyBuilder
         return this;
     }
 
-#if NETCOREAPP
-    /// <summary>
-    /// Adds a <see cref="PermissionRequirement"/> to the current instance which requires
-    /// that the current user has the specified permission.
-    /// </summary>
-    /// <param name="permission">The permission required.</param>
-    /// <returns>A reference to this instance after the operation has completed.</returns>
-    public AuthorizationPolicyBuilder RequirePermission(string permission)
-    {
-        if (permission == null)
-        {
-            throw new ArgumentNullException(nameof(permission));
-        }
+    ///// <summary>
+    ///// Adds a <see cref="PermissionRequirement"/> to the current instance which requires
+    ///// that the current user has the specified permission.
+    ///// </summary>
+    ///// <param name="permission">The permission required.</param>
+    ///// <returns>A reference to this instance after the operation has completed.</returns>
+    //public AuthorizationPolicyBuilder RequirePermission(string permission)
+    //{
+    //    if (permission == null)
+    //    {
+    //        throw new ArgumentNullException(nameof(permission));
+    //    }
 
-        return AddRequirements(new PermissionRequirement(permission));
-    }
-#endif
+    //    return AddRequirements(new PermissionRequirement(permission));
+    //}
 
     /// <summary>
     /// Adds a <see cref="ClaimsAuthorizationRequirement"/> to the current instance which requires

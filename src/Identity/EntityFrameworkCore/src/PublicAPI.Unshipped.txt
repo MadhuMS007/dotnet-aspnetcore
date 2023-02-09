@@ -28,7 +28,6 @@ virtual Microsoft.AspNetCore.Identity.EntityFrameworkCore.IdentityDbContext<TUse
 virtual Microsoft.AspNetCore.Identity.EntityFrameworkCore.IdentityUserContext<TUser, TKey, TUserClaim, TUserLogin, TUserToken>.OnModelCreatingVersion(Microsoft.EntityFrameworkCore.ModelBuilder! builder, System.Version! schemaVersion) -> void
 virtual Microsoft.AspNetCore.Identity.EntityFrameworkCore.IdentityUserContext<TUser, TKey, TUserClaim, TUserLogin, TUserToken>.OnModelCreatingVersion1(Microsoft.EntityFrameworkCore.ModelBuilder! builder) -> void
 virtual Microsoft.AspNetCore.Identity.EntityFrameworkCore.IdentityUserContext<TUser, TKey, TUserClaim, TUserLogin, TUserToken>.OnModelCreatingVersion2(Microsoft.EntityFrameworkCore.ModelBuilder! builder) -> void
-virtual Microsoft.AspNetCore.Identity.EntityFrameworkCore.RoleStore<TRole, TContext, TKey, TUserRole, TRoleClaim>.SaveChanges(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
 virtual Microsoft.AspNetCore.Identity.EntityFrameworkCore.TokenStore<TToken, TContext>.Context.get -> TContext!
 virtual Microsoft.AspNetCore.Identity.EntityFrameworkCore.TokenStore<TToken, TContext>.CreateAsync(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.IdentityResult!>!
 virtual Microsoft.AspNetCore.Identity.EntityFrameworkCore.TokenStore<TToken, TContext>.DeleteAsync(TToken! token, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.IdentityResult!>!
