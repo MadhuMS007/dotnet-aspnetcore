@@ -10,7 +10,6 @@ Microsoft.AspNetCore.Identity.IdentityStoreToken.Id.get -> string!
 Microsoft.AspNetCore.Identity.IdentityStoreToken.Id.set -> void
 Microsoft.AspNetCore.Identity.IdentityStoreToken.IdentityStoreToken() -> void
 Microsoft.AspNetCore.Identity.IdentityStoreToken.IdentityStoreToken(Microsoft.AspNetCore.Identity.TokenInfo! info) -> void
-Microsoft.AspNetCore.Identity.IdentityStoreToken.Import(Microsoft.AspNetCore.Identity.TokenInfo! info) -> void
 Microsoft.AspNetCore.Identity.IdentityStoreToken.Payload.get -> string?
 Microsoft.AspNetCore.Identity.IdentityStoreToken.Payload.set -> void
 Microsoft.AspNetCore.Identity.IdentityStoreToken.Purpose.get -> string!
@@ -21,5 +20,6 @@ Microsoft.AspNetCore.Identity.IdentityStoreToken.Subject.get -> string!
 Microsoft.AspNetCore.Identity.IdentityStoreToken.Subject.set -> void
 virtual Microsoft.AspNetCore.Identity.IdentityStoreToken.ConcurrencyStamp.get -> string?
 virtual Microsoft.AspNetCore.Identity.IdentityStoreToken.ConcurrencyStamp.set -> void
+virtual Microsoft.AspNetCore.Identity.IdentityStoreToken.Import(Microsoft.AspNetCore.Identity.TokenInfo! info) -> void
 virtual Microsoft.AspNetCore.Identity.IdentityUserToken<TKey>.ValidUntil.get -> System.DateTimeOffset
 virtual Microsoft.AspNetCore.Identity.IdentityUserToken<TKey>.ValidUntil.set -> void

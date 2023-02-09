@@ -29,7 +29,7 @@ public class IdentityStoreToken
     /// Import the token info into this instance.
     /// </summary>
     /// <param name="info">The token info to import.</param>
-    public void Import(TokenInfo info)
+    public virtual void Import(TokenInfo info)
     {
         Id = info.Id;
         Format = info.Format;
