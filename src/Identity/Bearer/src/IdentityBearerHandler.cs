@@ -36,7 +36,7 @@ internal class DefaultAccessTokenValidator<TUser> : IAccessTokenValidator
         }
 
         // Check for revocation
-        if (_accessTokenDenyPolicy != null && await _accessTokenDenyPolicy.IsDeniedAsync(tokenInfo.Id))
+        if (_accessTokenDenyPolicy != null && await _accessTokenDenyPolicy.IsDeniedAsync(tokenInfo))
         {
             return null;
         }

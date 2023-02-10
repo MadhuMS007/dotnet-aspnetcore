@@ -36,7 +36,10 @@ public class TodoApiTests
         await using var application = new TodoApplication();
         await using var db = application.CreateTodoDbContext();
 
+        await application.CreateUserAsync(userId);
         var client = await application.CreateClientAsync(userId);
+        await application.DeleteUserAsync(userId);
+
         var response = await client.GetAsync("/todos");
 
         // Note: we get 401 if we send an empty token for an unknown user

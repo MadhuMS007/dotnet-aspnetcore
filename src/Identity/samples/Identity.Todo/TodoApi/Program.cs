@@ -6,12 +6,8 @@ using TodoApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add Serilog
-//builder.AddSerilog();
-
 // Configure auth
-// builder.Services.AddAuthentication().AddJwtBearer(); // AddDefaultIdentityBearer does this
-builder.Services.AddAuthorizationBuilder().AddCurrentUserHandler();
+builder.Services.AddAuthorizationBuilder();
 
 // Configure the database
 var connectionString = builder.Configuration.GetConnectionString("Todos") ?? "Data Source=.db/Todos.db";
@@ -22,8 +18,9 @@ builder.Services.AddDefaultIdentityBearer<TodoUser>()
                 .AddEntityFrameworkStores<TodoDbContext>()
                 .AddTokenStore<TodoDbContext>();
 
-// State that represents the current user from the database *and* the request
-builder.Services.AddCurrentUser();
+// Ensure that the user's exist in the database for access tokens and that
+// the jti is not blocked.
+builder.Services.AddScoped<IAccessTokenDenyPolicy, AccessTokenDenyPolicy>();
 
 // Configure Open API
 //builder.Services.AddEndpointsApiExplorer();
@@ -33,13 +30,7 @@ builder.Services.AddCurrentUser();
 // Configure rate limiting
 //builder.Services.AddRateLimiting();
 
-// Configure OpenTelemetry
-//builder.AddOpenTelemetry();
-
 var app = builder.Build();
-
-// Add Serilog requests logging
-//app.UseSerilogRequestLogging();
 
 if (app.Environment.IsDevelopment())
 {
@@ -54,10 +45,5 @@ app.Map("/", () => Results.Redirect("/swagger"));
 // Configure the APIs
 app.MapTodos();
 app.MapUsers<TodoUser>();
-
-// Configure the prometheus endpoint for scraping metrics
-//app.MapPrometheusScrapingEndpoint();
-// NOTE: This should only be exposed on an internal port!
-// .RequireHost("*:9100");
 
 app.Run();

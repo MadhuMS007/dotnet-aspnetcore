@@ -22,11 +22,14 @@ Microsoft.AspNetCore.Identity.Bearer.PasswordLoginInfo.PasswordLoginInfo() -> vo
 Microsoft.AspNetCore.Identity.Bearer.PasswordLoginInfo.Username.get -> string!
 Microsoft.AspNetCore.Identity.Bearer.PasswordLoginInfo.Username.set -> void
 Microsoft.AspNetCore.Identity.Bearer.RefreshToken
+Microsoft.AspNetCore.Identity.Bearer.RefreshToken.RefreshToken() -> void
+Microsoft.AspNetCore.Identity.Bearer.RefreshToken.Token.get -> string!
+Microsoft.AspNetCore.Identity.Bearer.RefreshToken.Token.set -> void
 Microsoft.AspNetCore.Identity.BearerSchemeOptions
 Microsoft.AspNetCore.Identity.BearerSchemeOptions.BearerSchemeOptions() -> void
 Microsoft.AspNetCore.Identity.BearerServiceCollectionExtensions
 Microsoft.AspNetCore.Identity.IAccessTokenDenyPolicy
-Microsoft.AspNetCore.Identity.IAccessTokenDenyPolicy.IsDeniedAsync(string! tokenId) -> System.Threading.Tasks.Task<bool>!
+Microsoft.AspNetCore.Identity.IAccessTokenDenyPolicy.IsDeniedAsync(Microsoft.AspNetCore.Identity.TokenInfo! token) -> System.Threading.Tasks.Task<bool>!
 Microsoft.AspNetCore.Identity.IUserTokenService<TUser>
 Microsoft.AspNetCore.Identity.IUserTokenService<TUser>.GetAccessTokenAsync(TUser! user) -> System.Threading.Tasks.Task<string!>!
 Microsoft.AspNetCore.Identity.IUserTokenService<TUser>.GetRefreshTokenAsync(TUser! user) -> System.Threading.Tasks.Task<string!>!
@@ -55,7 +58,7 @@ Microsoft.AspNetCore.Identity.JsonWebKey.X5tS256.set -> void
 Microsoft.AspNetCore.Identity.JsonWebKey.X5u.get -> string?
 Microsoft.AspNetCore.Identity.JsonWebKey.X5u.set -> void
 Microsoft.AspNetCore.Identity.JtiBlocker
-Microsoft.AspNetCore.Identity.JtiBlocker.IsDeniedAsync(string! tokenId) -> System.Threading.Tasks.Task<bool>!
+Microsoft.AspNetCore.Identity.JtiBlocker.IsDeniedAsync(Microsoft.AspNetCore.Identity.TokenInfo! token) -> System.Threading.Tasks.Task<bool>!
 Microsoft.AspNetCore.Identity.JtiBlocker.JtiBlocker(Microsoft.Extensions.Options.IOptions<Microsoft.AspNetCore.Identity.JtiBlockerOptions!>! options) -> void
 Microsoft.AspNetCore.Identity.JtiBlockerOptions
 Microsoft.AspNetCore.Identity.JtiBlockerOptions.BlockedJti.get -> System.Collections.Generic.HashSet<string!>!

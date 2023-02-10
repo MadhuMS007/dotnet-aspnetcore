@@ -13,9 +13,9 @@ public interface IAccessTokenDenyPolicy
     /// <summary>
     /// Determines if an access token should be denied.
     /// </summary>
-    /// <param name="tokenId">The id of the access token.</param>
+    /// <param name="token">The <see cref="TokenInfo"/> for the token.</param>
     /// <returns>True if the access token should be denied.</returns>
-    Task<bool> IsDeniedAsync(string tokenId);
+    Task<bool> IsDeniedAsync(TokenInfo token);
 }
 
 /// <summary>
@@ -46,8 +46,8 @@ public class JtiBlocker : IAccessTokenDenyPolicy
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="tokenId"></param>
+    /// <param name="token"></param>
     /// <returns></returns>
-    public Task<bool> IsDeniedAsync(string tokenId)
-        => Task.FromResult(_options.BlockedJti.Contains(tokenId));
+    public Task<bool> IsDeniedAsync(TokenInfo token)
+        => Task.FromResult(_options.BlockedJti.Contains(token.Id));
 }

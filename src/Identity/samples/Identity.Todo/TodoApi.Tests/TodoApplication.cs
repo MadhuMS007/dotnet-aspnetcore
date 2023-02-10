@@ -39,6 +39,15 @@ internal class TodoApplication : WebApplicationFactory<Program>
         Assert.True(result.Succeeded);
     }
 
+    public async Task DeleteUserAsync(string username)
+    {
+        using var scope = Services.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<TodoUser>>();
+        var user = await userManager.FindByNameAsync(username);
+        var result = await userManager.DeleteAsync(user!);
+        Assert.True(result.Succeeded);
+    }
+
     public async Task<HttpClient> CreateClientAsync(string userName)
     {
         var token = await CreateTokenAsync(userName);
