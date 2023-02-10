@@ -106,7 +106,7 @@ public class UserApiTests
 
         Assert.True(response.IsSuccessStatusCode);
 
-        var token = await response.Content.ReadFromJsonAsync<AuthToken>();
+        var token = await response.Content.ReadFromJsonAsync<AuthTokens>();
 
         Assert.NotNull(token);
         Assert.NotNull(token.AccessToken);
@@ -133,7 +133,7 @@ public class UserApiTests
 
         Assert.True(response.IsSuccessStatusCode);
 
-        var token = await response.Content.ReadFromJsonAsync<AuthToken>();
+        var token = await response.Content.ReadFromJsonAsync<AuthTokens>();
 
         Assert.NotNull(token);
         Assert.NotNull(token.AccessToken);
@@ -166,7 +166,7 @@ public class UserApiTests
 
         Assert.True(response.IsSuccessStatusCode);
 
-        var token = await response.Content.ReadFromJsonAsync<AuthToken>();
+        var token = await response.Content.ReadFromJsonAsync<AuthTokens>();
 
         Assert.NotNull(token);
         Assert.NotNull(token.AccessToken);
@@ -177,7 +177,7 @@ public class UserApiTests
 
         Assert.True(response.IsSuccessStatusCode);
 
-        var newTokens = await response.Content.ReadFromJsonAsync<AuthToken>();
+        var newTokens = await response.Content.ReadFromJsonAsync<AuthTokens>();
         Assert.NotNull(newTokens);
         Assert.NotNull(newTokens.AccessToken);
         Assert.NotNull(newTokens.RefreshToken);
@@ -204,7 +204,7 @@ public class UserApiTests
 
         Assert.True(response.IsSuccessStatusCode);
 
-        var token = await response.Content.ReadFromJsonAsync<AuthToken>();
+        var token = await response.Content.ReadFromJsonAsync<AuthTokens>();
 
         Assert.NotNull(token);
         Assert.NotNull(token.AccessToken);
@@ -215,7 +215,7 @@ public class UserApiTests
 
         Assert.True(response.IsSuccessStatusCode);
 
-        var newTokens = await response.Content.ReadFromJsonAsync<AuthToken>();
+        var newTokens = await response.Content.ReadFromJsonAsync<AuthTokens>();
         Assert.NotNull(newTokens);
         Assert.NotNull(newTokens.AccessToken);
         Assert.NotNull(newTokens.RefreshToken);
@@ -239,7 +239,7 @@ public class UserApiTests
 
         Assert.True(response.IsSuccessStatusCode);
 
-        var token = await response.Content.ReadFromJsonAsync<AuthToken>();
+        var token = await response.Content.ReadFromJsonAsync<AuthTokens>();
 
         Assert.NotNull(token);
         Assert.NotNull(token.AccessToken);
@@ -262,7 +262,7 @@ public class UserApiTests
 
         Assert.True(response.IsSuccessStatusCode);
 
-        var token = await response.Content.ReadFromJsonAsync<AuthToken>();
+        var token = await response.Content.ReadFromJsonAsync<AuthTokens>();
 
         Assert.NotNull(token);
         Assert.NotNull(token.AccessToken);

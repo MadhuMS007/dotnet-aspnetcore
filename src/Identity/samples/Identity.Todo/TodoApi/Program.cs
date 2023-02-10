@@ -53,7 +53,7 @@ app.Map("/", () => Results.Redirect("/swagger"));
 
 // Configure the APIs
 app.MapTodos();
-app.MapUsers();
+app.MapUsers<TodoUser>();
 
 // Configure the prometheus endpoint for scraping metrics
 //app.MapPrometheusScrapingEndpoint();
