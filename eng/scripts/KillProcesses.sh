@@ -15,6 +15,9 @@ then
   ps -p $p
 fi
 
+touch /cores/test && rm /cores/test
+
+ulimit -c unlimited
 c=$(ulimit -c)
 echo "ulimit -c: $c"
 
