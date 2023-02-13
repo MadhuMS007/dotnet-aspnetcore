@@ -17,6 +17,26 @@ namespace Microsoft.Extensions.DependencyInjection;
 public static class BearerApi
 {
     /// <summary>
+    /// The identity endpoint prefix, "/identity"
+    /// </summary>
+    public const string IdentityEndpoint = $"/identity";
+
+    /// <summary>
+    /// The register users endpoint, "/identity/register";
+    /// </summary>
+    public const string RegisterEndpoint = $"{IdentityEndpoint}/register";
+
+    /// <summary>
+    /// The login endpoint, "/identity/login";
+    /// </summary>
+    public const string LoginEndpoint = $"{IdentityEndpoint}/login";
+
+    /// <summary>
+    /// The refresh token endpoint, "/identity/refresh";
+    /// </summary>
+    public const string RefreshEndpoint = $"{IdentityEndpoint}/refresh";
+
+    /// <summary>
     /// Setup various bearer token routes under "/users".
     /// </summary>
     /// <typeparam name="TUser"></typeparam>
@@ -26,13 +46,13 @@ public static class BearerApi
     [System.Diagnostics.CodeAnalysis.SuppressMessage("AOT", "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.", Justification = "<Pending>")]
     public static RouteGroupBuilder MapUsers<TUser>(this IEndpointRouteBuilder routes) where TUser : class, new()
     {
-        var group = routes.MapGroup("/users");
+        var group = routes.MapGroup(IdentityEndpoint);
 
         group.WithTags("Users");
 
-        //group.WithParameterValidation(typeof(UserInfo), typeof(ExternalUserInfo));
+        // group.WithParameterValidation(typeof(UserInfo), typeof(ExternalUserInfo));
 
-        group.MapPost("/", async Task<Results<Ok, ValidationProblem>> (PasswordLoginInfo newUser, UserManager<TUser> userManager) =>
+        group.MapPost("/register", async Task<Results<Ok, ValidationProblem>> (PasswordLoginInfo newUser, UserManager<TUser> userManager) =>
         {
             var user = new TUser();
             await userManager.SetUserNameAsync(user, newUser.Username);
@@ -46,7 +66,7 @@ public static class BearerApi
             return TypedResults.ValidationProblem(result.Errors.ToDictionary(e => e.Code, e => new[] { e.Description }));
         });
 
-        group.MapPost("/token", async Task<Results<BadRequest, Ok<AuthTokens>>> (PasswordLoginInfo userInfo, UserManager<TUser> userManager, IUserTokenService<TUser> tokenService) =>
+        group.MapPost("/login", async Task<Results<BadRequest, Ok<AuthTokens>>> (PasswordLoginInfo userInfo, UserManager<TUser> userManager, IUserTokenService<TUser> tokenService) =>
         {
             var user = await userManager.FindByNameAsync(userInfo.Username);
 
@@ -58,7 +78,7 @@ public static class BearerApi
             return TypedResults.Ok(new AuthTokens(await tokenService.GetAccessTokenAsync(user), await tokenService.GetRefreshTokenAsync(user)));
         });
 
-        group.MapPost("/token/{provider}", async Task<Results<Ok<AuthTokens>, ValidationProblem>> (string provider, ExternalUserInfo userInfo, UserManager<TUser> userManager, IUserTokenService<TUser> tokenService) =>
+        group.MapPost("/login/{provider}", async Task<Results<Ok<AuthTokens>, ValidationProblem>> (string provider, ExternalUserInfo userInfo, UserManager<TUser> userManager, IUserTokenService<TUser> tokenService) =>
         {
             var user = await userManager.FindByLoginAsync(provider, userInfo.ProviderKey);
 
@@ -85,7 +105,7 @@ public static class BearerApi
             return TypedResults.ValidationProblem(result.Errors.ToDictionary(e => e.Code, e => new[] { e.Description }));
         });
 
-        group.MapPost("/refreshToken", async Task<Results<BadRequest, Ok<AuthTokens>>> (RefreshToken tokenInfo, IUserTokenService<TUser> tokenService) =>
+        group.MapPost("/refresh", async Task<Results<BadRequest, Ok<AuthTokens>>> (RefreshToken tokenInfo, IUserTokenService<TUser> tokenService) =>
         {
             if (tokenInfo.Token is null)
             {

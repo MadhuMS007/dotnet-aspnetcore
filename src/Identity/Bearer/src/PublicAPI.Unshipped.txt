@@ -3,6 +3,10 @@ const Microsoft.AspNetCore.Identity.JWEAlg.RSA_OAEP = "RSA-OAEP" -> string!
 const Microsoft.AspNetCore.Identity.JWSAlg.HS256 = "HS256" -> string!
 const Microsoft.AspNetCore.Identity.JWSAlg.None = "none" -> string!
 const Microsoft.AspNetCore.Identity.JWSAlg.RS256 = "RS256" -> string!
+const Microsoft.Extensions.DependencyInjection.BearerApi.IdentityEndpoint = "/identity" -> string!
+const Microsoft.Extensions.DependencyInjection.BearerApi.LoginEndpoint = "/identity/login" -> string!
+const Microsoft.Extensions.DependencyInjection.BearerApi.RefreshEndpoint = "/identity/refresh" -> string!
+const Microsoft.Extensions.DependencyInjection.BearerApi.RegisterEndpoint = "/identity/register" -> string!
 Microsoft.AspNetCore.Identity.Bearer.AuthTokens
 Microsoft.AspNetCore.Identity.Bearer.AuthTokens.AccessToken.get -> string!
 Microsoft.AspNetCore.Identity.Bearer.AuthTokens.AccessToken.init -> void
