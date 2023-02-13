@@ -16,6 +16,7 @@ builder.Services.AddSqlite<TodoDbContext>(connectionString);
 // Configure identity
 builder.Services.AddDefaultIdentityBearer<TodoUser>()
                 .AddEntityFrameworkStores<TodoDbContext>()
+                .AddDefaultTokenProviders()
                 .AddTokenStore<TodoDbContext>();
 
 // Ensure that the user's exist in the database for access tokens and that

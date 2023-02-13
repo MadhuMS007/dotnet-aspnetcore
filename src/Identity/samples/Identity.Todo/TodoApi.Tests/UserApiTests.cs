@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Net.Http;
-using System.Net.Http.Json;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Bearer;
 using Microsoft.AspNetCore.Mvc;
@@ -104,7 +103,11 @@ public class UserApiTests
 
         var client = application.CreateClient();
         var response = await client.PostAsJsonAsync(BearerApi.LoginEndpoint, new UserInfo { Username = "todouser", Password = "p@assw0rd1" });
+        await IsValidTokenAsync(client, response);
+    }
 
+    private async Task<AuthTokens> IsValidTokenAsync(HttpClient client, HttpResponseMessage response)
+    {
         Assert.True(response.IsSuccessStatusCode);
 
         var token = await response.Content.ReadFromJsonAsync<AuthTokens>();
@@ -114,12 +117,48 @@ public class UserApiTests
         Assert.NotNull(token.RefreshToken);
 
         // Check that the token is indeed valid
-
         var req = new HttpRequestMessage(HttpMethod.Get, "/todos");
         req.Headers.Authorization = new("Bearer", token.AccessToken);
         response = await client.SendAsync(req);
 
         Assert.True(response.IsSuccessStatusCode);
+
+        return token;
+    }
+
+    [Fact]
+    public async Task CanRequireConfirmedUsers()
+    {
+        await using var application = new TodoApplication();
+        application.RequireConfirmedUserEmails();
+        await using var db = application.CreateTodoDbContext();
+        (var userId, var code) = await application.CreateUserAsync("todouser", "p@assw0rd1", generateCode: true);
+
+        var client = application.CreateClient();
+        var response = await client.PostAsJsonAsync(BearerApi.LoginEndpoint, new UserInfo { Username = "todouser", Password = "p@assw0rd1" });
+
+        // Bad request for unconfirmed users
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        // Confirm the user
+        response = await client.PostAsJsonAsync(BearerApi.ConfirmEmailEndpoint, new EmailConfirmation { UserId = userId, Token = code });
+        Assert.True(response.IsSuccessStatusCode);
+
+        await IsValidTokenAsync(client, await client.PostAsJsonAsync(BearerApi.LoginEndpoint, new UserInfo { Username = "todouser", Password = "p@assw0rd1" }));
+    }
+
+    [Fact]
+    public async Task CanConfirmUser()
+    {
+        await using var application = new TodoApplication();
+        application.RequireConfirmedUserEmails();
+        await using var db = application.CreateTodoDbContext();
+        var code = await application.CreateUserAsync("todouser", "p@assw0rd1", generateCode: true);
+
+        var client = application.CreateClient();
+        var response = await client.PostAsJsonAsync(BearerApi.LoginEndpoint, new UserInfo { Username = "todouser", Password = "p@assw0rd1" });
+
+        Assert.False(response.IsSuccessStatusCode);
     }
 
     [Fact]
@@ -132,16 +171,8 @@ public class UserApiTests
         var client = application.CreateClient();
         var response = await client.PostAsJsonAsync(BearerApi.LoginEndpoint, new UserInfo { Username = "todouser", Password = "p@assw0rd1" });
 
-        Assert.True(response.IsSuccessStatusCode);
-
-        var token = await response.Content.ReadFromJsonAsync<AuthTokens>();
-
-        Assert.NotNull(token);
-        Assert.NotNull(token.AccessToken);
-        Assert.NotNull(token.RefreshToken);
-
         // Check that the token is indeed valid and revoke ourselves
-
+        var token = await IsValidTokenAsync(client, response);
         var req = new HttpRequestMessage(HttpMethod.Get, "/todos/revokeMe");
         req.Headers.Authorization = new("Bearer", token.AccessToken);
         response = await client.SendAsync(req);
@@ -152,7 +183,7 @@ public class UserApiTests
         req.Headers.Authorization = new("Bearer", token.AccessToken);
         response = await client.SendAsync(req);
 
-        Assert.False(response.IsSuccessStatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
@@ -165,17 +196,10 @@ public class UserApiTests
         var client = application.CreateClient();
         var response = await client.PostAsJsonAsync(BearerApi.LoginEndpoint, new UserInfo { Username = "todouser", Password = "p@assw0rd1" });
 
-        Assert.True(response.IsSuccessStatusCode);
-
-        var token = await response.Content.ReadFromJsonAsync<AuthTokens>();
-
-        Assert.NotNull(token);
-        Assert.NotNull(token.AccessToken);
-        Assert.NotNull(token.RefreshToken);
+        var token = await IsValidTokenAsync(client, response);
 
         // Try to refresh the tokens
         response = await client.PostAsJsonAsync(BearerApi.RefreshEndpoint, new RefreshToken { Token = token.RefreshToken });
-
         Assert.True(response.IsSuccessStatusCode);
 
         var newTokens = await response.Content.ReadFromJsonAsync<AuthTokens>();
@@ -203,13 +227,7 @@ public class UserApiTests
         var client = application.CreateClient();
         var response = await client.PostAsJsonAsync(BearerApi.LoginEndpoint, new UserInfo { Username = "todouser", Password = "p@assw0rd1" });
 
-        Assert.True(response.IsSuccessStatusCode);
-
-        var token = await response.Content.ReadFromJsonAsync<AuthTokens>();
-
-        Assert.NotNull(token);
-        Assert.NotNull(token.AccessToken);
-        Assert.NotNull(token.RefreshToken);
+        var token = await IsValidTokenAsync(client, response);
 
         // Try to refresh the tokens twice
         response = await client.PostAsJsonAsync(BearerApi.RefreshEndpoint, new RefreshToken { Token = token.RefreshToken });
@@ -225,7 +243,7 @@ public class UserApiTests
 
         // The second time should fail with the old token
         response = await client.PostAsJsonAsync(BearerApi.RefreshEndpoint, new RefreshToken { Token = token.RefreshToken });
-        Assert.False(response.IsSuccessStatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]
@@ -238,18 +256,13 @@ public class UserApiTests
         var client = application.CreateClient();
         var response = await client.PostAsJsonAsync(BearerApi.LoginEndpoint, new UserInfo { Username = "todouser", Password = "p@assw0rd1" });
 
-        Assert.True(response.IsSuccessStatusCode);
-
-        var token = await response.Content.ReadFromJsonAsync<AuthTokens>();
-
-        Assert.NotNull(token);
-        Assert.NotNull(token.AccessToken);
-        Assert.NotNull(token.RefreshToken);
+        var token = await IsValidTokenAsync(client, response);
 
         // Try to refresh with the access token
         response = await client.PostAsJsonAsync(BearerApi.RefreshEndpoint, new RefreshToken { Token = token.AccessToken });
 
         Assert.False(response.IsSuccessStatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]
@@ -261,21 +274,7 @@ public class UserApiTests
         var client = application.CreateClient();
         var response = await client.PostAsJsonAsync($"{BearerApi.LoginEndpoint}/Google", new ExternalUserInfo { Username = "todouser", ProviderKey = "1003" });
 
-        Assert.True(response.IsSuccessStatusCode);
-
-        var token = await response.Content.ReadFromJsonAsync<AuthTokens>();
-
-        Assert.NotNull(token);
-        Assert.NotNull(token.AccessToken);
-        Assert.NotNull(token.RefreshToken);
-
-        // Check that the token is indeed valid
-
-        var req = new HttpRequestMessage(HttpMethod.Get, "/todos");
-        req.Headers.Authorization = new("Bearer", token.AccessToken);
-        response = await client.SendAsync(req);
-
-        Assert.True(response.IsSuccessStatusCode);
+        await IsValidTokenAsync(client, response);
 
         using var scope = application.Services.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<TodoUser>>();

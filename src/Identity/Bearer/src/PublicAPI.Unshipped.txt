@@ -3,6 +3,7 @@ const Microsoft.AspNetCore.Identity.JWEAlg.RSA_OAEP = "RSA-OAEP" -> string!
 const Microsoft.AspNetCore.Identity.JWSAlg.HS256 = "HS256" -> string!
 const Microsoft.AspNetCore.Identity.JWSAlg.None = "none" -> string!
 const Microsoft.AspNetCore.Identity.JWSAlg.RS256 = "RS256" -> string!
+const Microsoft.Extensions.DependencyInjection.BearerApi.ConfirmEmailEndpoint = "/identity/confirmEmail" -> string!
 const Microsoft.Extensions.DependencyInjection.BearerApi.IdentityEndpoint = "/identity" -> string!
 const Microsoft.Extensions.DependencyInjection.BearerApi.LoginEndpoint = "/identity/login" -> string!
 const Microsoft.Extensions.DependencyInjection.BearerApi.RefreshEndpoint = "/identity/refresh" -> string!
@@ -13,6 +14,12 @@ Microsoft.AspNetCore.Identity.Bearer.AuthTokens.AccessToken.init -> void
 Microsoft.AspNetCore.Identity.Bearer.AuthTokens.AuthTokens(string! AccessToken, string! RefreshToken) -> void
 Microsoft.AspNetCore.Identity.Bearer.AuthTokens.RefreshToken.get -> string!
 Microsoft.AspNetCore.Identity.Bearer.AuthTokens.RefreshToken.init -> void
+Microsoft.AspNetCore.Identity.Bearer.EmailConfirmation
+Microsoft.AspNetCore.Identity.Bearer.EmailConfirmation.EmailConfirmation() -> void
+Microsoft.AspNetCore.Identity.Bearer.EmailConfirmation.Token.get -> string!
+Microsoft.AspNetCore.Identity.Bearer.EmailConfirmation.Token.set -> void
+Microsoft.AspNetCore.Identity.Bearer.EmailConfirmation.UserId.get -> string!
+Microsoft.AspNetCore.Identity.Bearer.EmailConfirmation.UserId.set -> void
 Microsoft.AspNetCore.Identity.Bearer.ExternalUserInfo
 Microsoft.AspNetCore.Identity.Bearer.ExternalUserInfo.ExternalUserInfo() -> void
 Microsoft.AspNetCore.Identity.Bearer.ExternalUserInfo.ProviderKey.get -> string!

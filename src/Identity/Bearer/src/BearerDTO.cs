@@ -54,7 +54,24 @@ public record AuthTokens(string AccessToken, string RefreshToken);
 public class RefreshToken
 {
     /// <summary>
-    /// The refresh token
+    /// The refresh token.
+    /// </summary>
+    [Required]
+    public string Token { get; set; } = default!;
+}
+
+/// <summary>
+/// DTO representing a confirmation code.
+/// </summary>
+public class EmailConfirmation
+{
+    /// <summary>
+    /// THe user id being confirmed.
+    /// </summary>
+    public string UserId { get; set; } = default!;
+
+    /// <summary>
+    /// The confirmation code.
     /// </summary>
     [Required]
     public string Token { get; set; } = default!;

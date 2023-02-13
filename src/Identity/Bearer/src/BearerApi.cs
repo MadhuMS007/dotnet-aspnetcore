@@ -6,8 +6,10 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.WebUtilities;
 using System.Linq;
 using Microsoft.AspNetCore.Identity.Bearer;
+using System.Text;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -25,6 +27,11 @@ public static class BearerApi
     /// The register users endpoint, "/identity/register";
     /// </summary>
     public const string RegisterEndpoint = $"{IdentityEndpoint}/register";
+
+    /// <summary>
+    /// The confirm email endpoint, "/identity/confirmEmail";
+    /// </summary>
+    public const string ConfirmEmailEndpoint = $"{IdentityEndpoint}/confirmEmail";
 
     /// <summary>
     /// The login endpoint, "/identity/login";
@@ -70,7 +77,26 @@ public static class BearerApi
         {
             var user = await userManager.FindByNameAsync(userInfo.Username);
 
-            if (user is null || !await userManager.CheckPasswordAsync(user, userInfo.Password))
+            if (user is null)
+            {
+                return TypedResults.BadRequest();
+            }
+
+            // This should go in some new SignInPolicy
+            if (userManager.Options.SignIn.RequireConfirmedEmail && !(await userManager.IsEmailConfirmedAsync(user)))
+            {
+                return TypedResults.BadRequest();
+            }
+            if (userManager.Options.SignIn.RequireConfirmedPhoneNumber && !(await userManager.IsPhoneNumberConfirmedAsync(user)))
+            {
+                return TypedResults.BadRequest();
+            }
+            //if (Options.SignIn.RequireConfirmedAccount && !(await _confirmation.IsConfirmedAsync(UserManager, user)))
+            //{
+            //    return TypedResults.BadRequest();
+            //}
+
+            if (!await userManager.CheckPasswordAsync(user, userInfo.Password))
             {
                 return TypedResults.BadRequest();
             }
@@ -120,6 +146,32 @@ public static class BearerApi
             }
 
             return TypedResults.Ok(new AuthTokens(accessToken, refreshToken));
+        });
+
+        group.MapPost("/confirmEmail", async Task<Results<BadRequest, Ok>> (EmailConfirmation code, UserManager<TUser> userManager) =>
+        {
+            if (code.Token is null || code.UserId is null)
+            {
+                return TypedResults.BadRequest();
+            }
+
+            var user = await userManager.FindByIdAsync(code.UserId);
+
+            if (user is null)
+            {
+                return TypedResults.BadRequest();
+            }
+
+            var decodedCode = Encoding.UTF8.GetString(AspNetCore.WebUtilities.WebEncoders.Base64UrlDecode(code.Token));
+            var result = await userManager.ConfirmEmailAsync(user, decodedCode);
+
+            if (result.Succeeded)
+            {
+                return TypedResults.Ok();
+            }
+
+            // REVIEw Should this return an error message?
+            return TypedResults.BadRequest();
         });
 
         return group;

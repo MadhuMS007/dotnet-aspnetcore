@@ -4,14 +4,17 @@
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace TodoApi.Tests;
 
@@ -26,7 +29,14 @@ internal class TodoApplication : WebApplicationFactory<Program>
         return db;
     }
 
-    public async Task CreateUserAsync(string username, string? password = null, bool isAdmin = false)
+    public void RequireConfirmedUserEmails()
+    {
+        var options = Services.GetRequiredService<IOptions<IdentityOptions>>().Value;
+        options.SignIn.RequireConfirmedAccount = true;
+        options.SignIn.RequireConfirmedEmail = true;
+    }
+
+    public async Task<(string, string?)> CreateUserAsync(string username, string? password = null, bool isAdmin = false, bool generateCode = false)
     {
         using var scope = Services.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<TodoUser>>();
@@ -37,6 +47,9 @@ internal class TodoApplication : WebApplicationFactory<Program>
             await userManager.AddClaimAsync(newUser, new Claim(ClaimTypes.Role, "admin"));
         }
         Assert.True(result.Succeeded);
+        return generateCode
+            ? (newUser.Id, WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(await userManager.GenerateEmailConfirmationTokenAsync(newUser))))
+            : (newUser.Id, null);
     }
 
     public async Task DeleteUserAsync(string username)
