@@ -24,6 +24,8 @@ Microsoft.AspNetCore.Identity.IKeyStore
 Microsoft.AspNetCore.Identity.IKeyStore.AddAsync(string! keyId, string! providerId, string! format, string! data, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.IdentityResult!>!
 Microsoft.AspNetCore.Identity.IKeyStore.FindByIdAsync(string! keyId, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.KeyInfo?>!
 Microsoft.AspNetCore.Identity.IKeyStore.RemoveAsync(string! keyId, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.IdentityResult!>!
+Microsoft.AspNetCore.Identity.ISignInPolicy<TUser>
+Microsoft.AspNetCore.Identity.ISignInPolicy<TUser>.CanSignInAsync(TUser! user) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Identity.SignInResult?>!
 Microsoft.AspNetCore.Identity.ITokenFormatProvider
 Microsoft.AspNetCore.Identity.ITokenFormatProvider.CreateTokenAsync(Microsoft.AspNetCore.Identity.TokenInfo! token) -> System.Threading.Tasks.Task<string!>!
 Microsoft.AspNetCore.Identity.ITokenFormatProvider.PayloadSerializer.get -> Microsoft.AspNetCore.Identity.ITokenSerializer!

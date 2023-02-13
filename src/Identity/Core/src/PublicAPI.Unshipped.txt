@@ -1,4 +1,5 @@
 #nullable enable
+Microsoft.AspNetCore.Identity.SignInManager<TUser>.SignInManager(Microsoft.AspNetCore.Identity.UserManager<TUser!>! userManager, Microsoft.AspNetCore.Http.IHttpContextAccessor! contextAccessor, Microsoft.AspNetCore.Identity.IUserClaimsPrincipalFactory<TUser!>! claimsFactory, Microsoft.Extensions.Options.IOptions<Microsoft.AspNetCore.Identity.IdentityOptions!>! optionsAccessor, Microsoft.Extensions.Logging.ILogger<Microsoft.AspNetCore.Identity.SignInManager<TUser!>!>! logger, Microsoft.AspNetCore.Authentication.IAuthenticationSchemeProvider! schemes, Microsoft.AspNetCore.Identity.IUserConfirmation<TUser!>! confirmation, Microsoft.AspNetCore.Identity.ISignInPolicy<TUser!>! signInPolicy) -> void
 virtual Microsoft.AspNetCore.Identity.SignInManager<TUser>.IsTwoFactorEnabledAsync(TUser! user) -> System.Threading.Tasks.Task<bool>!
 const Microsoft.AspNetCore.Identity.IdentityConstants.ApplicationSchemeName = "Identity.Application" -> string!
 const Microsoft.AspNetCore.Identity.IdentityConstants.BearerCookieScheme = "Identity.Bearer.Cookie" -> string!

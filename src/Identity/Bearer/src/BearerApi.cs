@@ -1,15 +1,14 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.AspNetCore.WebUtilities;
 using System.Linq;
-using Microsoft.AspNetCore.Identity.Bearer;
 using System.Text;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.Bearer;
+using Microsoft.AspNetCore.Routing;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -73,30 +72,11 @@ public static class BearerApi
             return TypedResults.ValidationProblem(result.Errors.ToDictionary(e => e.Code, e => new[] { e.Description }));
         });
 
-        group.MapPost("/login", async Task<Results<BadRequest, Ok<AuthTokens>>> (PasswordLoginInfo userInfo, UserManager<TUser> userManager, IUserTokenService<TUser> tokenService) =>
+        group.MapPost("/login", async Task<Results<BadRequest, Ok<AuthTokens>>> (PasswordLoginInfo userInfo, TokenSignInManager<TUser> signInManager, IUserTokenService<TUser> tokenService) =>
         {
-            var user = await userManager.FindByNameAsync(userInfo.Username);
-
-            if (user is null)
-            {
-                return TypedResults.BadRequest();
-            }
-
-            // This should go in some new SignInPolicy
-            if (userManager.Options.SignIn.RequireConfirmedEmail && !(await userManager.IsEmailConfirmedAsync(user)))
-            {
-                return TypedResults.BadRequest();
-            }
-            if (userManager.Options.SignIn.RequireConfirmedPhoneNumber && !(await userManager.IsPhoneNumberConfirmedAsync(user)))
-            {
-                return TypedResults.BadRequest();
-            }
-            //if (Options.SignIn.RequireConfirmedAccount && !(await _confirmation.IsConfirmedAsync(UserManager, user)))
-            //{
-            //    return TypedResults.BadRequest();
-            //}
-
-            if (!await userManager.CheckPasswordAsync(user, userInfo.Password))
+            // TODO: this should return different status (mfa etc)
+            (var result, var user) = await signInManager.PasswordSignInAsync(userInfo.Username, userInfo.Password);
+            if (!result.Succeeded || user is null)
             {
                 return TypedResults.BadRequest();
             }
@@ -106,17 +86,13 @@ public static class BearerApi
 
         group.MapPost("/login/{provider}", async Task<Results<Ok<AuthTokens>, ValidationProblem>> (string provider, ExternalUserInfo userInfo, UserManager<TUser> userManager, IUserTokenService<TUser> tokenService) =>
         {
-            var user = await userManager.FindByLoginAsync(provider, userInfo.ProviderKey);
-
             var result = IdentityResult.Success;
-
+            var user = await userManager.FindByLoginAsync(provider, userInfo.ProviderKey);
             if (user is null)
             {
                 user = new TUser();
                 await userManager.SetUserNameAsync(user, userInfo.Username);
-
                 result = await userManager.CreateAsync(user);
-
                 if (result.Succeeded)
                 {
                     result = await userManager.AddLoginAsync(user, new UserLoginInfo(provider, userInfo.ProviderKey, displayName: null));
@@ -139,7 +115,6 @@ public static class BearerApi
             }
 
             (var accessToken, var refreshToken) = await tokenService.RefreshTokensAsync(tokenInfo.Token);
-
             if (accessToken is null || refreshToken is null)
             {
                 return TypedResults.BadRequest();
@@ -156,7 +131,6 @@ public static class BearerApi
             }
 
             var user = await userManager.FindByIdAsync(code.UserId);
-
             if (user is null)
             {
                 return TypedResults.BadRequest();
@@ -164,7 +138,6 @@ public static class BearerApi
 
             var decodedCode = Encoding.UTF8.GetString(AspNetCore.WebUtilities.WebEncoders.Base64UrlDecode(code.Token));
             var result = await userManager.ConfirmEmailAsync(user, decodedCode);
-
             if (result.Succeeded)
             {
                 return TypedResults.Ok();

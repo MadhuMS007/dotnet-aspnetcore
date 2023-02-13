@@ -30,6 +30,31 @@ public class SignInManager<TUser> where TUser : class
     /// <param name="logger">The logger used to log messages, warnings and errors.</param>
     /// <param name="schemes">The scheme provider that is used enumerate the authentication schemes.</param>
     /// <param name="confirmation">The <see cref="IUserConfirmation{TUser}"/> used check whether a user account is confirmed.</param>
+    /// <param name="signInPolicy"></param>
+    public SignInManager(UserManager<TUser> userManager,
+        IHttpContextAccessor contextAccessor,
+        IUserClaimsPrincipalFactory<TUser> claimsFactory,
+        IOptions<IdentityOptions> optionsAccessor,
+        ILogger<SignInManager<TUser>> logger,
+        IAuthenticationSchemeProvider schemes,
+        IUserConfirmation<TUser> confirmation,
+        ISignInPolicy<TUser> signInPolicy)
+        : this(userManager, contextAccessor, claimsFactory, optionsAccessor,
+              logger, schemes, confirmation)
+    {
+        _signInPolicy = signInPolicy;
+    }
+
+    /// <summary>
+    /// Creates a new instance of <see cref="SignInManager{TUser}"/>.
+    /// </summary>
+    /// <param name="userManager">An instance of <see cref="UserManager"/> used to retrieve users from and persist users.</param>
+    /// <param name="contextAccessor">The accessor used to access the <see cref="HttpContext"/>.</param>
+    /// <param name="claimsFactory">The factory to use to create claims principals for a user.</param>
+    /// <param name="optionsAccessor">The accessor used to access the <see cref="IdentityOptions"/>.</param>
+    /// <param name="logger">The logger used to log messages, warnings and errors.</param>
+    /// <param name="schemes">The scheme provider that is used enumerate the authentication schemes.</param>
+    /// <param name="confirmation">The <see cref="IUserConfirmation{TUser}"/> used check whether a user account is confirmed.</param>
     public SignInManager(UserManager<TUser> userManager,
         IHttpContextAccessor contextAccessor,
         IUserClaimsPrincipalFactory<TUser> claimsFactory,
@@ -54,6 +79,7 @@ public class SignInManager<TUser> where TUser : class
     private readonly IHttpContextAccessor _contextAccessor;
     private readonly IAuthenticationSchemeProvider _schemes;
     private readonly IUserConfirmation<TUser> _confirmation;
+    private readonly ISignInPolicy<TUser>? _signInPolicy;
     private HttpContext? _context;
 
     /// <summary>
@@ -128,6 +154,13 @@ public class SignInManager<TUser> where TUser : class
     /// </returns>
     public virtual async Task<bool> CanSignInAsync(TUser user)
     {
+        // Delegate to the sign in policy if we have one.
+        if (_signInPolicy != null)
+        {
+            // Any non null result is considered an error
+            return await _signInPolicy.CanSignInAsync(user) == null;
+        }
+
         if (Options.SignIn.RequireConfirmedEmail && !(await UserManager.IsEmailConfirmedAsync(user)))
         {
             Logger.LogDebug(EventIds.UserCannotSignInWithoutConfirmedEmail, "User cannot sign in without a confirmed email.");
@@ -462,8 +495,10 @@ public class SignInManager<TUser> where TUser : class
         // When token is verified correctly, clear the access failed count used for lockout
         await ResetLockout(user);
 
-        var claims = new List<Claim>();
-        claims.Add(new Claim("amr", "mfa"));
+        var claims = new List<Claim>
+        {
+            new Claim("amr", "mfa")
+        };
 
         // Cleanup external cookie
         if (twoFactorInfo.LoginProvider != null)

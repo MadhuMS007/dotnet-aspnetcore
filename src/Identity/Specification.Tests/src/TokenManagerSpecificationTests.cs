@@ -342,10 +342,10 @@ public abstract class TokenManagerSpecificationTestBase<TUser, TKey>
             _tokenManager = tokenManager;
         }
 
-        public async Task<bool> IsDeniedAsync(string tokenId)
+        public async Task<bool> IsDeniedAsync(TokenInfo token)
         {
             // check for revocation is done by looking for a token record that has invalid status
-            var storageToken = await _tokenManager.FindByIdAsync<object>(tokenId);
+            var storageToken = await _tokenManager.FindByIdAsync<object>(token.Id);
             return storageToken?.Status != TokenStatus.Active;
         }
     }

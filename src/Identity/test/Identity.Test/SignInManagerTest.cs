@@ -96,7 +96,7 @@ public class SignInManagerTest
         return manager;
     }
 
-    private static SignInManager<PocoUser> SetupSignInManager(UserManager<PocoUser> manager, HttpContext context, ILogger logger = null, IdentityOptions identityOptions = null, IAuthenticationSchemeProvider schemeProvider = null)
+    private static SignInManager<PocoUser> SetupSignInManager(UserManager<PocoUser> manager, HttpContext context, ILogger logger = null, IdentityOptions identityOptions = null, IAuthenticationSchemeProvider schemeProvider = null, ISignInPolicy<PocoUser> signInPolicy = null)
     {
         var contextAccessor = new Mock<IHttpContextAccessor>();
         contextAccessor.Setup(a => a.HttpContext).Returns(context);
@@ -106,7 +106,7 @@ public class SignInManagerTest
         options.Setup(a => a.Value).Returns(identityOptions);
         var claimsFactory = new UserClaimsPrincipalFactory<PocoUser, PocoRole>(manager, roleManager.Object, options.Object);
         schemeProvider = schemeProvider ?? new Mock<IAuthenticationSchemeProvider>().Object;
-        var sm = new SignInManager<PocoUser>(manager, contextAccessor.Object, claimsFactory, options.Object, null, schemeProvider, new DefaultUserConfirmation<PocoUser>());
+        var sm = new SignInManager<PocoUser>(manager, contextAccessor.Object, claimsFactory, options.Object, null, schemeProvider, new DefaultUserConfirmation<PocoUser>(), signInPolicy);
         sm.Logger = logger ?? NullLogger<SignInManager<PocoUser>>.Instance;
         return sm;
     }
@@ -228,6 +228,25 @@ public class SignInManagerTest
         // Assert
         Assert.True(result.Succeeded);
         manager.Verify();
+    }
+
+    [Fact]
+    public async Task CanDelegateSignInPolicy()
+    {
+        // Setup
+        var user = new PocoUser { UserName = "Foo" };
+        var manager = SetupUserManager(user);
+        var context = new DefaultHttpContext();
+        var policy = new Mock<ISignInPolicy<PocoUser>>();
+        policy.Setup(m => m.CanSignInAsync(user)).ReturnsAsync(SignInResult.NotAllowed).Verifiable();
+        var helper = SetupSignInManager(manager.Object, context, signInPolicy: policy.Object);
+
+        // Act
+        var result = await helper.CanSignInAsync(user);
+
+        // Assert
+        Assert.False(result);
+        policy.Verify();
     }
 
     [Fact]

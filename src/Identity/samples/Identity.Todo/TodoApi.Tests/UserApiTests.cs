@@ -148,20 +148,6 @@ public class UserApiTests
     }
 
     [Fact]
-    public async Task CanConfirmUser()
-    {
-        await using var application = new TodoApplication();
-        application.RequireConfirmedUserEmails();
-        await using var db = application.CreateTodoDbContext();
-        var code = await application.CreateUserAsync("todouser", "p@assw0rd1", generateCode: true);
-
-        var client = application.CreateClient();
-        var response = await client.PostAsJsonAsync(BearerApi.LoginEndpoint, new UserInfo { Username = "todouser", Password = "p@assw0rd1" });
-
-        Assert.False(response.IsSuccessStatusCode);
-    }
-
-    [Fact]
     public async Task CanRevokeAccessToken()
     {
         await using var application = new TodoApplication();
