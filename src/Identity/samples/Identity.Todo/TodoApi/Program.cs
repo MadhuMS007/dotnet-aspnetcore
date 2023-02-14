@@ -45,6 +45,6 @@ app.Map("/", () => Results.Redirect("/swagger"));
 
 // Configure the APIs
 app.MapTodos();
-app.MapUsers<TodoUser>();
+app.MapIdentity<TodoUser>();
 
 app.Run();

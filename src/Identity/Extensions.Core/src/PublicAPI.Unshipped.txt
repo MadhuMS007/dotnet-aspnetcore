@@ -13,10 +13,30 @@ const Microsoft.AspNetCore.Identity.TokenPurpose.RefreshToken = "refresh_token" 
 const Microsoft.AspNetCore.Identity.TokenStatus.Active = "active" -> string!
 const Microsoft.AspNetCore.Identity.TokenStatus.Inactive = "inactive" -> string!
 const Microsoft.AspNetCore.Identity.TokenStatus.Revoked = "revoked" -> string!
+Microsoft.AspNetCore.Identity.EndpointOptions
+Microsoft.AspNetCore.Identity.EndpointOptions.AuthenticatorGetEndpoint.get -> string!
+Microsoft.AspNetCore.Identity.EndpointOptions.AuthenticatorGetEndpoint.set -> void
+Microsoft.AspNetCore.Identity.EndpointOptions.ConfirmEmailEndpoint.get -> string!
+Microsoft.AspNetCore.Identity.EndpointOptions.ConfirmEmailEndpoint.set -> void
+Microsoft.AspNetCore.Identity.EndpointOptions.EndpointOptions() -> void
+Microsoft.AspNetCore.Identity.EndpointOptions.IdentityManageSubgroup.get -> string!
+Microsoft.AspNetCore.Identity.EndpointOptions.IdentityManageSubgroup.set -> void
+Microsoft.AspNetCore.Identity.EndpointOptions.IdentityRouteGroup.get -> string!
+Microsoft.AspNetCore.Identity.EndpointOptions.IdentityRouteGroup.set -> void
+Microsoft.AspNetCore.Identity.EndpointOptions.LoginEndpoint.get -> string!
+Microsoft.AspNetCore.Identity.EndpointOptions.LoginEndpoint.set -> void
+Microsoft.AspNetCore.Identity.EndpointOptions.RefreshEndpoint.get -> string!
+Microsoft.AspNetCore.Identity.EndpointOptions.RefreshEndpoint.set -> void
+Microsoft.AspNetCore.Identity.EndpointOptions.RegisterEndpoint.get -> string!
+Microsoft.AspNetCore.Identity.EndpointOptions.RegisterEndpoint.set -> void
+Microsoft.AspNetCore.Identity.EndpointOptions.VerifyAuthenticatorPostEndpoint.get -> string!
+Microsoft.AspNetCore.Identity.EndpointOptions.VerifyAuthenticatorPostEndpoint.set -> void
 Microsoft.AspNetCore.Identity.IdentityBearerTokenBuilder
 Microsoft.AspNetCore.Identity.IdentityBearerTokenBuilder.IdentityBearerTokenBuilder(Microsoft.AspNetCore.Identity.IdentityBuilder! builder, System.Type! tokenType) -> void
 Microsoft.AspNetCore.Identity.IdentityBearerTokenBuilder.IdentityBuilder.get -> Microsoft.AspNetCore.Identity.IdentityBuilder!
 Microsoft.AspNetCore.Identity.IdentityBuilder.TokenType.get -> System.Type?
+Microsoft.AspNetCore.Identity.IdentityOptions.Endpoints.get -> Microsoft.AspNetCore.Identity.EndpointOptions!
+Microsoft.AspNetCore.Identity.IdentityOptions.Endpoints.set -> void
 Microsoft.AspNetCore.Identity.IdentityOptions.TokenManager.get -> Microsoft.AspNetCore.Identity.TokenManagerOptions!
 Microsoft.AspNetCore.Identity.IdentityOptions.TokenManager.set -> void
 Microsoft.AspNetCore.Identity.IdentityVersions

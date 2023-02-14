@@ -61,9 +61,9 @@ public class RefreshToken
 }
 
 /// <summary>
-/// DTO representing a confirmation code.
+/// DTO representing a verification token, used for confirming emails, 2fa, authenticator
 /// </summary>
-public class EmailConfirmation
+public class VerificationToken
 {
     /// <summary>
     /// THe user id being confirmed.
@@ -76,3 +76,20 @@ public class EmailConfirmation
     [Required]
     public string Token { get; set; } = default!;
 }
+
+/// <summary>
+/// DTO representing authenticator app information.
+/// </summary>
+public class AuthenticatorInfo
+{
+    /// <summary>
+    /// The Uri for the authenticator.
+    /// </summary>
+    public string Uri { get; set; } = default!;
+
+    /// <summary>
+    /// The authenticator key.
+    /// </summary>
+    public string Key { get; set; } = default!;
+}
+

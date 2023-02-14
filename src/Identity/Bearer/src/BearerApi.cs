@@ -1,6 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using Microsoft.AspNetCore.Builder;
@@ -9,6 +10,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Bearer;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Options;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -18,31 +20,6 @@ namespace Microsoft.Extensions.DependencyInjection;
 public static class BearerApi
 {
     /// <summary>
-    /// The identity endpoint prefix, "/identity"
-    /// </summary>
-    public const string IdentityEndpoint = $"/identity";
-
-    /// <summary>
-    /// The register users endpoint, "/identity/register";
-    /// </summary>
-    public const string RegisterEndpoint = $"{IdentityEndpoint}/register";
-
-    /// <summary>
-    /// The confirm email endpoint, "/identity/confirmEmail";
-    /// </summary>
-    public const string ConfirmEmailEndpoint = $"{IdentityEndpoint}/confirmEmail";
-
-    /// <summary>
-    /// The login endpoint, "/identity/login";
-    /// </summary>
-    public const string LoginEndpoint = $"{IdentityEndpoint}/login";
-
-    /// <summary>
-    /// The refresh token endpoint, "/identity/refresh";
-    /// </summary>
-    public const string RefreshEndpoint = $"{IdentityEndpoint}/refresh";
-
-    /// <summary>
     /// Setup various bearer token routes under "/users".
     /// </summary>
     /// <typeparam name="TUser"></typeparam>
@@ -50,15 +27,18 @@ public static class BearerApi
     /// <returns></returns>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "<Pending>")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("AOT", "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.", Justification = "<Pending>")]
-    public static RouteGroupBuilder MapUsers<TUser>(this IEndpointRouteBuilder routes) where TUser : class, new()
+    public static RouteGroupBuilder MapIdentity<TUser>(this IEndpointRouteBuilder routes) where TUser : class, new()
     {
-        var group = routes.MapGroup(IdentityEndpoint);
+        var options = routes.ServiceProvider.GetRequiredService<IOptions<IdentityOptions>>().Value.Endpoints;
 
-        group.WithTags("Users");
+        var group = routes.MapGroup(options.IdentityRouteGroup);
+
+        // TODO: add to options?
+        group.WithTags("Identity", "Users");
 
         // group.WithParameterValidation(typeof(UserInfo), typeof(ExternalUserInfo));
 
-        group.MapPost("/register", async Task<Results<Ok, ValidationProblem>> (PasswordLoginInfo newUser, UserManager<TUser> userManager) =>
+        group.MapPost(options.RegisterEndpoint, async Task<Results<Ok, ValidationProblem>> (PasswordLoginInfo newUser, UserManager<TUser> userManager) =>
         {
             var user = new TUser();
             await userManager.SetUserNameAsync(user, newUser.Username);
@@ -72,7 +52,7 @@ public static class BearerApi
             return TypedResults.ValidationProblem(result.Errors.ToDictionary(e => e.Code, e => new[] { e.Description }));
         });
 
-        group.MapPost("/login", async Task<Results<BadRequest, Ok<AuthTokens>>> (PasswordLoginInfo userInfo, TokenSignInManager<TUser> signInManager, IUserTokenService<TUser> tokenService) =>
+        group.MapPost(options.LoginEndpoint, async Task<Results<BadRequest, Ok<AuthTokens>>> (PasswordLoginInfo userInfo, TokenSignInManager<TUser> signInManager, IUserTokenService<TUser> tokenService) =>
         {
             // TODO: this should return different status (mfa etc)
             (var result, var user) = await signInManager.PasswordSignInAsync(userInfo.Username, userInfo.Password);
@@ -84,6 +64,7 @@ public static class BearerApi
             return TypedResults.Ok(new AuthTokens(await tokenService.GetAccessTokenAsync(user), await tokenService.GetRefreshTokenAsync(user)));
         });
 
+        // TODO: need to ensure {provider} is in this pattern
         group.MapPost("/login/{provider}", async Task<Results<Ok<AuthTokens>, ValidationProblem>> (string provider, ExternalUserInfo userInfo, UserManager<TUser> userManager, IUserTokenService<TUser> tokenService) =>
         {
             var result = IdentityResult.Success;
@@ -107,7 +88,7 @@ public static class BearerApi
             return TypedResults.ValidationProblem(result.Errors.ToDictionary(e => e.Code, e => new[] { e.Description }));
         });
 
-        group.MapPost("/refresh", async Task<Results<BadRequest, Ok<AuthTokens>>> (RefreshToken tokenInfo, IUserTokenService<TUser> tokenService) =>
+        group.MapPost(options.RefreshEndpoint, async Task<Results<BadRequest, Ok<AuthTokens>>> (RefreshToken tokenInfo, IUserTokenService<TUser> tokenService) =>
         {
             if (tokenInfo.Token is null)
             {
@@ -123,7 +104,7 @@ public static class BearerApi
             return TypedResults.Ok(new AuthTokens(accessToken, refreshToken));
         });
 
-        group.MapPost("/confirmEmail", async Task<Results<BadRequest, Ok>> (EmailConfirmation code, UserManager<TUser> userManager) =>
+        group.MapPost(options.ConfirmEmailEndpoint, async Task<Results<BadRequest, Ok>> (VerificationToken code, UserManager<TUser> userManager) =>
         {
             if (code.Token is null || code.UserId is null)
             {
@@ -147,6 +128,85 @@ public static class BearerApi
             return TypedResults.BadRequest();
         });
 
+        // Protect manage section
+        var manageGroup = group.MapGroup(options.IdentityManageSubgroup).RequireAuthorization();
+        manageGroup.WithTags("Users", "Manage");
+
+        manageGroup.MapGet(options.AuthenticatorGetEndpoint, async Task<Results<BadRequest, Ok<AuthenticatorInfo>>> (UserManager<TUser> userManager, HttpContext request) =>
+        {
+            var user = await userManager.GetUserAsync(request.User);
+            if (user is null)
+            {
+                return TypedResults.BadRequest();
+            }
+
+            // Load the authenticator key & QR code URI to display on the form
+            var unformattedKey = await userManager.GetAuthenticatorKeyAsync(user);
+            if (string.IsNullOrEmpty(unformattedKey))
+            {
+                await userManager.ResetAuthenticatorKeyAsync(user);
+                unformattedKey = await userManager.GetAuthenticatorKeyAsync(user);
+            }
+            var email = await userManager.GetEmailAsync(user);
+
+            return TypedResults.Ok(new AuthenticatorInfo
+            {
+                Uri = GenerateQrCodeUri(email!, unformattedKey!),
+                Key = FormatKey(unformattedKey!)
+            });
+        });
+
+        manageGroup.MapPost(options.VerifyAuthenticatorPostEndpoint, async Task<Results<BadRequest, Ok>> (VerificationToken code, UserManager<TUser> userManager, HttpContext request) =>
+        {
+            var user = await userManager.GetUserAsync(request.User);
+            if (user is null)
+            {
+                return TypedResults.BadRequest();
+            }
+
+            // Strip spaces and hyphens
+            var verificationCode = code.Token.Replace(" ", string.Empty).Replace("-", string.Empty);
+            var is2faCodeValid = await userManager.VerifyTwoFactorTokenAsync(user, userManager.Options.Tokens.AuthenticatorTokenProvider, verificationCode);
+            if (!is2faCodeValid)
+            {
+                return TypedResults.BadRequest();
+            }
+
+            await userManager.SetTwoFactorEnabledAsync(user, true);
+            //_logger.LogInformation(LoggerEventIds.TwoFAEnabled, "User has enabled 2FA with an authenticator app.");
+
+            return TypedResults.Ok();
+        });
+
         return group;
+    }
+
+    private const string AuthenticatorUriFormat = "otpauth://totp/{0}:{1}?secret={2}&issuer={0}&digits=6";
+
+    private static string FormatKey(string unformattedKey)
+    {
+        var result = new StringBuilder();
+        int currentPosition = 0;
+        while (currentPosition + 4 < unformattedKey.Length)
+        {
+            result.Append(unformattedKey.AsSpan(currentPosition, 4)).Append(' ');
+            currentPosition += 4;
+        }
+        if (currentPosition < unformattedKey.Length)
+        {
+            result.Append(unformattedKey.AsSpan(currentPosition));
+        }
+
+        return result.ToString().ToLowerInvariant();
+    }
+
+    private static string GenerateQrCodeUri(string email, string unformattedKey)
+    {
+        return string.Format(
+            CultureInfo.InvariantCulture,
+            AuthenticatorUriFormat,
+            AspNetCore.WebUtilities.WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes("Microsoft.AspNetCore.Identity.UI")),
+            AspNetCore.WebUtilities.WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(email)),
+            unformattedKey);
     }
 }

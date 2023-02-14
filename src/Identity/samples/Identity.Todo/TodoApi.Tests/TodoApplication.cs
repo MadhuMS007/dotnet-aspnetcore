@@ -21,6 +21,12 @@ namespace TodoApi.Tests;
 internal class TodoApplication : WebApplicationFactory<Program>
 {
     private readonly SqliteConnection _sqliteConnection = new("Filename=:memory:");
+    private readonly Action<IdentityOptions>? _configureIdentity;
+
+    public TodoApplication(Action<IdentityOptions>? configureIdentity = null)
+    {
+        _configureIdentity = configureIdentity;
+    }
 
     public TodoDbContext CreateTodoDbContext()
     {
@@ -29,12 +35,18 @@ internal class TodoApplication : WebApplicationFactory<Program>
         return db;
     }
 
-    public void RequireConfirmedUserEmails()
+    public void ConfigureIdentity(Action<IdentityOptions> configure)
     {
         var options = Services.GetRequiredService<IOptions<IdentityOptions>>().Value;
-        options.SignIn.RequireConfirmedAccount = true;
-        options.SignIn.RequireConfirmedEmail = true;
+        configure(options);
     }
+
+    public void RequireConfirmedUserEmails()
+        => ConfigureIdentity(options =>
+        {
+            options.SignIn.RequireConfirmedAccount = true;
+            options.SignIn.RequireConfirmedEmail = true;
+        });
 
     public async Task<(string, string?)> CreateUserAsync(string username, string? password = null, bool isAdmin = false, bool generateCode = false)
     {
@@ -95,6 +107,11 @@ internal class TodoApplication : WebApplicationFactory<Program>
                 o.Password.RequiredLength = 1;
                 o.Password.RequireLowercase = false;
                 o.Password.RequireUppercase = false;
+
+                if (_configureIdentity != null)
+                {
+                    _configureIdentity(o);
+                }
             });
         });
 
