@@ -1,14 +1,13 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.Buffers.Text;
 using System.Globalization;
+using System.Net;
 using System.Net.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Bearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json.Linq;
 
 namespace TodoApi.Tests;
 
@@ -20,6 +19,7 @@ public class UserApiTests
     public const string LoginEndpoint = $"{IdentityEndpoint}/login";
     public const string RefreshEndpoint = $"{IdentityEndpoint}/refresh";
     public const string IdentityManageEndpoint = $"{IdentityEndpoint}/manage";
+    public const string LogoutEndpoint = $"{IdentityManageEndpoint}/logout";
     public const string VerifyAuthenticatorEndpoint = $"{IdentityManageEndpoint}/verifyAuthenticator";
     public const string GetAuthenticatorEndpoint = $"{IdentityManageEndpoint}/authenticator";
 
@@ -216,7 +216,7 @@ public class UserApiTests
     }
 
     [Fact]
-    public async Task CanRevokeAccessToken()
+    public async Task CanLogout()
     {
         await using var application = new TodoApplication();
         await using var db = application.CreateTodoDbContext();
@@ -225,18 +225,19 @@ public class UserApiTests
         var client = application.CreateClient();
         var response = await client.PostAsJsonAsync(LoginEndpoint, new UserInfo { Username = "todouser", Password = "p@assw0rd1" });
 
-        // Check that the token is indeed valid and revoke ourselves
+        // Check that the token is indeed valid
         var token = await IsValidTokenAsync(client, response);
-        var req = new HttpRequestMessage(HttpMethod.Get, "/todos/revokeMe");
+
+        // Logout
+        var req = new HttpRequestMessage(HttpMethod.Post, LogoutEndpoint);
         req.Headers.Authorization = new("Bearer", token.AccessToken);
         response = await client.SendAsync(req);
-
         Assert.True(response.IsSuccessStatusCode);
 
+        // Verify that the token no longer works
         req = new HttpRequestMessage(HttpMethod.Get, "/todos");
         req.Headers.Authorization = new("Bearer", token.AccessToken);
         response = await client.SendAsync(req);
-
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 

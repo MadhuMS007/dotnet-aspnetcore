@@ -29,6 +29,11 @@ public class EndpointOptions
     public string LoginEndpoint { get; set; } = $"/login";
 
     /// <summary>
+    /// The logout endpoint, /logout";
+    /// </summary>
+    public string LogoutEndpoint { get; set; } = $"/logout";
+
+    /// <summary>
     /// The refresh token endpoint, "/refresh";
     /// </summary>
     public string RefreshEndpoint { get; set; } = $"/refresh";

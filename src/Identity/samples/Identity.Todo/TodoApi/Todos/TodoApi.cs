@@ -3,9 +3,7 @@
 
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 
 namespace TodoApi;
 
@@ -37,19 +35,6 @@ internal static class TodoApi
         group.MapGet("/", async (TodoDbContext db, HttpContext request) =>
         {
             return await db.Todos.Where(todo => todo.OwnerId == request.User.GetOwnerId()).Select(t => t.AsTodoItem()).AsNoTracking().ToListAsync();
-        });
-
-        group.MapGet("/revokeMe", Results<BadRequest, Ok> (HttpContext request, IOptions<JtiBlockerOptions> blockerOptions) =>
-        {
-            var jti = request.User.FindFirstValue(TokenClaims.Jti);
-            if (jti == null)
-            {
-                return TypedResults.BadRequest();
-            }
-
-            blockerOptions.Value.BlockedJti.Add(jti);
-
-            return TypedResults.Ok();
         });
 
         group.MapGet("/{id}", async Task<Results<Ok<TodoItem>, NotFound>> (TodoDbContext db, int id, HttpContext request) =>

@@ -25,6 +25,8 @@ Microsoft.AspNetCore.Identity.EndpointOptions.IdentityRouteGroup.get -> string!
 Microsoft.AspNetCore.Identity.EndpointOptions.IdentityRouteGroup.set -> void
 Microsoft.AspNetCore.Identity.EndpointOptions.LoginEndpoint.get -> string!
 Microsoft.AspNetCore.Identity.EndpointOptions.LoginEndpoint.set -> void
+Microsoft.AspNetCore.Identity.EndpointOptions.LogoutEndpoint.get -> string!
+Microsoft.AspNetCore.Identity.EndpointOptions.LogoutEndpoint.set -> void
 Microsoft.AspNetCore.Identity.EndpointOptions.RefreshEndpoint.get -> string!
 Microsoft.AspNetCore.Identity.EndpointOptions.RefreshEndpoint.set -> void
 Microsoft.AspNetCore.Identity.EndpointOptions.RegisterEndpoint.get -> string!
