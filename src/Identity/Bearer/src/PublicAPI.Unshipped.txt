@@ -3,13 +3,6 @@ const Microsoft.AspNetCore.Identity.JWEAlg.RSA_OAEP = "RSA-OAEP" -> string!
 const Microsoft.AspNetCore.Identity.JWSAlg.HS256 = "HS256" -> string!
 const Microsoft.AspNetCore.Identity.JWSAlg.None = "none" -> string!
 const Microsoft.AspNetCore.Identity.JWSAlg.RS256 = "RS256" -> string!
-const Microsoft.Extensions.DependencyInjection.BearerApi.ConfirmEmailEndpoint = "/identity/confirmEmail" -> string!
-const Microsoft.Extensions.DependencyInjection.BearerApi.IdentityEndpoint = "/identity" -> string!
-const Microsoft.Extensions.DependencyInjection.BearerApi.IdentityManageEndpoint = "/identity/manage" -> string!
-const Microsoft.Extensions.DependencyInjection.BearerApi.LoginEndpoint = "/identity/login" -> string!
-const Microsoft.Extensions.DependencyInjection.BearerApi.RefreshEndpoint = "/identity/refresh" -> string!
-const Microsoft.Extensions.DependencyInjection.BearerApi.RegisterEndpoint = "/identity/register" -> string!
-const Microsoft.Extensions.DependencyInjection.BearerApi.VerifyAuthenticatorEndpoint = "/identity/manage/verifyAuthenticator" -> string!
 Microsoft.AspNetCore.Identity.Bearer.AuthenticatorInfo
 Microsoft.AspNetCore.Identity.Bearer.AuthenticatorInfo.AuthenticatorInfo() -> void
 Microsoft.AspNetCore.Identity.Bearer.AuthenticatorInfo.Key.get -> string!
@@ -32,12 +25,13 @@ Microsoft.AspNetCore.Identity.Bearer.PasswordLoginInfo
 Microsoft.AspNetCore.Identity.Bearer.PasswordLoginInfo.Password.get -> string!
 Microsoft.AspNetCore.Identity.Bearer.PasswordLoginInfo.Password.set -> void
 Microsoft.AspNetCore.Identity.Bearer.PasswordLoginInfo.PasswordLoginInfo() -> void
+Microsoft.AspNetCore.Identity.Bearer.PasswordLoginInfo.TfaCode.get -> string?
+Microsoft.AspNetCore.Identity.Bearer.PasswordLoginInfo.TfaCode.set -> void
 Microsoft.AspNetCore.Identity.Bearer.PasswordLoginInfo.Username.get -> string!
 Microsoft.AspNetCore.Identity.Bearer.PasswordLoginInfo.Username.set -> void
-Microsoft.AspNetCore.Identity.Bearer.RefreshToken
-Microsoft.AspNetCore.Identity.Bearer.RefreshToken.RefreshToken() -> void
-Microsoft.AspNetCore.Identity.Bearer.RefreshToken.Token.get -> string!
-Microsoft.AspNetCore.Identity.Bearer.RefreshToken.Token.set -> void
+Microsoft.AspNetCore.Identity.Bearer.TokenData
+Microsoft.AspNetCore.Identity.Bearer.TokenData.Token.get -> string!
+Microsoft.AspNetCore.Identity.Bearer.TokenData.Token.set -> void
 Microsoft.AspNetCore.Identity.Bearer.VerificationToken
 Microsoft.AspNetCore.Identity.Bearer.VerificationToken.Token.get -> string!
 Microsoft.AspNetCore.Identity.Bearer.VerificationToken.Token.set -> void
@@ -118,7 +112,7 @@ static Microsoft.AspNetCore.Identity.BearerServiceCollectionExtensions.AddBearer
 static Microsoft.AspNetCore.Identity.BearerServiceCollectionExtensions.AddDefaultIdentityBearer<TUser, TToken>(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<Microsoft.AspNetCore.Identity.IdentityOptions!>! setupAction) -> Microsoft.AspNetCore.Identity.IdentityBuilder!
 static Microsoft.AspNetCore.Identity.BearerServiceCollectionExtensions.AddDefaultIdentityBearer<TUser>(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.AspNetCore.Identity.IdentityBuilder!
 static Microsoft.AspNetCore.Identity.BearerServiceCollectionExtensions.AddIdentityCore<TUser, TToken>(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<Microsoft.AspNetCore.Identity.IdentityOptions!>! setupAction) -> Microsoft.AspNetCore.Identity.IdentityBearerTokenBuilder!
-static Microsoft.Extensions.DependencyInjection.BearerApi.MapIdentity<TUser>(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! routes, Microsoft.AspNetCore.Identity.IdentityEndpointOptions! options) -> Microsoft.AspNetCore.Routing.RouteGroupBuilder!
+static Microsoft.Extensions.DependencyInjection.BearerApi.MapIdentity<TUser>(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! routes) -> Microsoft.AspNetCore.Routing.RouteGroupBuilder!
 static Microsoft.Extensions.DependencyInjection.BearerBuilderExtensions.AddBearerTokens<TToken>(this Microsoft.AspNetCore.Identity.IdentityBuilder! builder) -> Microsoft.AspNetCore.Identity.IdentityBearerTokenBuilder!
 static Microsoft.Extensions.DependencyInjection.BearerBuilderExtensions.AddTokenStore<TContext>(this Microsoft.AspNetCore.Identity.IdentityBuilder! builder) -> Microsoft.AspNetCore.Identity.IdentityBuilder!
 virtual Microsoft.AspNetCore.Identity.TokenManager<TToken>.CancellationToken.get -> System.Threading.CancellationToken

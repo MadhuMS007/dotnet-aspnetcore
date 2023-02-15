@@ -21,4 +21,13 @@ public interface ISignInPolicy<TUser> where TUser : class
     /// if the specified user can sign-in, otherwise the sign-in status that should be returned.
     /// </returns>
     public Task<SignInResult?> CanSignInAsync(TUser user);
+
+    /// <summary>
+    /// Check if the <paramref name="user"/> has two factor enabled.
+    /// </summary>
+    /// <param name="user"></param>
+    /// <returns>
+    /// The task object representing the asynchronous operation containing true if the user has two factor enabled.
+    /// </returns>
+    public Task<bool> IsTwoFactorEnabledAsync(TUser user);
 }

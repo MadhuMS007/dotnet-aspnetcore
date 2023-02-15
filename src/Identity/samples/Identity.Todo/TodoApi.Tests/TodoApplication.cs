@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
@@ -48,11 +49,11 @@ internal class TodoApplication : WebApplicationFactory<Program>
             options.SignIn.RequireConfirmedEmail = true;
         });
 
-    public async Task<(string, string?)> CreateUserAsync(string username, string? password = null, bool isAdmin = false, bool generateCode = false)
+    public async Task<(TodoUser, string?)> CreateUserAsync(string userId, string? password = null, bool isAdmin = false, bool generateCode = false)
     {
         using var scope = Services.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<TodoUser>>();
-        var newUser = new TodoUser { UserName = username };
+        var newUser = new TodoUser { UserName = userId, Id = userId };
         var result = await userManager.CreateAsync(newUser, password ?? Guid.NewGuid().ToString());
         if (isAdmin)
         {
@@ -60,8 +61,15 @@ internal class TodoApplication : WebApplicationFactory<Program>
         }
         Assert.True(result.Succeeded);
         return generateCode
-            ? (newUser.Id, WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(await userManager.GenerateEmailConfirmationTokenAsync(newUser))))
-            : (newUser.Id, null);
+            ? (newUser, WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(await userManager.GenerateEmailConfirmationTokenAsync(newUser))))
+            : (newUser, null);
+    }
+
+    public async Task<string?> GetAuthenticatorCode(TodoUser user)
+    {
+        using var scope = Services.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<TodoUser>>();
+        return await userManager.GetAuthenticatorKeyAsync(user);
     }
 
     public async Task DeleteUserAsync(string username)
@@ -73,9 +81,9 @@ internal class TodoApplication : WebApplicationFactory<Program>
         Assert.True(result.Succeeded);
     }
 
-    public async Task<HttpClient> CreateClientAsync(string userName)
+    public async Task<HttpClient> CreateClientAsync(string userId)
     {
-        var token = await CreateTokenAsync(userName);
+        var token = await CreateTokenAsync(userId);
         return CreateDefaultClient(new AuthHandler(req =>
         {
             req.Headers.Authorization = new AuthenticationHeaderValue(JwtBearerDefaults.AuthenticationScheme, token);
@@ -118,14 +126,12 @@ internal class TodoApplication : WebApplicationFactory<Program>
         return base.CreateHost(builder);
     }
 
-    private async Task<string> CreateTokenAsync(string userName)
+    private async Task<string> CreateTokenAsync(string userId)
     {
-        // Read the user JWTs configuration for testing so unit tests can generate
-        // JWT tokens.
         using var scope = Services.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<TodoUser>>();
         var tokenService = scope.ServiceProvider.GetRequiredService<IUserTokenService<TodoUser>>();
-        var user = await userManager.FindByNameAsync(userName);
+        var user = await userManager.FindByIdAsync(userId);
         return await tokenService.GetAccessTokenAsync(user!);
     }
 

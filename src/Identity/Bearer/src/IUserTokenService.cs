@@ -74,9 +74,8 @@ internal class UserTokenService<TUser> : IUserTokenService<TUser> where TUser : 
     private async Task BuildPayloadAsync(TUser user, IDictionary<string, string> payload)
     {
         // Based on UserClaimsPrincipalFactory
-        //var userId = await UserManager.GetUserIdAsync(user).ConfigureAwait(false);
-        var userName = await UserManager.GetUserNameAsync(user).ConfigureAwait(false);
-        payload[ClaimTypes.NameIdentifier] = userName!;
+        var userId = await UserManager.GetUserIdAsync(user).ConfigureAwait(false);
+        payload[ClaimTypes.NameIdentifier] = userId;
 
         if (UserManager.SupportsUserEmail)
         {

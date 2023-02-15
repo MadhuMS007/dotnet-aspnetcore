@@ -1,11 +1,14 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Buffers.Text;
+using System.Globalization;
 using System.Net.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Bearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json.Linq;
 
 namespace TodoApi.Tests;
 
@@ -18,6 +21,7 @@ public class UserApiTests
     public const string RefreshEndpoint = $"{IdentityEndpoint}/refresh";
     public const string IdentityManageEndpoint = $"{IdentityEndpoint}/manage";
     public const string VerifyAuthenticatorEndpoint = $"{IdentityManageEndpoint}/verifyAuthenticator";
+    public const string GetAuthenticatorEndpoint = $"{IdentityManageEndpoint}/authenticator";
 
     [Fact]
     public async Task CanCreateAUser()
@@ -156,7 +160,7 @@ public class UserApiTests
         await using var application = new TodoApplication();
         application.RequireConfirmedUserEmails();
         await using var db = application.CreateTodoDbContext();
-        (var userId, var code) = await application.CreateUserAsync("todouser", "p@assw0rd1", generateCode: true);
+        (var user, var code) = await application.CreateUserAsync("todouser", "p@assw0rd1", generateCode: true);
 
         var client = application.CreateClient();
         var response = await client.PostAsJsonAsync(LoginEndpoint, new UserInfo { Username = "todouser", Password = "p@assw0rd1" });
@@ -165,10 +169,50 @@ public class UserApiTests
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
         // Confirm the user
-        response = await client.PostAsJsonAsync(ConfirmEmailEndpoint, new VerificationToken { UserId = userId, Token = code });
+        response = await client.PostAsJsonAsync(ConfirmEmailEndpoint, new VerificationToken { UserId = user.Id, Token = code });
         Assert.True(response.IsSuccessStatusCode);
 
         await IsValidTokenAsync(client, await client.PostAsJsonAsync(LoginEndpoint, new UserInfo { Username = "todouser", Password = "p@assw0rd1" }));
+    }
+
+    internal static string CalculateCode(string key)
+    {
+        // Based on AuthenticatorTokenProvider
+        var keyBytes = Base32.FromBase32(key);
+        var unixTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var timestep = Convert.ToInt64(unixTimestamp / 30);
+        return Rfc6238AuthenticationService.ComputeTotp(keyBytes, (ulong)timestep, modifierBytes: null).ToString(CultureInfo.InvariantCulture);
+    }
+
+    [Fact]
+    public async Task CanAddAuthenticator()
+    {
+        await using var application = new TodoApplication();
+        await using var db = application.CreateTodoDbContext();
+        (var user, _) = await application.CreateUserAsync("todouser", "p@assw0rd1");
+
+        var client = await application.CreateClientAsync(user.Id);
+        var authenticator = await client.GetFromJsonAsync<AuthenticatorInfo>(GetAuthenticatorEndpoint);
+        Assert.NotNull(authenticator);
+        Assert.NotNull(authenticator.Key);
+        Assert.NotNull(authenticator.Uri);
+
+        var key = await application.GetAuthenticatorCode(user);
+        Assert.NotNull(key);
+        Assert.Equal(authenticator.Key, BearerApi.FormatKey(key));
+        var authenticatorCode = CalculateCode(key);
+
+        var response = await client.PostAsJsonAsync(VerifyAuthenticatorEndpoint, new TokenData() { Token = authenticatorCode });
+        Assert.True(response.IsSuccessStatusCode);
+
+        // Verify that login will now fail since tfa is required
+        var newClient = application.CreateClient();
+        response = await newClient.PostAsJsonAsync(LoginEndpoint, new PasswordLoginInfo { Username = "todouser", Password = "p@assw0rd1" });
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        // Verify that login works with code
+        response = await newClient.PostAsJsonAsync(LoginEndpoint, new PasswordLoginInfo { Username = "todouser", Password = "p@assw0rd1", TfaCode = CalculateCode(key) });
+        await IsValidTokenAsync(client, response);
     }
 
     [Fact]

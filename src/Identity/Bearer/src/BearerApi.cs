@@ -55,7 +55,7 @@ public static class BearerApi
         group.MapPost(options.LoginEndpoint, async Task<Results<BadRequest, Ok<AuthTokens>>> (PasswordLoginInfo userInfo, TokenSignInManager<TUser> signInManager, IUserTokenService<TUser> tokenService) =>
         {
             // TODO: this should return different status (mfa etc)
-            (var result, var user) = await signInManager.PasswordSignInAsync(userInfo.Username, userInfo.Password);
+            (var result, var user) = await signInManager.PasswordSignInAsync(userInfo.Username, userInfo.Password, userInfo.TfaCode);
             if (!result.Succeeded || user is null)
             {
                 return TypedResults.BadRequest();
@@ -88,7 +88,7 @@ public static class BearerApi
             return TypedResults.ValidationProblem(result.Errors.ToDictionary(e => e.Code, e => new[] { e.Description }));
         });
 
-        group.MapPost(options.RefreshEndpoint, async Task<Results<BadRequest, Ok<AuthTokens>>> (RefreshToken tokenInfo, IUserTokenService<TUser> tokenService) =>
+        group.MapPost(options.RefreshEndpoint, async Task<Results<BadRequest, Ok<AuthTokens>>> (TokenData tokenInfo, IUserTokenService<TUser> tokenService) =>
         {
             if (tokenInfo.Token is null)
             {
@@ -147,16 +147,16 @@ public static class BearerApi
                 await userManager.ResetAuthenticatorKeyAsync(user);
                 unformattedKey = await userManager.GetAuthenticatorKeyAsync(user);
             }
-            var email = await userManager.GetEmailAsync(user);
+            var userName = await userManager.GetUserNameAsync(user);
 
             return TypedResults.Ok(new AuthenticatorInfo
             {
-                Uri = GenerateQrCodeUri(email!, unformattedKey!),
+                Uri = GenerateQrCodeUri(userName!, unformattedKey!),
                 Key = FormatKey(unformattedKey!)
             });
         });
 
-        manageGroup.MapPost(options.VerifyAuthenticatorPostEndpoint, async Task<Results<BadRequest, Ok>> (VerificationToken code, UserManager<TUser> userManager, HttpContext request) =>
+        manageGroup.MapPost(options.VerifyAuthenticatorPostEndpoint, async Task<Results<BadRequest, Ok>> (TokenData token, UserManager<TUser> userManager, HttpContext request) =>
         {
             var user = await userManager.GetUserAsync(request.User);
             if (user is null)
@@ -165,7 +165,7 @@ public static class BearerApi
             }
 
             // Strip spaces and hyphens
-            var verificationCode = code.Token.Replace(" ", string.Empty).Replace("-", string.Empty);
+            var verificationCode = token.Token.Replace(" ", string.Empty).Replace("-", string.Empty);
             var is2faCodeValid = await userManager.VerifyTwoFactorTokenAsync(user, userManager.Options.Tokens.AuthenticatorTokenProvider, verificationCode);
             if (!is2faCodeValid)
             {
@@ -183,7 +183,7 @@ public static class BearerApi
 
     private const string AuthenticatorUriFormat = "otpauth://totp/{0}:{1}?secret={2}&issuer={0}&digits=6";
 
-    private static string FormatKey(string unformattedKey)
+    internal static string FormatKey(string unformattedKey)
     {
         var result = new StringBuilder();
         int currentPosition = 0;
@@ -200,13 +200,13 @@ public static class BearerApi
         return result.ToString().ToLowerInvariant();
     }
 
-    private static string GenerateQrCodeUri(string email, string unformattedKey)
+    private static string GenerateQrCodeUri(string userName, string unformattedKey)
     {
         return string.Format(
             CultureInfo.InvariantCulture,
             AuthenticatorUriFormat,
             AspNetCore.WebUtilities.WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes("Microsoft.AspNetCore.Identity.UI")),
-            AspNetCore.WebUtilities.WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(email)),
+            AspNetCore.WebUtilities.WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(userName)),
             unformattedKey);
     }
 }

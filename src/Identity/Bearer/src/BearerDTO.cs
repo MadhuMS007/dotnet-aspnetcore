@@ -21,6 +21,11 @@ public class PasswordLoginInfo
     /// </summary>
     [Required]
     public string Password { get; set; } = default!;
+
+    /// <summary>
+    /// Optional two factor code needed if enabled for the user.
+    /// </summary>
+    public string? TfaCode { get; set; }
 }
 
 /// <summary>
@@ -49,12 +54,12 @@ public class ExternalUserInfo
 public record AuthTokens(string AccessToken, string RefreshToken);
 
 /// <summary>
-/// DTO representing a refresh token.
+/// DTO representing a token.
 /// </summary>
-public class RefreshToken
+public class TokenData
 {
     /// <summary>
-    /// The refresh token.
+    /// The token.
     /// </summary>
     [Required]
     public string Token { get; set; } = default!;

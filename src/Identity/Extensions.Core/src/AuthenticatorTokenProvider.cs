@@ -21,7 +21,6 @@ public class AuthenticatorTokenProvider<TUser> : IUserTwoFactorTokenProvider<TUs
     public virtual async Task<bool> CanGenerateTwoFactorTokenAsync(UserManager<TUser> manager, TUser user)
     {
         var key = await manager.GetAuthenticatorKeyAsync(user).ConfigureAwait(false);
-
         return !string.IsNullOrWhiteSpace(key);
     }
 

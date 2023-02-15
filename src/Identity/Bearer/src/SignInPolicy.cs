@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Microsoft.AspNetCore.Identity;
 
@@ -16,7 +17,7 @@ internal class TokenSignInManager<TUser> where TUser : class
         _signInPolicy = signInPolicy;
     }
 
-    public virtual async Task<(SignInResult, TUser?)> PasswordSignInAsync(string userName, string password)
+    public virtual async Task<(SignInResult, TUser?)> PasswordSignInAsync(string userName, string password, string? tfaCode)
     {
         var user = await _userManager.FindByNameAsync(userName);
         if (user is null)
@@ -30,13 +31,26 @@ internal class TokenSignInManager<TUser> where TUser : class
             return (result, null);
         }
 
+        // TODO this should all be replaced with interceptors
         if (await _userManager.CheckPasswordAsync(user, password))
         {
+            if (await _signInPolicy.IsTwoFactorEnabledAsync(user))
+            {
+                if (tfaCode != null &&
+                    await _userManager.VerifyTwoFactorTokenAsync(user, _userManager.Options.Tokens.AuthenticatorTokenProvider, tfaCode))
+                {
+                    return (SignInResult.Success, user);
+                }
+                return (SignInResult.Failed, null);
+            }
+
             return (SignInResult.Success, user);
         }
 
         return (SignInResult.Failed, null);
     }
+
+
 }
 
 internal class SignInPolicy<TUser> : ISignInPolicy<TUser> where TUser : class
@@ -80,5 +94,12 @@ internal class SignInPolicy<TUser> : ISignInPolicy<TUser> where TUser : class
 
         return null;
     }
+
+    /// <inheritdoc/>
+    public virtual async Task<bool> IsTwoFactorEnabledAsync(TUser user)
+        => _userManager.SupportsUserTwoFactor &&
+        await _userManager.GetTwoFactorEnabledAsync(user) &&
+        (await _userManager.GetValidTwoFactorProvidersAsync(user)).Count > 0;
+
 }
 
