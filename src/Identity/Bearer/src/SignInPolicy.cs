@@ -2,9 +2,100 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Microsoft.AspNetCore.Identity;
+
+internal class SignInContext<TUser> where TUser : class
+{
+    public SignInContext(TUser user, UserManager<TUser> userManager)
+    {
+        User = user;
+        UserManager = userManager;
+    }
+
+    public TUser User { get; }
+
+    public UserManager<TUser> UserManager { get; }
+
+    public string? SuppliedPassword { get; set; }
+
+    public string? SuppliedTfaCode { get; set; }
+
+    public SignInResult? Result { get; set; }
+
+    public async Task<bool> IsTwoFactorEnabledAsync()
+        => UserManager.SupportsUserTwoFactor &&
+        await UserManager.GetTwoFactorEnabledAsync(User) &&
+        (await UserManager.GetValidTwoFactorProvidersAsync(User)).Count > 0;
+
+}
+
+internal interface SignInStep<TUser> where TUser : class
+{
+    public Task ExecuteAsync(SignInContext<TUser> context);
+}
+
+internal class CheckConfirmationStep<TUser> : SignInStep<TUser> where TUser : class
+{
+    public async Task ExecuteAsync(SignInContext<TUser> context)
+    {
+        if (context.UserManager.Options.SignIn.RequireConfirmedEmail && !(await context.UserManager.IsEmailConfirmedAsync(context.User)))
+        {
+            //_logger.LogDebug(EventIds.UserCannotSignInWithoutConfirmedEmail, "User cannot sign in without a confirmed email.");
+            context.Result = SignInResult.NotAllowed;
+            return;
+        }
+        if (context.UserManager.Options.SignIn.RequireConfirmedPhoneNumber && !(await context.UserManager.IsPhoneNumberConfirmedAsync(context.User)))
+        {
+            //_logger.LogDebug(EventIds.UserCannotSignInWithoutConfirmedPhoneNumber, "User cannot sign in without a confirmed phone number.");
+            context.Result = SignInResult.NotAllowed;
+            return;
+        }
+        //if (context.UserManager.Options.SignIn.RequireConfirmedAccount && !(await _confirmation.IsConfirmedAsync(context.UserManager, user)))
+        //{
+        //    //_logger.LogDebug(EventIds.UserCannotSignInWithoutConfirmedAccount, "User cannot sign in without a confirmed account.");
+        //    return SignInResult.NotAllowed;
+        //}
+
+        if (context.UserManager.SupportsUserLockout && await context.UserManager.IsLockedOutAsync(context.User))
+        {
+            //_logger.LogDebug(EventIds.UserLockedOut, "User is currently locked out.");
+            context.Result = SignInResult.NotAllowed;
+            return;
+        }
+    }
+}
+
+internal class CheckPasswordStep<TUser> : SignInStep<TUser> where TUser : class
+{
+    public async Task ExecuteAsync(SignInContext<TUser> context)
+    {
+        if (context.SuppliedPassword == null ||
+            !await context.UserManager.CheckPasswordAsync(context.User, context.SuppliedPassword))
+        {
+            // TODO: also do lockout inc here
+            context.Result = SignInResult.Failed;
+        }
+    }
+}
+
+internal class CheckTfaStep<TUser> : SignInStep<TUser> where TUser : class
+{
+    public async Task ExecuteAsync(SignInContext<TUser> context)
+    {
+        if (!await context.IsTwoFactorEnabledAsync())
+        {
+            return;
+        }
+
+        if (context.SuppliedTfaCode == null ||
+            !await context.UserManager.VerifyTwoFactorTokenAsync(context.User, context.UserManager.Options.Tokens.AuthenticatorTokenProvider, context.SuppliedTfaCode))
+        {
+            // TODO: also do lockout inc here
+            context.Result = SignInResult.Failed;
+        }
+    }
+}
 
 internal class TokenSignInManager<TUser> where TUser : class
 {
@@ -25,32 +116,32 @@ internal class TokenSignInManager<TUser> where TUser : class
             return (SignInResult.Failed, null);
         }
 
-        var result = await _signInPolicy.CanSignInAsync(user);
-        if (result != null)
+        var pipeline = new List<SignInStep<TUser>>()
         {
-            return (result, null);
-        }
+            new CheckConfirmationStep<TUser>(),
+            new CheckPasswordStep<TUser>(),
+            new CheckTfaStep<TUser>()
+        };
 
-        // TODO this should all be replaced with interceptors
-        if (await _userManager.CheckPasswordAsync(user, password))
+        var context = new SignInContext<TUser>(user, _userManager)
         {
-            if (await _signInPolicy.IsTwoFactorEnabledAsync(user))
+            SuppliedPassword = password,
+            SuppliedTfaCode = tfaCode
+        };
+        foreach (var step in pipeline)
+        {
+            await step.ExecuteAsync(context);
+            if (context.Result != null)
             {
-                if (tfaCode != null &&
-                    await _userManager.VerifyTwoFactorTokenAsync(user, _userManager.Options.Tokens.AuthenticatorTokenProvider, tfaCode))
-                {
-                    return (SignInResult.Success, user);
-                }
-                return (SignInResult.Failed, null);
+                // Only return the user if successful
+                return (context.Result,
+                    context.Result.Succeeded ? user : null);
             }
-
-            return (SignInResult.Success, user);
         }
 
-        return (SignInResult.Failed, null);
+        // If we finished the pipeline without issue, this is a successful sign in.
+        return (SignInResult.Success, user);
     }
-
-
 }
 
 internal class SignInPolicy<TUser> : ISignInPolicy<TUser> where TUser : class

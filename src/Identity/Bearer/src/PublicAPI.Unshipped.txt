@@ -32,6 +32,7 @@ Microsoft.AspNetCore.Identity.Bearer.PasswordLoginInfo.Username.set -> void
 Microsoft.AspNetCore.Identity.Bearer.TokenData
 Microsoft.AspNetCore.Identity.Bearer.TokenData.Token.get -> string!
 Microsoft.AspNetCore.Identity.Bearer.TokenData.Token.set -> void
+Microsoft.AspNetCore.Identity.Bearer.TokenData.TokenData() -> void
 Microsoft.AspNetCore.Identity.Bearer.VerificationToken
 Microsoft.AspNetCore.Identity.Bearer.VerificationToken.Token.get -> string!
 Microsoft.AspNetCore.Identity.Bearer.VerificationToken.Token.set -> void
