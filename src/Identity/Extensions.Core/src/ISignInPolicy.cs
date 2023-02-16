@@ -30,4 +30,13 @@ public interface ISignInPolicy<TUser> where TUser : class
     /// The task object representing the asynchronous operation containing true if the user has two factor enabled.
     /// </returns>
     public Task<bool> IsTwoFactorEnabledAsync(TUser user);
+
+    /// <summary>
+    /// Attempt to sign in a user with the specified password and tfaCode.
+    /// </summary>
+    /// <param name="userName">The user name.</param>
+    /// <param name="password">The password.</param>
+    /// <param name="tfaCode">The optional two factor code.</param>
+    /// <returns>The <see cref="SignInResult"/> and the user if successful, null otherwise.</returns>
+    public Task<(SignInResult, TUser?)> PasswordSignInAsync(string userName, string password, string? tfaCode);
 }

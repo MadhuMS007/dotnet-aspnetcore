@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Bearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 
 namespace TodoApi.Tests;
 
@@ -132,6 +133,30 @@ public class UserApiTests
         var client = application.CreateClient();
         var response = await client.PostAsJsonAsync("/wee/yolo", new UserInfo { Username = "todouser", Password = "p@assw0rd1" });
         await IsValidTokenAsync(client, response);
+    }
+
+    private class AlwaysLockedOutStep : ISignInStep
+    {
+        public Task ExecuteAsync<TUser>(SignInContext<TUser> context) where TUser : class
+        {
+            context.Result = Microsoft.AspNetCore.Identity.SignInResult.LockedOut;
+            return Task.CompletedTask;
+        }
+    }
+
+    [Fact]
+    public async Task CanCustomizePasswordSignIn()
+    {
+        await using var application = new TodoApplication(o =>
+        {
+            o.SignIn.PasswordSignInSteps.Add(new AlwaysLockedOutStep());
+        });
+        await using var db = application.CreateTodoDbContext();
+        await application.CreateUserAsync("todouser", "p@assw0rd1");
+
+        var client = application.CreateClient();
+        var response = await client.PostAsJsonAsync(LoginEndpoint, new UserInfo { Username = "todouser", Password = "p@assw0rd1" });
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     private async Task<AuthTokens> IsValidTokenAsync(HttpClient client, HttpResponseMessage response)

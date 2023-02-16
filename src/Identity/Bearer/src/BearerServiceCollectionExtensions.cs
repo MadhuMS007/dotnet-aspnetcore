@@ -75,7 +75,10 @@ public static class BearerServiceCollectionExtensions
         //{
         //});
 
-        services.Configure<IdentityOptions>(o => o.Stores.SchemaVersion = IdentityVersions.Version2);
+        services.Configure<IdentityOptions>(o =>
+        {
+            o.Stores.SchemaVersion = IdentityVersions.Version2;
+        });
         return services.AddIdentityCore<TUser, TToken>(setupAction).IdentityBuilder;
     }
 }

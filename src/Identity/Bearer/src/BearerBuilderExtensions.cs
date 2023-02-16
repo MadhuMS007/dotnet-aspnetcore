@@ -47,8 +47,6 @@ public static class BearerBuilderExtensions
         builder.Services.TryAddScoped(typeof(ISignInPolicy<>).MakeGenericType(builder.UserType), typeof(SignInPolicy<>).MakeGenericType(builder.UserType));
         builder.Services.TryAddScoped(typeof(IUserTokenService<>).MakeGenericType(builder.UserType), typeof(UserTokenService<>).MakeGenericType(builder.UserType));
         builder.Services.TryAddScoped(typeof(IAccessTokenValidator), typeof(DefaultAccessTokenValidator<>).MakeGenericType(builder.UserType));
-        var tokenSignManagerType = typeof(TokenSignInManager<>).MakeGenericType(builder.UserType);
-        builder.Services.TryAddScoped(tokenSignManagerType);
 
         return new IdentityBearerTokenBuilder(builder, typeof(TToken));
     }

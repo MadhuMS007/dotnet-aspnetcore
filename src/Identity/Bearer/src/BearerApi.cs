@@ -53,7 +53,7 @@ public static class BearerApi
             return TypedResults.ValidationProblem(result.Errors.ToDictionary(e => e.Code, e => new[] { e.Description }));
         });
 
-        group.MapPost(options.LoginEndpoint, async Task<Results<BadRequest, Ok<AuthTokens>>> (PasswordLoginInfo userInfo, TokenSignInManager<TUser> signInManager, IUserTokenService<TUser> tokenService) =>
+        group.MapPost(options.LoginEndpoint, async Task<Results<BadRequest, Ok<AuthTokens>>> (PasswordLoginInfo userInfo, ISignInPolicy<TUser> signInManager, IUserTokenService<TUser> tokenService) =>
         {
             // TODO: this should return different status (mfa etc)
             (var result, var user) = await signInManager.PasswordSignInAsync(userInfo.Username, userInfo.Password, userInfo.TfaCode);
@@ -146,7 +146,6 @@ public static class BearerApi
 
             return TypedResults.Ok();
         });
-
 
         manageGroup.MapGet(options.AuthenticatorGetEndpoint, async Task<Results<BadRequest, Ok<AuthenticatorInfo>>> (UserManager<TUser> userManager, HttpContext request) =>
         {
