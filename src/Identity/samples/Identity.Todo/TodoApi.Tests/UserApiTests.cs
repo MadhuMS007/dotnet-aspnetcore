@@ -2,13 +2,11 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Globalization;
-using System.Net;
 using System.Net.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Bearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
 
 namespace TodoApi.Tests;
 
@@ -156,6 +154,8 @@ public class UserApiTests
 
         var client = application.CreateClient();
         var response = await client.PostAsJsonAsync(LoginEndpoint, new UserInfo { Username = "todouser", Password = "p@assw0rd1" });
+
+        // Fails because we now always return locked out.
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
