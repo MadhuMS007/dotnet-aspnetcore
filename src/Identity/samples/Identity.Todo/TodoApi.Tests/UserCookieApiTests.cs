@@ -174,7 +174,7 @@ public class UserCookieApiTests
 
         // Check that the token is indeed valid
         var req = new HttpRequestMessage(HttpMethod.Get, "/todos");
-        req.Headers.Add("Set-Cookie", setCookie);
+        req.Headers.Add("Cookie", setCookie);
         response = await client.SendAsync(req);
 
         Assert.True(response.IsSuccessStatusCode);

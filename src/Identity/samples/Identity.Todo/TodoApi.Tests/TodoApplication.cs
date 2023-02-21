@@ -1,6 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
@@ -14,6 +15,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace TodoApi.Tests;
 
@@ -85,6 +87,20 @@ internal class TodoApplication : WebApplicationFactory<Program>
         return CreateDefaultClient(new AuthHandler(req =>
         {
             req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        }));
+    }
+
+    public HttpClient CreateCookieClient(HttpResponseMessage response)
+    {
+        string? setCookie = null;
+        if (response.Headers.Contains("Set-Cookie"))
+        {
+            setCookie = response.Headers.GetValues("Set-Cookie").SingleOrDefault();
+        }
+        Assert.NotNull(setCookie);
+        return CreateDefaultClient(new AuthHandler(req =>
+        {
+            req.Headers.Add("Cookie", setCookie);
         }));
     }
 

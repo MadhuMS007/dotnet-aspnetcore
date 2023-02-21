@@ -3,22 +3,32 @@
 
 namespace TodoApi.Tests;
 
-public class TodoApiTests
+public class TodoCookieApiTests
 {
+    // TODO: centralize
+    public const string IdentityEndpoint = $"/identity/cookies";
+    public const string RegisterEndpoint = $"{IdentityEndpoint}/register";
+    public const string ConfirmEmailEndpoint = $"{IdentityEndpoint}/confirmEmail";
+    public const string LoginEndpoint = $"{IdentityEndpoint}/login";
+
     [Fact]
     public async Task GetTodos()
     {
-        var userId = "34";
+        var userIdName = "34";
+        var password = "p@assw0rd1";
 
         await using var application = new TodoApplication();
         await using var db = application.CreateTodoDbContext();
-        await application.CreateUserAsync(userId);
+        await application.CreateUserAsync(userIdName, password);
 
-        db.Todos.Add(new Todo { Title = "Thing one I have to do", OwnerId = userId });
+        db.Todos.Add(new Todo { Title = "Thing one I have to do", OwnerId = userIdName });
 
         await db.SaveChangesAsync();
 
-        var client = await application.CreateClientAsync(userId);
+        var client = application.CreateClient();
+        var response = await client.PostAsJsonAsync(LoginEndpoint, new UserInfo { Username = userIdName, Password = password });
+        client = application.CreateCookieClient(response);
+
         var todos = await client.GetFromJsonAsync<List<TodoItem>>("/todos");
         Assert.NotNull(todos);
 
@@ -27,34 +37,19 @@ public class TodoApiTests
     }
 
     [Fact]
-    public async Task GetTodosWithoutDbUser()
-    {
-        var userId = "34";
-
-        await using var application = new TodoApplication();
-        await using var db = application.CreateTodoDbContext();
-
-        await application.CreateUserAsync(userId);
-        var client = await application.CreateClientAsync(userId);
-        await application.DeleteUserAsync(userId);
-
-        var response = await client.GetAsync("/todos");
-
-        // Note: we get 401 if we send an empty token for an unknown user
-        // we get 403 if we send a bogus token for an unknown user
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [Fact]
     public async Task PostTodos()
     {
-        var userId = "34";
+        var userIdName = "34";
+        var password = "p@assw0rd1";
         await using var application = new TodoApplication();
         await using var db = application.CreateTodoDbContext();
-        await application.CreateUserAsync(userId);
+        await application.CreateUserAsync(userIdName, password);
 
-        var client = await application.CreateClientAsync(userId);
-        var response = await client.PostAsJsonAsync("/todos", new TodoItem { Title = "I want to do this thing tomorrow" });
+        var client = application.CreateClient();
+        var response = await client.PostAsJsonAsync(LoginEndpoint, new UserInfo { Username = userIdName, Password = password });
+        client = application.CreateCookieClient(response);
+
+        response = await client.PostAsJsonAsync("/todos", new TodoItem { Title = "I want to do this thing tomorrow" });
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
@@ -69,24 +64,25 @@ public class TodoApiTests
     [Fact]
     public async Task DeleteTodos()
     {
-        var userId = "34";
-
+        var userIdName = "34";
+        var password = "p@assw0rd1";
         await using var application = new TodoApplication();
         await using var db = application.CreateTodoDbContext();
-        await application.CreateUserAsync(userId);
+        await application.CreateUserAsync(userIdName, password);
 
-        db.Todos.Add(new Todo { Title = "I want to do this thing tomorrow", OwnerId = userId });
+        db.Todos.Add(new Todo { Title = "I want to do this thing tomorrow", OwnerId = userIdName });
 
         await db.SaveChangesAsync();
-
-        var client = await application.CreateClientAsync(userId);
 
         var todo = db.Todos.FirstOrDefault();
         Assert.NotNull(todo);
         Assert.Equal("I want to do this thing tomorrow", todo.Title);
         Assert.False(todo.IsComplete);
 
-        var response = await client.DeleteAsync($"/todos/{todo.Id}");
+        var client = application.CreateClient();
+        var response = await client.PostAsJsonAsync(LoginEndpoint, new UserInfo { Username = userIdName, Password = password });
+        client = application.CreateCookieClient(response);
+        response = await client.DeleteAsync($"/todos/{todo.Id}");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -158,18 +154,24 @@ public class TodoApiTests
     {
         var userId0 = "34";
         var userId1 = "35";
+        var password = "p@assw0rd1";
 
         await using var application = new TodoApplication();
         await using var db = application.CreateTodoDbContext();
-        await application.CreateUserAsync(userId0);
-        await application.CreateUserAsync(userId1);
+        await application.CreateUserAsync(userId0, password);
+        await application.CreateUserAsync(userId1, password);
 
         db.Todos.Add(new Todo { Title = "I want to do this thing tomorrow", OwnerId = userId0 });
 
         await db.SaveChangesAsync();
 
-        var client0 = await application.CreateClientAsync(userId0);
-        var client1 = await application.CreateClientAsync(userId1);
+        var client0 = application.CreateClient();
+        var response = await client0.PostAsJsonAsync(LoginEndpoint, new UserInfo { Username = userId0, Password = password });
+        client0 = application.CreateCookieClient(response);
+
+        var client1 = application.CreateClient();
+        response = await client1.PostAsJsonAsync(LoginEndpoint, new UserInfo { Username = userId1, Password = password });
+        client1 = application.CreateCookieClient(response);
 
         var todos = await client0.GetFromJsonAsync<List<TodoItem>>("/todos");
         Assert.NotNull(todos);
@@ -178,7 +180,7 @@ public class TodoApiTests
         Assert.Equal("I want to do this thing tomorrow", todo.Title);
         Assert.False(todo.IsComplete);
 
-        var response = await client1.DeleteAsync($"/todos/{todo.Id}");
+        response = await client1.DeleteAsync($"/todos/{todo.Id}");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
 
@@ -194,18 +196,25 @@ public class TodoApiTests
     {
         var userId = "34";
         var adminUserId = "35";
+        var password = "p@assw0rd1";
+        var adminPassword = "A@dmin0rd1";
 
         await using var application = new TodoApplication();
         await using var db = application.CreateTodoDbContext();
-        await application.CreateUserAsync(userId);
-        await application.CreateUserAsync(adminUserId, isAdmin: true);
+        await application.CreateUserAsync(userId, password);
+        await application.CreateUserAsync(adminUserId, adminPassword, isAdmin: true);
 
         db.Todos.Add(new Todo { Title = "I want to do this thing tomorrow", OwnerId = userId });
 
         await db.SaveChangesAsync();
 
-        var client = await application.CreateClientAsync(userId);
-        var adminClient = await application.CreateClientAsync(adminUserId);
+        var client = application.CreateClient();
+        var response = await client.PostAsJsonAsync(LoginEndpoint, new UserInfo { Username = userId, Password = password });
+        client = application.CreateCookieClient(response);
+
+        var adminClient = application.CreateClient();
+        response = await adminClient.PostAsJsonAsync(LoginEndpoint, new UserInfo { Username = adminUserId, Password = adminPassword });
+        adminClient = application.CreateCookieClient(response);
 
         var todos = await client.GetFromJsonAsync<List<TodoItem>>("/todos");
         Assert.NotNull(todos);
@@ -214,7 +223,7 @@ public class TodoApiTests
         Assert.Equal("I want to do this thing tomorrow", todo.Title);
         Assert.False(todo.IsComplete);
 
-        var response = await adminClient.DeleteAsync($"/todos/{todo.Id}");
+        response = await adminClient.DeleteAsync($"/todos/{todo.Id}");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -232,16 +241,19 @@ public class TodoApiTests
     {
         var ownerId = "34";
         var userId = "34";
+        var password = "p@assw0rd1";
         await using var application = new TodoApplication();
         await using var db = application.CreateTodoDbContext();
-        await application.CreateUserAsync(userId);
+        await application.CreateUserAsync(userId, password);
 
         db.Todos.Add(new Todo { Title = "I want to do this thing tomorrow", OwnerId = ownerId });
 
         await db.SaveChangesAsync();
 
         // Create API Client
-        var client = await application.CreateClientAsync(userId);
+        var client = application.CreateClient();
+        var response = await client.PostAsJsonAsync(LoginEndpoint, new UserInfo { Username = userId, Password = password });
+        client = application.CreateCookieClient(response);
 
         var todos = await client.GetFromJsonAsync<List<TodoItem>>("/todos");
 
@@ -250,9 +262,9 @@ public class TodoApiTests
         var todo = Assert.Single(todos);
         
         //update the status
-        todo.IsComplete= true;
+        todo.IsComplete = true;
 
-        var response = await client.PutAsJsonAsync($"todos/{todo.Id}", todo);
+        response = await client.PutAsJsonAsync($"todos/{todo.Id}", todo);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -262,7 +274,6 @@ public class TodoApiTests
         var updatedTodo = Assert.Single(todos);
         Assert.NotNull(updatedTodo);
         Assert.True(updatedTodo.IsComplete);
-
     }
 
     /// <summary>
