@@ -216,7 +216,6 @@ public class SignInManager<TUser> where TUser : class
     /// <param name="isPersistent">Flag indicating whether the sign-in cookie should persist after the browser is closed.</param>
     /// <param name="authenticationMethod">Name of the method used to authenticate the user.</param>
     /// <returns>The task object representing the asynchronous operation.</returns>
-    [SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Required for backwards compatibility")]
     public virtual Task SignInAsync(TUser user, bool isPersistent, string? authenticationMethod = null)
         => SignInAsync(user, new AuthenticationProperties { IsPersistent = isPersistent }, authenticationMethod);
 
@@ -227,14 +226,15 @@ public class SignInManager<TUser> where TUser : class
     /// <param name="authenticationProperties">Properties applied to the login and authentication cookie.</param>
     /// <param name="authenticationMethod">Name of the method used to authenticate the user.</param>
     /// <returns>The task object representing the asynchronous operation.</returns>
-    [SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "Required for backwards compatibility")]
     public virtual Task SignInAsync(TUser user, AuthenticationProperties authenticationProperties, string? authenticationMethod = null)
     {
         IList<Claim> additionalClaims = Array.Empty<Claim>();
         if (authenticationMethod != null)
         {
-            additionalClaims = new List<Claim>();
-            additionalClaims.Add(new Claim(ClaimTypes.AuthenticationMethod, authenticationMethod));
+            additionalClaims = new List<Claim>
+            {
+                new Claim(ClaimTypes.AuthenticationMethod, authenticationMethod)
+            };
         }
         return SignInWithClaimsAsync(user, authenticationProperties, additionalClaims);
     }

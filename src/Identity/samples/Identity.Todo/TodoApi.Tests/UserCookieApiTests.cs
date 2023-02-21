@@ -10,9 +10,9 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace TodoApi.Tests;
 
-public class UserApiTests
+public class UserCookieApiTests
 {
-    public const string IdentityEndpoint = $"/identity";
+    public const string IdentityEndpoint = $"/identity/cookies";
     public const string RegisterEndpoint = $"{IdentityEndpoint}/register";
     public const string ConfirmEmailEndpoint = $"{IdentityEndpoint}/confirmEmail";
     public const string LoginEndpoint = $"{IdentityEndpoint}/login";
@@ -106,7 +106,7 @@ public class UserApiTests
     //}
 
     [Fact]
-    public async Task CanGetATokenForValidUser()
+    public async Task CanGetCookieForValidUser()
     {
         await using var application = new TodoApplication();
         await using var db = application.CreateTodoDbContext();
@@ -114,7 +114,7 @@ public class UserApiTests
 
         var client = application.CreateClient();
         var response = await client.PostAsJsonAsync(LoginEndpoint, new UserInfo { Username = "todouser", Password = "p@assw0rd1" });
-        await IsValidTokenAsync(client, response);
+        await VerifyCookie(client, response);
     }
 
     [Fact]
@@ -123,14 +123,15 @@ public class UserApiTests
         await using var application = new TodoApplication(o =>
         {
             o.Endpoints.IdentityRouteGroup = "/wee";
+            o.Endpoints.IdentityCookieRouteGroup = "/cake";
             o.Endpoints.LoginEndpoint = "/yolo";
         });
         await using var db = application.CreateTodoDbContext();
         await application.CreateUserAsync("todouser", "p@assw0rd1");
 
         var client = application.CreateClient();
-        var response = await client.PostAsJsonAsync("/wee/yolo", new UserInfo { Username = "todouser", Password = "p@assw0rd1" });
-        await IsValidTokenAsync(client, response);
+        var response = await client.PostAsJsonAsync("/wee/cake/yolo", new UserInfo { Username = "todouser", Password = "p@assw0rd1" });
+        await VerifyCookie(client, response);
     }
 
     private class AlwaysLockedOutStep : ISignInStep
@@ -159,24 +160,26 @@ public class UserApiTests
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    private async Task<AuthTokens> IsValidTokenAsync(HttpClient client, HttpResponseMessage response)
+    private async Task<string> VerifyCookie(HttpClient client, HttpResponseMessage response)
     {
         Assert.True(response.IsSuccessStatusCode);
 
-        var token = await response.Content.ReadFromJsonAsync<AuthTokens>();
+        string? setCookie = null;
+        if (response.Headers.Contains("Set-Cookie"))
+        {
+            setCookie = response.Headers.GetValues("Set-Cookie").SingleOrDefault();
+        }
 
-        Assert.NotNull(token);
-        Assert.NotNull(token.AccessToken);
-        Assert.NotNull(token.RefreshToken);
+        Assert.NotNull(setCookie);
 
         // Check that the token is indeed valid
         var req = new HttpRequestMessage(HttpMethod.Get, "/todos");
-        req.Headers.Authorization = new("Bearer", token.AccessToken);
+        req.Headers.Add("Set-Cookie", setCookie);
         response = await client.SendAsync(req);
 
         Assert.True(response.IsSuccessStatusCode);
 
-        return token;
+        return setCookie;
     }
 
     [Fact]
@@ -199,7 +202,7 @@ public class UserApiTests
         response = await client.PostAsJsonAsync(ConfirmEmailEndpoint, new VerificationToken { UserId = user.Id, Token = code });
         Assert.True(response.IsSuccessStatusCode);
 
-        await IsValidTokenAsync(client, await client.PostAsJsonAsync(LoginEndpoint, new UserInfo { Username = "todouser", Password = "p@assw0rd1" }));
+        await VerifyCookie(client, await client.PostAsJsonAsync(LoginEndpoint, new UserInfo { Username = "todouser", Password = "p@assw0rd1" }));
     }
 
     internal static string CalculateCode(string key)
@@ -239,7 +242,7 @@ public class UserApiTests
 
         // Verify that login works with code
         response = await newClient.PostAsJsonAsync(LoginEndpoint, new PasswordLoginInfo { Username = "todouser", Password = "p@assw0rd1", TfaCode = CalculateCode(key) });
-        await IsValidTokenAsync(client, response);
+        await VerifyCookie(client, response);
     }
 
     [Fact]
@@ -253,116 +256,15 @@ public class UserApiTests
         var response = await client.PostAsJsonAsync(LoginEndpoint, new UserInfo { Username = "todouser", Password = "p@assw0rd1" });
 
         // Check that the token is indeed valid
-        var token = await IsValidTokenAsync(client, response);
+        var cookie = await VerifyCookie(client, response);
 
         // Logout
         var req = new HttpRequestMessage(HttpMethod.Post, LogoutEndpoint);
-        req.Headers.Authorization = new("Bearer", token.AccessToken);
+        req.Headers.Add("Set-Cookie", cookie);
         response = await client.SendAsync(req);
         Assert.True(response.IsSuccessStatusCode);
 
-        // Verify that the token no longer works
-        req = new HttpRequestMessage(HttpMethod.Get, "/todos");
-        req.Headers.Authorization = new("Bearer", token.AccessToken);
-        response = await client.SendAsync(req);
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task CanRefreshTokensForValidUser()
-    {
-        await using var application = new TodoApplication();
-        await using var db = application.CreateTodoDbContext();
-        await application.CreateUserAsync("todouser", "p@assw0rd1");
-
-        var client = application.CreateClient();
-        var response = await client.PostAsJsonAsync(LoginEndpoint, new UserInfo { Username = "todouser", Password = "p@assw0rd1" });
-
-        var token = await IsValidTokenAsync(client, response);
-
-        // Try to refresh the tokens
-        response = await client.PostAsJsonAsync(RefreshEndpoint, new RefreshToken { Token = token.RefreshToken });
-        Assert.True(response.IsSuccessStatusCode);
-
-        var newTokens = await response.Content.ReadFromJsonAsync<AuthTokens>();
-        Assert.NotNull(newTokens);
-        Assert.NotNull(newTokens.AccessToken);
-        Assert.NotNull(newTokens.RefreshToken);
-        Assert.NotEqual(newTokens.AccessToken, token.AccessToken);
-        Assert.NotEqual(newTokens.RefreshToken, token.RefreshToken);
-
-        // Check that the new access token is indeed valid
-        var req = new HttpRequestMessage(HttpMethod.Get, "/todos");
-        req.Headers.Authorization = new("Bearer", token.AccessToken);
-        response = await client.SendAsync(req);
-
-        Assert.True(response.IsSuccessStatusCode);
-    }
-
-    [Fact]
-    public async Task CanRefreshTokensOnlyOnce()
-    {
-        await using var application = new TodoApplication();
-        await using var db = application.CreateTodoDbContext();
-        await application.CreateUserAsync("todouser", "p@assw0rd1");
-
-        var client = application.CreateClient();
-        var response = await client.PostAsJsonAsync(LoginEndpoint, new UserInfo { Username = "todouser", Password = "p@assw0rd1" });
-
-        var token = await IsValidTokenAsync(client, response);
-
-        // Try to refresh the tokens twice
-        response = await client.PostAsJsonAsync(RefreshEndpoint, new RefreshToken { Token = token.RefreshToken });
-
-        Assert.True(response.IsSuccessStatusCode);
-
-        var newTokens = await response.Content.ReadFromJsonAsync<AuthTokens>();
-        Assert.NotNull(newTokens);
-        Assert.NotNull(newTokens.AccessToken);
-        Assert.NotNull(newTokens.RefreshToken);
-        Assert.NotEqual(newTokens.AccessToken, token.AccessToken);
-        Assert.NotEqual(newTokens.RefreshToken, token.RefreshToken);
-
-        // The second time should fail with the old token
-        response = await client.PostAsJsonAsync(RefreshEndpoint, new RefreshToken { Token = token.RefreshToken });
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task RefreshTokensWithInvalidTokenFails()
-    {
-        await using var application = new TodoApplication();
-        await using var db = application.CreateTodoDbContext();
-        await application.CreateUserAsync("todouser", "p@assw0rd1");
-
-        var client = application.CreateClient();
-        var response = await client.PostAsJsonAsync(LoginEndpoint, new UserInfo { Username = "todouser", Password = "p@assw0rd1" });
-
-        var token = await IsValidTokenAsync(client, response);
-
-        // Try to refresh with the access token
-        response = await client.PostAsJsonAsync(RefreshEndpoint, new RefreshToken { Token = token.AccessToken });
-
-        Assert.False(response.IsSuccessStatusCode);
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task CanGetATokenForExternalUser()
-    {
-        await using var application = new TodoApplication();
-        await using var db = application.CreateTodoDbContext();
-
-        var client = application.CreateClient();
-        var response = await client.PostAsJsonAsync($"{LoginEndpoint}/Google", new ExternalUserInfo { Username = "todouser", ProviderKey = "1003" });
-
-        await IsValidTokenAsync(client, response);
-
-        using var scope = application.Services.CreateScope();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<TodoUser>>();
-        var user = await userManager.FindByLoginAsync("Google", "1003");
-        Assert.NotNull(user);
-        Assert.Equal("todouser", user.UserName);
+        // TODO: verify that logout clears cookie
     }
 
     [Fact]

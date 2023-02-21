@@ -5,14 +5,12 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
@@ -86,7 +84,7 @@ internal class TodoApplication : WebApplicationFactory<Program>
         var token = await CreateTokenAsync(userId);
         return CreateDefaultClient(new AuthHandler(req =>
         {
-            req.Headers.Authorization = new AuthenticationHeaderValue(JwtBearerDefaults.AuthenticationScheme, token);
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         }));
     }
 
@@ -116,10 +114,7 @@ internal class TodoApplication : WebApplicationFactory<Program>
                 o.Password.RequireLowercase = false;
                 o.Password.RequireUppercase = false;
 
-                if (_configureIdentity != null)
-                {
-                    _configureIdentity(o);
-                }
+                _configureIdentity?.Invoke(o);
             });
         });
 

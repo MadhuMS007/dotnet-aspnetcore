@@ -57,12 +57,6 @@ internal class SignInContext<TUser> where TUser : class
     public string? SuppliedTfaCode { get; set; }
 
     public SignInResult? Result { get; set; }
-
-
-    public async Task<bool> IsTwoFactorEnabledAsync()
-        => UserManager.SupportsUserTwoFactor &&
-        await UserManager.GetTwoFactorEnabledAsync(User).ConfigureAwait(false) &&
-        (await UserManager.GetValidTwoFactorProvidersAsync(User).ConfigureAwait(false)).Count > 0;
 }
 
 internal interface ISignInStep

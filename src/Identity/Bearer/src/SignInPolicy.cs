@@ -53,6 +53,23 @@ internal class SignInPolicy<TUser> : ISignInPolicy<TUser> where TUser : class
         await _userManager.GetTwoFactorEnabledAsync(user) &&
         (await _userManager.GetValidTwoFactorProvidersAsync(user)).Count > 0;
 
+    public virtual async Task<SignInResult> SignInAsync(SignInContext<TUser> context, IEnumerable<ISignInStep> steps)
+    {
+        // TODO: check the pipeline is legit/valid?
+        foreach (var step in steps)
+        {
+            await step.ExecuteAsync(context);
+            if (context.Result != null)
+            {
+                // Only return the user if successful
+                return context.Result;
+            }
+        }
+
+        // If we finished the pipeline without issue, this is a successful sign in.
+        return SignInResult.Success;
+    }
+
     /// <inheritdoc/>
     public virtual async Task<(SignInResult, TUser?)> PasswordSignInAsync(string userName, string password, string? tfaCode)
     {
