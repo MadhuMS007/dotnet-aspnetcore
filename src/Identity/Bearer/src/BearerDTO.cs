@@ -6,9 +6,9 @@ using System.ComponentModel.DataAnnotations;
 namespace Microsoft.AspNetCore.Identity.Bearer;
 
 /// <summary>
-/// Username/Password.
+/// DTO for the register endpoint, username, password
 /// </summary>
-public class PasswordLoginInfo
+public class RegisterEndpointInfo
 {
     /// <summary>
     /// The user name.
@@ -21,6 +21,34 @@ public class PasswordLoginInfo
     /// </summary>
     [Required]
     public string Password { get; set; } = default!;
+
+    /// <summary>
+    /// The email for the user.
+    /// </summary>
+    public string Email { get; set; } = default!;
+}
+
+/// <summary>
+/// DTO for the login endpoint, username, password, tfacode
+/// </summary>
+public class LoginEndpointInfo
+{
+    /// <summary>
+    /// The user name.
+    /// </summary>
+    [Required]
+    public string Username { get; set; } = default!;
+
+    /// <summary>
+    /// The password
+    /// </summary>
+    [Required]
+    public string Password { get; set; } = default!;
+
+    /// <summary>
+    /// When true, cookies will be returned instead of tokens.
+    /// </summary>
+    public bool CookieMode { get; set; }
 
     /// <summary>
     /// Optional two factor code needed if enabled for the user.

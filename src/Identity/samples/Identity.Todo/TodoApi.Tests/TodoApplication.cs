@@ -7,6 +7,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.Bearer;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Data.Sqlite;
@@ -88,10 +89,10 @@ internal class TodoApplication : WebApplicationFactory<Program>
         }));
     }
 
-    public async Task<HttpClient> CreateCookieClientAsync(string userName, string password, string loginEndpoint = $"identity/cookies/login")
+    public async Task<HttpClient> CreateCookieClientAsync(string userName, string password, string loginEndpoint = $"identity/login")
     {
         var client = CreateClient();
-        var response = await client.PostAsJsonAsync(loginEndpoint, new UserInfo { Username = userName, Password = password });
+        var response = await client.PostAsJsonAsync(loginEndpoint, new LoginEndpointInfo { Username = userName, Password = password, CookieMode = true });
 
         string? setCookie = null;
         if (response.Headers.Contains("Set-Cookie"))

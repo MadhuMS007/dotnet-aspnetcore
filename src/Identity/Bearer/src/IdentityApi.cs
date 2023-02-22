@@ -18,7 +18,7 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// <summary>
 /// Exposes extensions for mapping bearer token endpoints.
 /// </summary>
-public static class BearerApi
+public static class IdentityApi
 {
     /// <summary>
     /// Setup various bearer token routes under "/users".
@@ -39,11 +39,11 @@ public static class BearerApi
 
         // group.WithParameterValidation(typeof(UserInfo), typeof(ExternalUserInfo));
 
-        group.MapPost(options.RegisterEndpoint, async Task<Results<Ok, ValidationProblem>> (PasswordLoginInfo newUser, UserManager<TUser> userManager) =>
+        group.MapPost(options.RegisterEndpoint, async Task<Results<Ok, ValidationProblem>> (RegisterEndpointInfo info, UserManager<TUser> userManager) =>
         {
             var user = new TUser();
-            await userManager.SetUserNameAsync(user, newUser.Username);
-            var result = await userManager.CreateAsync(user, newUser.Password);
+            await userManager.SetUserNameAsync(user, info.Username);
+            var result = await userManager.CreateAsync(user, info.Password);
 
             if (result.Succeeded)
             {
@@ -53,16 +53,22 @@ public static class BearerApi
             return TypedResults.ValidationProblem(result.Errors.ToDictionary(e => e.Code, e => new[] { e.Description }));
         });
 
-        group.MapPost(options.LoginEndpoint, async Task<Results<BadRequest, Ok<AuthTokens>>> (PasswordLoginInfo userInfo, ISignInPolicy<TUser> signInManager, IUserTokenService<TUser> tokenService) =>
+        group.MapPost(options.LoginEndpoint,
+            async Task<Results<BadRequest, Ok<AuthTokens>, SignInHttpResult>>
+            (LoginEndpointInfo info, ISignInPolicy<TUser> signInManager, IUserTokenService<TUser> tokenService, IUserClaimsPrincipalFactory<TUser> claimsFactory) =>
         {
             // TODO: this should return different status (mfa etc)
-            (var result, var user) = await signInManager.PasswordSignInAsync(userInfo.Username, userInfo.Password, userInfo.TfaCode);
+            (var result, var user) = await signInManager.PasswordSignInAsync(info.Username, info.Password, info.TfaCode);
             if (!result.Succeeded || user is null)
             {
                 return TypedResults.BadRequest();
             }
 
-            return TypedResults.Ok(new AuthTokens(await tokenService.GetAccessTokenAsync(user), await tokenService.GetRefreshTokenAsync(user)));
+            return info.CookieMode
+                ? TypedResults.SignIn(await claimsFactory.CreateAsync(user),
+                    properties: null, // IsPersistent would go here
+                    authenticationScheme: IdentityConstants.BearerCookieScheme)
+                : TypedResults.Ok(new AuthTokens(await tokenService.GetAccessTokenAsync(user), await tokenService.GetRefreshTokenAsync(user)));
         });
 
         // TODO: need to ensure {provider} is in this pattern

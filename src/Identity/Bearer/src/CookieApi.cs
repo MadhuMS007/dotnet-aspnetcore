@@ -38,36 +38,6 @@ public static class CookieApi
 
         // group.WithParameterValidation(typeof(UserInfo), typeof(ExternalUserInfo));
 
-        group.MapPost(options.RegisterEndpoint, async Task<Results<Ok, ValidationProblem>> (PasswordLoginInfo newUser, UserManager<TUser> userManager) =>
-        {
-            var user = new TUser();
-            await userManager.SetUserNameAsync(user, newUser.Username);
-            var result = await userManager.CreateAsync(user, newUser.Password);
-
-            if (result.Succeeded)
-            {
-                return TypedResults.Ok();
-            }
-
-            return TypedResults.ValidationProblem(result.Errors.ToDictionary(e => e.Code, e => new[] { e.Description }));
-        });
-
-        group.MapPost(options.LoginEndpoint, async Task<Results<BadRequest, SignInHttpResult>> (PasswordLoginInfo userInfo, IUserClaimsPrincipalFactory<TUser> claimsFactory, ISignInPolicy<TUser> signInPolicy) =>
-        {
-            // TODO: Remember me? use new SignInPolicy
-            // TODO: this should return different status (mfa etc)
-            (var result, var user) = await signInPolicy.PasswordSignInAsync(userInfo.Username, userInfo.Password, userInfo.TfaCode);
-            if (!result.Succeeded || user is null)
-            {
-                return TypedResults.BadRequest();
-            }
-
-            // TODO: directly use IClaimsPrincipalfactory?
-            return TypedResults.SignIn(await claimsFactory.CreateAsync(user),
-                properties: null, // IsPersistent would go here
-                authenticationScheme: IdentityConstants.BearerCookieScheme);
-        });
-
         group.MapPost(options.ConfirmEmailEndpoint, async Task<Results<BadRequest, Ok>> (VerificationToken code, UserManager<TUser> userManager) =>
         {
             if (code.Token is null || code.UserId is null)
