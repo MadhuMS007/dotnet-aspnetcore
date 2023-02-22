@@ -1,7 +1,6 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
@@ -15,7 +14,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace TodoApi.Tests;
 
@@ -90,8 +88,11 @@ internal class TodoApplication : WebApplicationFactory<Program>
         }));
     }
 
-    public HttpClient CreateCookieClient(HttpResponseMessage response)
+    public async Task<HttpClient> CreateCookieClientAsync(string userName, string password, string loginEndpoint = $"identity/cookies/login")
     {
+        var client = CreateClient();
+        var response = await client.PostAsJsonAsync(loginEndpoint, new UserInfo { Username = userName, Password = password });
+
         string? setCookie = null;
         if (response.Headers.Contains("Set-Cookie"))
         {
