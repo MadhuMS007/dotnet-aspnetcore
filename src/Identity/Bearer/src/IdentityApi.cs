@@ -139,18 +139,25 @@ public static class IdentityApi
         var manageGroup = group.MapGroup(options.IdentityManageSubgroup).RequireAuthorization();
         manageGroup.WithTags("Users", "Manage");
 
-        manageGroup.MapPost(options.LogoutEndpoint, Results<BadRequest, Ok> (HttpContext request, IOptions<JtiBlockerOptions> blockerOptions) =>
+        manageGroup.MapPost(options.LogoutEndpoint, Results<BadRequest, Ok, SignOutHttpResult> (LogoutEndpointInfo info, HttpContext request, IOptions<JtiBlockerOptions> blockerOptions) =>
         {
-            // Alternatively this can invalidate the token on the db side?
-            var jti = request.User.FindFirstValue(TokenClaims.Jti);
-            if (jti == null)
+            if (info.CookieMode)
             {
-                return TypedResults.BadRequest();
+                return TypedResults.SignOut(authenticationSchemes: new[] { IdentityConstants.BearerCookieScheme });
             }
+            else
+            {
+                // Alternatively this can invalidate the token on the db side?
+                var jti = request.User.FindFirstValue(TokenClaims.Jti);
+                if (jti == null)
+                {
+                    return TypedResults.BadRequest();
+                }
 
-            blockerOptions.Value.BlockedJti.Add(jti);
+                blockerOptions.Value.BlockedJti.Add(jti);
 
-            return TypedResults.Ok();
+                return TypedResults.Ok();
+            }
         });
 
         manageGroup.MapGet(options.AuthenticatorGetEndpoint, async Task<Results<BadRequest, Ok<AuthenticatorInfo>>> (UserManager<TUser> userManager, HttpContext request) =>

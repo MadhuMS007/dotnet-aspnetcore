@@ -31,6 +31,10 @@ Microsoft.AspNetCore.Identity.Bearer.LoginEndpointInfo.TfaCode.get -> string?
 Microsoft.AspNetCore.Identity.Bearer.LoginEndpointInfo.TfaCode.set -> void
 Microsoft.AspNetCore.Identity.Bearer.LoginEndpointInfo.Username.get -> string!
 Microsoft.AspNetCore.Identity.Bearer.LoginEndpointInfo.Username.set -> void
+Microsoft.AspNetCore.Identity.Bearer.LogoutEndpointInfo
+Microsoft.AspNetCore.Identity.Bearer.LogoutEndpointInfo.CookieMode.get -> bool
+Microsoft.AspNetCore.Identity.Bearer.LogoutEndpointInfo.CookieMode.set -> void
+Microsoft.AspNetCore.Identity.Bearer.LogoutEndpointInfo.LogoutEndpointInfo() -> void
 Microsoft.AspNetCore.Identity.Bearer.RegisterEndpointInfo
 Microsoft.AspNetCore.Identity.Bearer.RegisterEndpointInfo.Email.get -> string!
 Microsoft.AspNetCore.Identity.Bearer.RegisterEndpointInfo.Email.set -> void
@@ -118,7 +122,6 @@ Microsoft.AspNetCore.Identity.TokenManager<TToken>.Store.get -> Microsoft.AspNet
 Microsoft.AspNetCore.Identity.TokenManager<TToken>.ThrowIfDisposed() -> void
 Microsoft.AspNetCore.Identity.TokenManager<TToken>.TokenManager(Microsoft.Extensions.Options.IOptions<Microsoft.AspNetCore.Identity.IdentityOptions!>! identityOptions, Microsoft.AspNetCore.Identity.ITokenStore<TToken!>! store, Microsoft.AspNetCore.Identity.IdentityErrorDescriber! errors, Microsoft.Extensions.Logging.ILogger<Microsoft.AspNetCore.Identity.TokenManager<TToken!>!>! logger) -> void
 Microsoft.Extensions.DependencyInjection.BearerBuilderExtensions
-Microsoft.Extensions.DependencyInjection.CookieApi
 Microsoft.Extensions.DependencyInjection.IdentityApi
 static Microsoft.AspNetCore.Identity.BearerServiceCollectionExtensions.AddBearerServerAuthentication(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.AspNetCore.Authentication.AuthenticationBuilder!
 static Microsoft.AspNetCore.Identity.BearerServiceCollectionExtensions.AddDefaultIdentityBearer<TUser, TToken>(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<Microsoft.AspNetCore.Identity.IdentityOptions!>! setupAction) -> Microsoft.AspNetCore.Identity.IdentityBuilder!
@@ -126,7 +129,6 @@ static Microsoft.AspNetCore.Identity.BearerServiceCollectionExtensions.AddDefaul
 static Microsoft.AspNetCore.Identity.BearerServiceCollectionExtensions.AddIdentityCore<TUser, TToken>(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<Microsoft.AspNetCore.Identity.IdentityOptions!>! setupAction) -> Microsoft.AspNetCore.Identity.IdentityBearerTokenBuilder!
 static Microsoft.Extensions.DependencyInjection.BearerBuilderExtensions.AddBearerTokens<TToken>(this Microsoft.AspNetCore.Identity.IdentityBuilder! builder) -> Microsoft.AspNetCore.Identity.IdentityBearerTokenBuilder!
 static Microsoft.Extensions.DependencyInjection.BearerBuilderExtensions.AddTokenStore<TContext>(this Microsoft.AspNetCore.Identity.IdentityBuilder! builder) -> Microsoft.AspNetCore.Identity.IdentityBuilder!
-static Microsoft.Extensions.DependencyInjection.CookieApi.MapIdentityCookies<TUser>(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! routes) -> Microsoft.AspNetCore.Routing.RouteGroupBuilder!
 static Microsoft.Extensions.DependencyInjection.IdentityApi.MapIdentity<TUser>(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! routes) -> Microsoft.AspNetCore.Routing.RouteGroupBuilder!
 virtual Microsoft.AspNetCore.Identity.TokenManager<TToken>.CancellationToken.get -> System.Threading.CancellationToken
 virtual Microsoft.AspNetCore.Identity.TokenManager<TToken>.CheckTokenStatus(string! status) -> bool

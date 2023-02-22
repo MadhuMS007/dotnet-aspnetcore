@@ -12,13 +12,13 @@ namespace TodoApi.Tests;
 
 public class UserCookieApiTests
 {
-    public const string IdentityEndpoint = $"/identity/cookies";
+    public const string IdentityEndpoint = $"/identity";
     public const string RegisterEndpoint = $"identity/register";
-    public const string ConfirmEmailEndpoint = $"{IdentityEndpoint}/confirmEmail";
+    public const string ConfirmEmailEndpoint = $"/identity/confirmEmail";
     public const string LoginEndpoint = $"/identity/login";
     public const string RefreshEndpoint = $"{IdentityEndpoint}/refresh";
     public const string IdentityManageEndpoint = $"{IdentityEndpoint}/manage";
-    public const string LogoutEndpoint = $"{IdentityManageEndpoint}/logout";
+    public const string LogoutEndpoint = $"identity/manage/logout";
     public const string VerifyAuthenticatorEndpoint = $"{IdentityManageEndpoint}/verifyAuthenticator";
     public const string GetAuthenticatorEndpoint = $"{IdentityManageEndpoint}/authenticator";
 
@@ -123,7 +123,6 @@ public class UserCookieApiTests
         await using var application = new TodoApplication(o =>
         {
             o.Endpoints.IdentityRouteGroup = "/wee";
-            o.Endpoints.IdentityCookieRouteGroup = "/cake";
             o.Endpoints.LoginEndpoint = "/yolo";
         });
         await using var db = application.CreateTodoDbContext();
@@ -252,16 +251,10 @@ public class UserCookieApiTests
         await using var db = application.CreateTodoDbContext();
         await application.CreateUserAsync("todouser", "p@assw0rd1");
 
-        var client = application.CreateClient();
-        var response = await client.PostAsJsonAsync(LoginEndpoint, new LoginEndpointInfo { Username = "todouser", Password = "p@assw0rd1", CookieMode = true });
-
-        // Check that the token is indeed valid
-        var cookie = await VerifyCookie(client, response);
+        var client = await application.CreateCookieClientAsync("todouser", "p@assw0rd1");
 
         // Logout
-        var req = new HttpRequestMessage(HttpMethod.Post, LogoutEndpoint);
-        req.Headers.Add("Set-Cookie", cookie);
-        response = await client.SendAsync(req);
+        var response = await client.PostAsJsonAsync(LogoutEndpoint, new LogoutEndpointInfo() { CookieMode = true });
         Assert.True(response.IsSuccessStatusCode);
 
         // TODO: verify that logout clears cookie

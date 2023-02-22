@@ -255,6 +255,8 @@ public class UserApiTests
         // Check that the token is indeed valid
         var token = await IsValidTokenAsync(client, response);
 
+        // TODO: need to fix post to logout to match new DTO
+
         // Logout
         var req = new HttpRequestMessage(HttpMethod.Post, LogoutEndpoint);
         req.Headers.Authorization = new("Bearer", token.AccessToken);

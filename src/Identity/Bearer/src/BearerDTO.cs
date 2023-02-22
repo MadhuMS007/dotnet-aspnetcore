@@ -57,6 +57,17 @@ public class LoginEndpointInfo
 }
 
 /// <summary>
+/// DTO for the logout endpoint
+/// </summary>
+public class LogoutEndpointInfo
+{
+    /// <summary>
+    /// When true, the login cookie will be cleared instead of invalidating an access token.
+    /// </summary>
+    public bool CookieMode { get; set; }
+}
+
+/// <summary>
 /// Represents information needed for an external user.
 /// </summary>
 public class ExternalUserInfo

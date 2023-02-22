@@ -14,11 +14,6 @@ public class EndpointOptions
     public string IdentityRouteGroup { get; set; } = $"/identity";
 
     /// <summary>
-    /// The identity cookie api endpoint subgroup, "/cookies"
-    /// </summary>
-    public string IdentityCookieRouteGroup { get; set; } = $"/cookies";
-
-    /// <summary>
     /// The register users endpoint, "/register";
     /// </summary>
     public string RegisterEndpoint { get; set; } = "/register";

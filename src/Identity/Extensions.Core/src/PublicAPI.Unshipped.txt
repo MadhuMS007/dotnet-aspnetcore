@@ -19,8 +19,6 @@ Microsoft.AspNetCore.Identity.EndpointOptions.AuthenticatorGetEndpoint.set -> vo
 Microsoft.AspNetCore.Identity.EndpointOptions.ConfirmEmailEndpoint.get -> string!
 Microsoft.AspNetCore.Identity.EndpointOptions.ConfirmEmailEndpoint.set -> void
 Microsoft.AspNetCore.Identity.EndpointOptions.EndpointOptions() -> void
-Microsoft.AspNetCore.Identity.EndpointOptions.IdentityCookieRouteGroup.get -> string!
-Microsoft.AspNetCore.Identity.EndpointOptions.IdentityCookieRouteGroup.set -> void
 Microsoft.AspNetCore.Identity.EndpointOptions.IdentityManageSubgroup.get -> string!
 Microsoft.AspNetCore.Identity.EndpointOptions.IdentityManageSubgroup.set -> void
 Microsoft.AspNetCore.Identity.EndpointOptions.IdentityRouteGroup.get -> string!
