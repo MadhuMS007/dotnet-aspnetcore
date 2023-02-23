@@ -2,47 +2,37 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
+using System.Globalization;
+using System.IO;
 using System.Text;
 
 namespace Microsoft.AspNetCore.Http.Generators.StaticRouteHandlerModel.Emitters;
 internal static class EndpointEmitter
 {
-    internal static string EmitParameterPreparation(this Endpoint endpoint)
+    internal static string EmitParameterPreparation(this Endpoint endpoint, int baseIndent = 0)
     {
-        var parameterPreparationBuilder = new StringBuilder();
+        using var stringWriter = new StringWriter(CultureInfo.InvariantCulture);
+        using var parameterPreparationBuilder = new CodeWriter(stringWriter, baseIndent);
 
-        for (var parameterIndex = 0; parameterIndex < endpoint.Parameters.Length; parameterIndex++)
+        foreach (var parameter in endpoint.Parameters)
         {
-            var parameter = endpoint.Parameters[parameterIndex];
-
-            var parameterPreparationCode = parameter switch
+            switch (parameter)
             {
-                {
-                    Source: EndpointParameterSource.SpecialType
-                } => parameter.EmitSpecialParameterPreparation(),
-                {
-                    Source: EndpointParameterSource.Query,
-                } => parameter.EmitQueryParameterPreparation(),
-                {
-                    Source: EndpointParameterSource.JsonBody
-                } => parameter.EmitJsonBodyParameterPreparationString(),
-                {
-                    Source: EndpointParameterSource.Service
-                } => parameter.EmitServiceParameterPreparation(),
-                _ => throw new Exception("Unreachable!")
-            };
-
-            // To avoid having two newlines after the block of parameter handling code.
-            if (parameterIndex < endpoint.Parameters.Length - 1)
-            {
-                parameterPreparationBuilder.AppendLine(parameterPreparationCode);
-            }
-            else
-            {
-                parameterPreparationBuilder.Append(parameterPreparationCode);
+                case { Source: EndpointParameterSource.SpecialType }:
+                    parameter.EmitSpecialParameterPreparation(parameterPreparationBuilder);
+                    break;
+                case { Source: EndpointParameterSource.Query }:
+                    parameter.EmitQueryParameterPreparation(parameterPreparationBuilder);
+                    break;
+                case { Source: EndpointParameterSource.JsonBody }:
+                    parameter.EmitJsonBodyParameterPreparationString(parameterPreparationBuilder);
+                    break;
+                case { Source: EndpointParameterSource.Service }:
+                    parameter.EmitServiceParameterPreparation(parameterPreparationBuilder);
+                    break;
             }
         }
 
-        return parameterPreparationBuilder.ToString();
+        return stringWriter.ToString();
     }
 }

@@ -45,12 +45,12 @@ namespace Microsoft.AspNetCore.Builder
             [global::System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
             return global::Microsoft.AspNetCore.Http.Generated.GeneratedRouteBuilderExtensionsCore.MapCore(
-                    endpoints,
-                    pattern,
-                    handler,
-                    GetVerb,
-                    filePath,
-                    lineNumber);
+                endpoints,
+                pattern,
+                handler,
+                GetVerb,
+                filePath,
+                lineNumber);
         }
 
     }
@@ -120,7 +120,6 @@ namespace Microsoft.AspNetCore.Http.Generated
                             wasParamCheckFailure = true;
                         }
                         var p1_local = p1_raw.ToString();
-
                         // Endpoint Parameter: p2 (Type = string, IsOptional = False, Source = Query)
                         var p2_raw = httpContext.Request.Query["p2"];
                         if (StringValues.IsNullOrEmpty(p2_raw))
@@ -138,6 +137,7 @@ namespace Microsoft.AspNetCore.Http.Generated
                         var result = handler(p1_local, p2_local);
                         return httpContext.Response.WriteAsync(result);
                     }
+
                     async Task RequestHandlerFiltered(HttpContext httpContext)
                     {
                         var wasParamCheckFailure = false;
@@ -148,7 +148,6 @@ namespace Microsoft.AspNetCore.Http.Generated
                             wasParamCheckFailure = true;
                         }
                         var p1_local = p1_raw.ToString();
-
                         // Endpoint Parameter: p2 (Type = string, IsOptional = False, Source = Query)
                         var p2_raw = httpContext.Request.Query["p2"];
                         if (StringValues.IsNullOrEmpty(p2_raw))

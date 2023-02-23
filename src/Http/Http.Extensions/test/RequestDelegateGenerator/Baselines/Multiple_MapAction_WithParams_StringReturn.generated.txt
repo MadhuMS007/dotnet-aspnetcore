@@ -45,12 +45,12 @@ namespace Microsoft.AspNetCore.Builder
             [global::System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
             return global::Microsoft.AspNetCore.Http.Generated.GeneratedRouteBuilderExtensionsCore.MapCore(
-                    endpoints,
-                    pattern,
-                    handler,
-                    GetVerb,
-                    filePath,
-                    lineNumber);
+                endpoints,
+                pattern,
+                handler,
+                GetVerb,
+                filePath,
+                lineNumber);
         }
         internal static global::Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(
             this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints,
@@ -60,12 +60,12 @@ namespace Microsoft.AspNetCore.Builder
             [global::System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
             return global::Microsoft.AspNetCore.Http.Generated.GeneratedRouteBuilderExtensionsCore.MapCore(
-                    endpoints,
-                    pattern,
-                    handler,
-                    GetVerb,
-                    filePath,
-                    lineNumber);
+                endpoints,
+                pattern,
+                handler,
+                GetVerb,
+                filePath,
+                lineNumber);
         }
         internal static global::Microsoft.AspNetCore.Builder.RouteHandlerBuilder MapGet(
             this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints,
@@ -75,12 +75,12 @@ namespace Microsoft.AspNetCore.Builder
             [global::System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
             return global::Microsoft.AspNetCore.Http.Generated.GeneratedRouteBuilderExtensionsCore.MapCore(
-                    endpoints,
-                    pattern,
-                    handler,
-                    GetVerb,
-                    filePath,
-                    lineNumber);
+                endpoints,
+                pattern,
+                handler,
+                GetVerb,
+                filePath,
+                lineNumber);
         }
 
     }
@@ -144,6 +144,7 @@ namespace Microsoft.AspNetCore.Http.Generated
                     {
                         var wasParamCheckFailure = false;
                         var req_local = httpContext.Request;
+
                         if (wasParamCheckFailure)
                         {
                             httpContext.Response.StatusCode = 400;
@@ -153,10 +154,12 @@ namespace Microsoft.AspNetCore.Http.Generated
                         var result = handler(req_local);
                         return httpContext.Response.WriteAsync(result);
                     }
+
                     async Task RequestHandlerFiltered(HttpContext httpContext)
                     {
                         var wasParamCheckFailure = false;
                         var req_local = httpContext.Request;
+
                         if (wasParamCheckFailure)
                         {
                             httpContext.Response.StatusCode = 400;
@@ -199,6 +202,7 @@ namespace Microsoft.AspNetCore.Http.Generated
                     {
                         var wasParamCheckFailure = false;
                         var res_local = httpContext.Response;
+
                         if (wasParamCheckFailure)
                         {
                             httpContext.Response.StatusCode = 400;
@@ -208,10 +212,12 @@ namespace Microsoft.AspNetCore.Http.Generated
                         var result = handler(res_local);
                         return httpContext.Response.WriteAsync(result);
                     }
+
                     async Task RequestHandlerFiltered(HttpContext httpContext)
                     {
                         var wasParamCheckFailure = false;
                         var res_local = httpContext.Response;
+
                         if (wasParamCheckFailure)
                         {
                             httpContext.Response.StatusCode = 400;
@@ -255,6 +261,7 @@ namespace Microsoft.AspNetCore.Http.Generated
                         var wasParamCheckFailure = false;
                         var req_local = httpContext.Request;
                         var res_local = httpContext.Response;
+
                         if (wasParamCheckFailure)
                         {
                             httpContext.Response.StatusCode = 400;
@@ -264,11 +271,13 @@ namespace Microsoft.AspNetCore.Http.Generated
                         var result = handler(req_local, res_local);
                         return httpContext.Response.WriteAsync(result);
                     }
+
                     async Task RequestHandlerFiltered(HttpContext httpContext)
                     {
                         var wasParamCheckFailure = false;
                         var req_local = httpContext.Request;
                         var res_local = httpContext.Response;
+
                         if (wasParamCheckFailure)
                         {
                             httpContext.Response.StatusCode = 400;

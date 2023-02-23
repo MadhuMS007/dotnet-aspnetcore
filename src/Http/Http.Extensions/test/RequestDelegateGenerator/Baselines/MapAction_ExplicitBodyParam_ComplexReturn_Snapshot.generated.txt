@@ -45,12 +45,12 @@ namespace Microsoft.AspNetCore.Builder
             [global::System.Runtime.CompilerServices.CallerLineNumber]int lineNumber = 0)
         {
             return global::Microsoft.AspNetCore.Http.Generated.GeneratedRouteBuilderExtensionsCore.MapCore(
-                    endpoints,
-                    pattern,
-                    handler,
-                    PostVerb,
-                    filePath,
-                    lineNumber);
+                endpoints,
+                pattern,
+                handler,
+                PostVerb,
+                filePath,
+                lineNumber);
         }
 
     }
@@ -129,6 +129,7 @@ namespace Microsoft.AspNetCore.Http.Generated
                         var result = handler(todo_local!);
                         await result.ExecuteAsync(httpContext);
                     }
+
                     async Task RequestHandlerFiltered(HttpContext httpContext)
                     {
                         var wasParamCheckFailure = false;
@@ -196,6 +197,7 @@ namespace Microsoft.AspNetCore.Http.Generated
                         var result = handler(todo_local);
                         await result.ExecuteAsync(httpContext);
                     }
+
                     async Task RequestHandlerFiltered(HttpContext httpContext)
                     {
                         var wasParamCheckFailure = false;

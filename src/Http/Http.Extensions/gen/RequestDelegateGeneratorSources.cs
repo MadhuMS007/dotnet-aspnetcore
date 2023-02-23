@@ -1569,7 +1569,7 @@ namespace Microsoft.AspNetCore.Http.Generated
         private static readonly string[] DeleteVerb = new[] { global::Microsoft.AspNetCore.Http.HttpMethods.Delete };
         private static readonly string[] PatchVerb = new[] { global::Microsoft.AspNetCore.Http.HttpMethods.Patch };
 
-{{endpoints}}
+        {{endpoints}}
     }
 """ : string.Empty;
 }
