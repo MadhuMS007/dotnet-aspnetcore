@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 
 namespace Microsoft.AspNetCore.Hosting.Abstractions.MetricsPrototype;
 
-internal class DefaultMetricsFactory : IMetricsFactory
+internal sealed class DefaultMetricsFactory : IMetricsFactory
 {
     private readonly IOptions<MetricsOptions> _options;
 
