@@ -9,7 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Microsoft.AspNetCore.Http.Generators.Tests;
 
-public class RequestDelegateGeneratorTests : RequestDelegateGeneratorTestBase
+public abstract class RequestDelegateGeneratorTests : RequestDelegateGeneratorTestBase
 {
     [Theory]
     [InlineData(@"app.MapGet(""/hello"", () => ""Hello world!"");", "MapGet", "Hello world!")]
@@ -23,12 +23,13 @@ public class RequestDelegateGeneratorTests : RequestDelegateGeneratorTestBase
     public async Task MapAction_NoParam_StringReturn(string source, string httpMethod, string expectedBody)
     {
         var (result, compilation) = await RunGeneratorAsync(source);
-
-        var endpointModel = GetStaticEndpoint(result, GeneratorSteps.EndpointModelStep);
         var endpoint = GetEndpointFromCompilation(compilation);
 
-        Assert.Equal("/hello", endpointModel.RoutePattern);
-        Assert.Equal(httpMethod, endpointModel.HttpMethod);
+        VerifyStaticEndpointModel(result, (endpointModel) =>
+        {
+            Assert.Equal("/hello", endpointModel.RoutePattern);
+            Assert.Equal(httpMethod, endpointModel.HttpMethod);
+        });
 
         var httpContext = CreateHttpContext();
         await endpoint.RequestDelegate(httpContext);
@@ -41,15 +42,16 @@ public class RequestDelegateGeneratorTests : RequestDelegateGeneratorTestBase
         var (results, compilation) = await RunGeneratorAsync("""
 app.MapGet("/hello", ([FromQuery]string p) => p);
 """);
-
-        var endpointModel = GetStaticEndpoint(results, GeneratorSteps.EndpointModelStep);
         var endpoint = GetEndpointFromCompilation(compilation);
 
-        Assert.Equal("/hello", endpointModel.RoutePattern);
-        Assert.Equal("MapGet", endpointModel.HttpMethod);
-        var p = Assert.Single(endpointModel.Parameters);
-        Assert.Equal(EndpointParameterSource.Query, p.Source);
-        Assert.Equal("p", p.Name);
+        VerifyStaticEndpointModel(results, (endpointModel) =>
+        {
+            Assert.Equal("/hello", endpointModel.RoutePattern);
+            Assert.Equal("MapGet", endpointModel.HttpMethod);
+            var p = Assert.Single(endpointModel.Parameters);
+            Assert.Equal(EndpointParameterSource.Query, p.Source);
+            Assert.Equal("p", p.Name);
+        });
 
         var httpContext = CreateHttpContext();
         httpContext.Request.QueryString = new QueryString("?p=Hello%20world!");
@@ -65,15 +67,16 @@ app.MapGet("/hello", ([FromQuery]string p) => p);
         var (results, compilation) = await RunGeneratorAsync("""
 app.MapGet("/hello", ([FromQuery]string? p) => p ?? "Error!");
 """);
-
-        var endpointModel = GetStaticEndpoint(results, GeneratorSteps.EndpointModelStep);
         var endpoint = GetEndpointFromCompilation(compilation);
 
-        Assert.Equal("/hello", endpointModel.RoutePattern);
-        Assert.Equal("MapGet", endpointModel.HttpMethod);
-        var p = Assert.Single(endpointModel.Parameters);
-        Assert.Equal(EndpointParameterSource.Query, p.Source);
-        Assert.Equal("p", p.Name);
+        VerifyStaticEndpointModel(results, endpointModel =>
+        {
+            Assert.Equal("/hello", endpointModel.RoutePattern);
+            Assert.Equal("MapGet", endpointModel.HttpMethod);
+            var p = Assert.Single(endpointModel.Parameters);
+            Assert.Equal(EndpointParameterSource.Query, p.Source);
+            Assert.Equal("p", p.Name);
+        });
 
         var httpContext = CreateHttpContext();
         httpContext.Request.QueryString = new QueryString("?p=Hello%20world!");
@@ -89,15 +92,16 @@ app.MapGet("/hello", ([FromQuery]string? p) => p ?? "Error!");
         var (results, compilation) = await RunGeneratorAsync("""
 app.MapGet("/hello", ([FromQuery]string? p) => p ?? "Was null!");
 """);
-
-        var endpointModel = GetStaticEndpoint(results, GeneratorSteps.EndpointModelStep);
         var endpoint = GetEndpointFromCompilation(compilation);
 
-        Assert.Equal("/hello", endpointModel.RoutePattern);
-        Assert.Equal("MapGet", endpointModel.HttpMethod);
-        var p = Assert.Single(endpointModel.Parameters);
-        Assert.Equal(EndpointParameterSource.Query, p.Source);
-        Assert.Equal("p", p.Name);
+        VerifyStaticEndpointModel(results, endpointModel =>
+        {
+            Assert.Equal("/hello", endpointModel.RoutePattern);
+            Assert.Equal("MapGet", endpointModel.HttpMethod);
+            var p = Assert.Single(endpointModel.Parameters);
+            Assert.Equal(EndpointParameterSource.Query, p.Source);
+            Assert.Equal("p", p.Name);
+        });
 
         var httpContext = CreateHttpContext();
 
@@ -112,15 +116,16 @@ app.MapGet("/hello", ([FromQuery]string? p) => p ?? "Was null!");
         var (results, compilation) = await RunGeneratorAsync("""
 app.MapGet("/hello", ([FromQuery]string? p) => p == string.Empty ? "No value, but not null!" : "Was null!");
 """);
-
-        var endpointModel = GetStaticEndpoint(results, GeneratorSteps.EndpointModelStep);
         var endpoint = GetEndpointFromCompilation(compilation);
 
-        Assert.Equal("/hello", endpointModel.RoutePattern);
-        Assert.Equal("MapGet", endpointModel.HttpMethod);
-        var p = Assert.Single(endpointModel.Parameters);
-        Assert.Equal(EndpointParameterSource.Query, p.Source);
-        Assert.Equal("p", p.Name);
+        VerifyStaticEndpointModel(results, endpointModel =>
+        {
+            Assert.Equal("/hello", endpointModel.RoutePattern);
+            Assert.Equal("MapGet", endpointModel.HttpMethod);
+            var p = Assert.Single(endpointModel.Parameters);
+            Assert.Equal(EndpointParameterSource.Query, p.Source);
+            Assert.Equal("p", p.Name);
+        });
 
         var httpContext = CreateHttpContext();
         httpContext.Request.QueryString = new QueryString("?p=");
@@ -136,12 +141,13 @@ app.MapGet("/hello", ([FromQuery]string? p) => p == string.Empty ? "No value, bu
         var (results, compilation) = await RunGeneratorAsync("""
 app.MapGet("/hello", ([FromQuery]string p1, [FromQuery]string p2) => $"{p1} {p2}");
 """);
-
-        var endpointModel = GetStaticEndpoint(results, GeneratorSteps.EndpointModelStep);
         var endpoint = GetEndpointFromCompilation(compilation);
 
-        Assert.Equal("/hello", endpointModel.RoutePattern);
-        Assert.Equal("MapGet", endpointModel.HttpMethod);
+        VerifyStaticEndpointModel(results, endpointModel =>
+        {
+            Assert.Equal("/hello", endpointModel.RoutePattern);
+            Assert.Equal("MapGet", endpointModel.HttpMethod);
+        });
 
         var httpContext = CreateHttpContext();
         httpContext.Request.QueryString = new QueryString("?p1=Hello&p2=world!");
@@ -164,15 +170,16 @@ app.MapGet("/hello", ([FromQuery]string p1, [FromQuery]string p2) => $"{p1} {p2}
         var (results, compilation) = await RunGeneratorAsync($"""
 app.MapGet("/hello", ({parameterType} p) => p == null ? "null!" : "Hello world!");
 """);
-
-        var endpointModel = GetStaticEndpoint(results, GeneratorSteps.EndpointModelStep);
         var endpoint = GetEndpointFromCompilation(compilation);
 
-        Assert.Equal("/hello", endpointModel.RoutePattern);
-        Assert.Equal("MapGet", endpointModel.HttpMethod);
-        var p = Assert.Single(endpointModel.Parameters);
-        Assert.Equal(EndpointParameterSource.SpecialType, p.Source);
-        Assert.Equal("p", p.Name);
+        VerifyStaticEndpointModel(results, endpointModel =>
+        {
+            Assert.Equal("/hello", endpointModel.RoutePattern);
+            Assert.Equal("MapGet", endpointModel.HttpMethod);
+            var p = Assert.Single(endpointModel.Parameters);
+            Assert.Equal(EndpointParameterSource.SpecialType, p.Source);
+            Assert.Equal("p", p.Name);
+        });
 
         var httpContext = CreateHttpContext();
         await endpoint.RequestDelegate(httpContext);
@@ -185,45 +192,30 @@ app.MapGet("/hello", ({parameterType} p) => p == null ? "null!" : "Hello world!"
         var (results, compilation) = await RunGeneratorAsync("""
 app.MapGet("/hello", (HttpRequest req, HttpResponse res) => req is null || res is null ? "null!" : "Hello world!");
 """);
-
-        var endpointModel = GetStaticEndpoint(results, GeneratorSteps.EndpointModelStep);
         var endpoint = GetEndpointFromCompilation(compilation);
 
-        Assert.Equal("/hello", endpointModel.RoutePattern);
-        Assert.Equal("MapGet", endpointModel.HttpMethod);
+        VerifyStaticEndpointModel(results, endpointModel =>
+        {
+            Assert.Equal("/hello", endpointModel.RoutePattern);
+            Assert.Equal("MapGet", endpointModel.HttpMethod);
 
-        Assert.Collection(endpointModel.Parameters,
-            reqParam =>
-            {
-                Assert.Equal(EndpointParameterSource.SpecialType, reqParam.Source);
-                Assert.Equal("req", reqParam.Name);
-            },
-            reqParam =>
-            {
-                Assert.Equal(EndpointParameterSource.SpecialType, reqParam.Source);
-                Assert.Equal("res", reqParam.Name);
-            });
+            Assert.Collection(endpointModel.Parameters,
+                reqParam =>
+                {
+                    Assert.Equal(EndpointParameterSource.SpecialType, reqParam.Source);
+                    Assert.Equal("req", reqParam.Name);
+                },
+                reqParam =>
+                {
+                    Assert.Equal(EndpointParameterSource.SpecialType, reqParam.Source);
+                    Assert.Equal("res", reqParam.Name);
+                });
+        });
 
         var httpContext = CreateHttpContext();
         await endpoint.RequestDelegate(httpContext);
         await VerifyResponseBodyAsync(httpContext, "Hello world!");
         await VerifyAgainstBaselineUsingFile(compilation);
-    }
-
-    [Fact]
-    public async Task MapGet_WithRequestDelegate_DoesNotGenerateSources()
-    {
-        var (results, compilation) = await RunGeneratorAsync("""
-app.MapGet("/hello", (HttpContext context) => Task.CompletedTask);
-""");
-
-        Assert.Empty(GetStaticEndpoints(results, GeneratorSteps.EndpointModelStep));
-
-        var endpoint = GetEndpointFromCompilation(compilation, expectSourceKey: false);
-
-        var httpContext = CreateHttpContext();
-        await endpoint.RequestDelegate(httpContext);
-        await VerifyResponseBodyAsync(httpContext, "");
     }
 
     [Fact]
@@ -236,11 +228,12 @@ app.MapGet("/hello", () =>
 });
 """;
         var (result, compilation) = await RunGeneratorAsync(source);
-
-        var endpointModel = GetStaticEndpoint(result, GeneratorSteps.EndpointModelStep);
         var endpoint = GetEndpointFromCompilation(compilation);
 
-        Assert.Equal("/hello", endpointModel.RoutePattern);
+        VerifyStaticEndpointModel(result, endpointModel =>
+        {
+            Assert.Equal("/hello", endpointModel.RoutePattern);
+        });
 
         var httpContext = CreateHttpContext();
         await endpoint.RequestDelegate(httpContext);
@@ -259,13 +252,13 @@ app.MapGet("/hello", () => "Hello world!")
 """;
         var expectedBody = "Filtered: Hello world!";
         var (result, compilation) = await RunGeneratorAsync(source);
-
-        await VerifyAgainstBaselineUsingFile(compilation);
-
-        var endpointModel = GetStaticEndpoint(result, GeneratorSteps.EndpointModelStep);
         var endpoint = GetEndpointFromCompilation(compilation);
 
-        Assert.Equal("/hello", endpointModel.RoutePattern);
+        await VerifyAgainstBaselineUsingFile(compilation);
+        VerifyStaticEndpointModel(result, endpointModel =>
+        {
+            Assert.Equal("/hello", endpointModel.RoutePattern);
+        });
 
         var httpContext = CreateHttpContext();
         await endpoint.RequestDelegate(httpContext);
@@ -279,12 +272,13 @@ app.MapGet("/hello", () => "Hello world!")
     public async Task MapAction_NoParam_AnyReturn(string source, string expectedBody)
     {
         var (result, compilation) = await RunGeneratorAsync(source);
-
-        var endpointModel = GetStaticEndpoint(result, GeneratorSteps.EndpointModelStep);
         var endpoint = GetEndpointFromCompilation(compilation);
 
-        Assert.Equal("/", endpointModel.RoutePattern);
-        Assert.Equal("MapGet", endpointModel.HttpMethod);
+        VerifyStaticEndpointModel(result, endpointModel =>
+        {
+            Assert.Equal("/", endpointModel.RoutePattern);
+            Assert.Equal("MapGet", endpointModel.HttpMethod);
+        });
 
         var httpContext = CreateHttpContext();
         await endpoint.RequestDelegate(httpContext);
@@ -302,33 +296,17 @@ app.MapGet("/", GetTodo);
     {
         var expectedBody = """{"id":0,"name":"Test Item","isComplete":false}""";
         var (result, compilation) = await RunGeneratorAsync(source);
-
-        var endpointModel = GetStaticEndpoint(result, GeneratorSteps.EndpointModelStep);
         var endpoint = GetEndpointFromCompilation(compilation);
 
-        Assert.Equal("/", endpointModel.RoutePattern);
-        Assert.Equal("MapGet", endpointModel.HttpMethod);
+        VerifyStaticEndpointModel(result, endpointModel =>
+        {
+            Assert.Equal("/", endpointModel.RoutePattern);
+            Assert.Equal("MapGet", endpointModel.HttpMethod);
+        });
 
         var httpContext = CreateHttpContext();
         await endpoint.RequestDelegate(httpContext);
         await VerifyResponseBodyAsync(httpContext, expectedBody);
-    }
-
-    [Theory]
-    [InlineData(@"app.MapGet(""/"", () => Console.WriteLine(""Returns void""));", null)]
-    [InlineData(@"app.MapGet(""/"", () => TypedResults.Ok(""Alright!""));", null)]
-    [InlineData(@"app.MapGet(""/"", () => Results.NotFound(""Oops!""));", null)]
-    [InlineData(@"app.MapGet(""/"", () => Task.FromResult(new Todo() { Name = ""Test Item""}));", "application/json")]
-    [InlineData(@"app.MapGet(""/"", () => ""Hello world!"");", "text/plain")]
-    public async Task MapAction_ProducesCorrectContentType(string source, string expectedContentType)
-    {
-        var (result, compilation) = await RunGeneratorAsync(source);
-
-        var endpointModel = GetStaticEndpoint(result, GeneratorSteps.EndpointModelStep);
-
-        Assert.Equal("/", endpointModel.RoutePattern);
-        Assert.Equal("MapGet", endpointModel.HttpMethod);
-        Assert.Equal(expectedContentType, endpointModel.Response.ContentType);
     }
 
     [Theory]
@@ -338,13 +316,14 @@ app.MapGet("/", GetTodo);
     public async Task MapAction_NoParam_TaskOfTReturn(string source, string expectedBody)
     {
         var (result, compilation) = await RunGeneratorAsync(source);
-
-        var endpointModel = GetStaticEndpoint(result, GeneratorSteps.EndpointModelStep);
         var endpoint = GetEndpointFromCompilation(compilation);
 
-        Assert.Equal("/", endpointModel.RoutePattern);
-        Assert.Equal("MapGet", endpointModel.HttpMethod);
-        Assert.True(endpointModel.Response.IsAwaitable);
+        VerifyStaticEndpointModel(result, endpointModel =>
+        {
+            Assert.Equal("/", endpointModel.RoutePattern);
+            Assert.Equal("MapGet", endpointModel.HttpMethod);
+            Assert.True(endpointModel.Response.IsAwaitable);
+        });
 
         var httpContext = CreateHttpContext();
         await endpoint.RequestDelegate(httpContext);
@@ -358,13 +337,14 @@ app.MapGet("/", GetTodo);
     public async Task MapAction_NoParam_ValueTaskOfTReturn(string source, string expectedBody)
     {
         var (result, compilation) = await RunGeneratorAsync(source);
-
-        var endpointModel = GetStaticEndpoint(result, GeneratorSteps.EndpointModelStep);
         var endpoint = GetEndpointFromCompilation(compilation);
 
-        Assert.Equal("/", endpointModel.RoutePattern);
-        Assert.Equal("MapGet", endpointModel.HttpMethod);
-        Assert.True(endpointModel.Response.IsAwaitable);
+        VerifyStaticEndpointModel(result, endpointModel =>
+        {
+            Assert.Equal("/", endpointModel.RoutePattern);
+            Assert.Equal("MapGet", endpointModel.HttpMethod);
+            Assert.True(endpointModel.Response.IsAwaitable);
+        });
 
         var httpContext = CreateHttpContext();
         await endpoint.RequestDelegate(httpContext);
@@ -381,13 +361,14 @@ app.MapGet("/", GetTodo);
     public async Task MapAction_NoParam_TaskLikeOfObjectReturn(string source, string expectedBody)
     {
         var (result, compilation) = await RunGeneratorAsync(source);
-
-        var endpointModel = GetStaticEndpoint(result, GeneratorSteps.EndpointModelStep);
         var endpoint = GetEndpointFromCompilation(compilation);
 
-        Assert.Equal("/", endpointModel.RoutePattern);
-        Assert.Equal("MapGet", endpointModel.HttpMethod);
-        Assert.True(endpointModel.Response.IsAwaitable);
+        VerifyStaticEndpointModel(result, endpointModel =>
+        {
+            Assert.Equal("/", endpointModel.RoutePattern);
+            Assert.Equal("MapGet", endpointModel.HttpMethod);
+            Assert.True(endpointModel.Response.IsAwaitable);
+        });
 
         var httpContext = CreateHttpContext();
         await endpoint.RequestDelegate(httpContext);
@@ -417,12 +398,10 @@ app.MapGet("/es", (HttpResponse res) => "Hola mundo!");
 app.MapGet("/zh", (HttpRequest req, HttpResponse res) => "你好世界！");
 """;
         var (results, compilation) = await RunGeneratorAsync(source);
+        var endpoints = GetEndpointsFromCompilation(compilation);
 
         await VerifyAgainstBaselineUsingFile(compilation);
-
-        var endpointModels = GetStaticEndpoints(results, GeneratorSteps.EndpointModelStep);
-
-        Assert.Collection(endpointModels,
+        VerifyStaticEndpointModels(results, endpointModels => Assert.Collection(endpointModels,
             endpointModel =>
             {
                 Assert.Equal("/en", endpointModel.RoutePattern);
@@ -454,9 +433,7 @@ app.MapGet("/zh", (HttpRequest req, HttpResponse res) => "你好世界！");
                         Assert.Equal(EndpointParameterSource.SpecialType, reqParam.Source);
                         Assert.Equal("res", reqParam.Name);
                     });
-            });
-
-        var endpoints = GetEndpointsFromCompilation(compilation);
+            }));
 
         Assert.Equal(3, endpoints.Length);
         var httpContext = CreateHttpContext();
@@ -470,29 +447,6 @@ app.MapGet("/zh", (HttpRequest req, HttpResponse res) => "你好世界！");
         httpContext = CreateHttpContext();
         await endpoints[2].RequestDelegate(httpContext);
         await VerifyResponseBodyAsync(httpContext, "你好世界！");
-    }
-
-    [Fact]
-    public async Task MapAction_VariableRoutePattern_EmitsDiagnostic_NoSource()
-    {
-        var expectedBody = "Hello world!";
-        var source = """
-var route = "/en";
-app.MapGet(route, () => "Hello world!");
-""";
-        var (result, compilation) = await RunGeneratorAsync(source);
-
-        // Emits diagnostic but generates no source
-        var diagnostic = Assert.Single(result.Diagnostics);
-        Assert.Equal(DiagnosticDescriptors.UnableToResolveRoutePattern.Id,diagnostic.Id);
-        Assert.Empty(result.GeneratedSources);
-
-        // Falls back to runtime-generated endpoint
-        var endpoint = GetEndpointFromCompilation(compilation, expectSourceKey: false);
-
-        var httpContext = CreateHttpContext();
-        await endpoint.RequestDelegate(httpContext);
-        await VerifyResponseBodyAsync(httpContext, expectedBody);
     }
 
     public static object[][] MapAction_ExplicitBodyParam_ComplexReturn_Data
@@ -615,31 +569,6 @@ app.MapPost("/fromBodyOptional", ([FromBody] Todo? todo) => TypedResults.Ok(todo
         await VerifyResponseBodyAsync(httpContext, string.Empty);
     }
 
-    [Fact]
-    public async Task MapAction_UnknownParameter_EmitsDiagnostic_NoSource()
-    {
-        // This will eventually be handled by the EndpointParameterSource.JsonBodyOrService.
-        // All parameters should theoretically be handleable with enough "Or"s in the future
-        // we'll remove this test and diagnostic.
-        var source = """
-app.MapGet("/", (IServiceProvider provider) => "Hello world!");
-""";
-        var expectedBody = "Hello world!";
-        var (result, compilation) = await RunGeneratorAsync(source);
-
-        // Emits diagnostic but generates no source
-        var diagnostic = Assert.Single(result.Diagnostics);
-        Assert.Equal(DiagnosticDescriptors.GetUnableToResolveParameterDescriptor("provider").Id, diagnostic.Id);
-        Assert.Empty(result.GeneratedSources);
-
-        // Falls back to runtime-generated endpoint
-        var endpoint = GetEndpointFromCompilation(compilation, expectSourceKey: false);
-
-        var httpContext = CreateHttpContext();
-        await endpoint.RequestDelegate(httpContext);
-        await VerifyResponseBodyAsync(httpContext, expectedBody);
-    }
-
     public static object[][] MapAction_ExplicitServiceParam_SimpleReturn_Data
     {
         get
@@ -754,18 +683,5 @@ app.MapGet("/multipleFromService", ([FromServices]{{typeof(TestService)}}? svc, 
         httpContext.RequestServices = services;
         await endpoints[2].RequestDelegate(httpContext);
         await VerifyResponseBodyAsync(httpContext, $"{expectedBody}, {expectedBody}");
-    }
-
-    [Fact]
-    public async Task MapAction_RequestDelegateHandler_DoesNotEmit()
-    {
-        var source = """
-app.MapGet("/", (HttpContext context) => context.Response.WriteAsync("Hello world"));
-""";
-        var (result, _) = await RunGeneratorAsync(source);
-        var endpointModels = GetStaticEndpoints(result, GeneratorSteps.EndpointModelStep);
-
-        Assert.Empty(result.GeneratedSources);
-        Assert.Empty(endpointModels);
     }
 }
