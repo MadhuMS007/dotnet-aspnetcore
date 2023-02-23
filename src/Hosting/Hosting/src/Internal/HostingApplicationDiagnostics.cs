@@ -28,18 +28,21 @@ internal sealed class HostingApplicationDiagnostics
     private readonly ActivitySource _activitySource;
     private readonly DiagnosticListener _diagnosticListener;
     private readonly DistributedContextPropagator _propagator;
+    private readonly HostingMetrics _metrics;
     private readonly ILogger _logger;
 
     public HostingApplicationDiagnostics(
         ILogger logger,
         DiagnosticListener diagnosticListener,
         ActivitySource activitySource,
-        DistributedContextPropagator propagator)
+        DistributedContextPropagator propagator,
+        HostingMetrics metrics)
     {
         _logger = logger;
         _diagnosticListener = diagnosticListener;
         _activitySource = activitySource;
         _propagator = propagator;
+        _metrics = metrics;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -47,7 +50,7 @@ internal sealed class HostingApplicationDiagnostics
     {
         long startTimestamp = 0;
 
-        if (HostingEventSource.Log.IsEnabled())
+        if (HostingEventSource.Log.IsEnabled() || _metrics.IsEnabled())
         {
             context.EventLogEnabled = true;
             // To keep the hot path short we defer logging in this function to non-inlines

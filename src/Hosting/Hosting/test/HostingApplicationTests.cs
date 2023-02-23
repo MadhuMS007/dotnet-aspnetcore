@@ -3,12 +3,15 @@
 
 using System.Collections;
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
+using Microsoft.AspNetCore.Hosting.Fakes;
 using Microsoft.AspNetCore.Hosting.Server.Abstractions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Metrics;
 using Moq;
 using static Microsoft.AspNetCore.Hosting.HostingApplication;
 
@@ -16,6 +19,74 @@ namespace Microsoft.AspNetCore.Hosting.Tests;
 
 public class HostingApplicationTests
 {
+    [Fact]
+    public void Metrics()
+    {
+        // Arrange
+        var measurements = new Dictionary<string, long>();
+        void OnMeasurementRecorded(Instrument instrument, long measurement, ReadOnlySpan<KeyValuePair<string, object>> tags, object state)
+        {
+            measurements[instrument.Name] = measurement;
+            Console.WriteLine($"{instrument.Name} recorded measurement {measurement}");
+        }
+
+        using var meterListener = new MeterListener();
+        meterListener.InstrumentPublished = (instrument, listener) =>
+        {
+            if (instrument.Meter.Name == "Microsoft.AspNetCore.Hosting")
+            {
+                listener.EnableMeasurementEvents(instrument);
+            }
+        };
+        meterListener.SetMeasurementEventCallback<long>(OnMeasurementRecorded);
+        meterListener.Start();
+
+        var metricsFactory = new TestMetricsFactory();
+        var hostingApplication = CreateApplication(metricsFactory: metricsFactory);
+        var httpContext = new DefaultHttpContext();
+        var meter = Assert.Single(metricsFactory.Meters);
+
+        // Act/Assert
+        Assert.Equal("Microsoft.AspNetCore.Hosting", meter.Name);
+        Assert.Null(meter.Version);
+
+        // Request 1 (after success)
+        var context1 = hostingApplication.CreateContext(httpContext.Features);
+        context1.HttpContext.Response.StatusCode = StatusCodes.Status200OK;
+        hostingApplication.DisposeContext(context1, null);
+        meterListener.RecordObservableInstruments();
+
+        Assert.Equal(1, measurements["total-requests"]);
+        Assert.Equal(0, measurements["current-requests"]);
+        Assert.Equal(0, measurements["failed-requests"]);
+
+        // Request 2 (after failure)
+        var context2 = hostingApplication.CreateContext(httpContext.Features);
+        context2.HttpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        hostingApplication.DisposeContext(context2, null);
+        meterListener.RecordObservableInstruments();
+
+        Assert.Equal(2, measurements["total-requests"]);
+        Assert.Equal(0, measurements["current-requests"]);
+        Assert.Equal(1, measurements["failed-requests"]);
+
+        // Request 2
+        var context3 = hostingApplication.CreateContext(httpContext.Features);
+        context3.HttpContext.Response.StatusCode = StatusCodes.Status200OK;
+        meterListener.RecordObservableInstruments();
+
+        Assert.Equal(3, measurements["total-requests"]);
+        Assert.Equal(1, measurements["current-requests"]);
+        Assert.Equal(1, measurements["failed-requests"]);
+
+        hostingApplication.DisposeContext(context3, null);
+        meterListener.RecordObservableInstruments();
+
+        Assert.Equal(3, measurements["total-requests"]);
+        Assert.Equal(0, measurements["current-requests"]);
+        Assert.Equal(1, measurements["failed-requests"]);
+    }
+
     [Fact]
     public void DisposeContextDoesNotClearHttpContextIfDefaultHttpContextFactoryUsed()
     {
@@ -183,7 +254,7 @@ public class HostingApplicationTests
     }
 
     private static HostingApplication CreateApplication(IHttpContextFactory httpContextFactory = null, bool useHttpContextAccessor = false,
-        ActivitySource activitySource = null)
+        ActivitySource activitySource = null, IMetricsFactory metricsFactory = null)
     {
         var services = new ServiceCollection();
         services.AddOptions();
@@ -200,7 +271,8 @@ public class HostingApplicationTests
             new DiagnosticListener("Microsoft.AspNetCore"),
             activitySource ?? new ActivitySource("Microsoft.AspNetCore"),
             DistributedContextPropagator.CreateDefaultPropagator(),
-            httpContextFactory);
+            httpContextFactory,
+            new HostingMetrics(metricsFactory ?? new TestMetricsFactory()));
 
         return hostingApplication;
     }
